@@ -16,6 +16,15 @@ acceptance criteria pass.
 Pull requests should link the relevant specification, state what is deliberately
 out of scope, and list the verification commands that were run.
 
+## Branches and releases
+
+Create feature work from `develop` and submit it back to `develop` through a pull
+request. Do not push directly to `develop` or `main`. Stable releases are promoted
+through a release pull request from `develop` to `main` and a `vX.Y.Z` tag.
+
+The complete branch, merge, preview, stable-release, and hotfix policy is defined
+in [docs/branching.md](docs/branching.md).
+
 ## Product constraints
 
 - Do not present AI-derived nutrition values as exact measurements.

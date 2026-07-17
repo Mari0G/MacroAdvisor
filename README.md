@@ -23,6 +23,7 @@ correction, local persistence, and a daily nutrition overview.
 - Cloud synchronization remains optional
 
 The current specifications are indexed in [specs/README.md](specs/README.md).
+The repository workflow is defined in [docs/branching.md](docs/branching.md).
 
 ## Planned technology
 

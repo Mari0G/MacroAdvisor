@@ -9,6 +9,9 @@
 
 ## Working method
 
+- Follow `docs/branching.md`: branch from `develop` and target ordinary pull
+  requests to `develop`.
+- Never push directly to the protected `develop` or `main` branches.
 - Implement one vertical slice at a time.
 - Add or update tests with every behavior change.
 - Keep provider, persistence, and UI concerns behind explicit interfaces.

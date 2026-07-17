@@ -63,9 +63,11 @@ Android emulator integration tests may use hardware virtualization when availabl
 iOS compilation requires a macOS runner and is deferred while iOS remains
 supported but untested.
 
-Version tags will trigger artifact creation and a GitHub Release. Store signing and
-app-store publication remain separate protected steps until release credentials and
-distribution accounts exist.
+Successful `develop` updates produce Android preview artifacts and, once signing is
+configured, GitHub Pre-Releases. Stable `vX.Y.Z` tags on `main` trigger artifact
+creation and a normal GitHub Release. Store signing and app-store publication
+remain separate protected steps until release credentials and distribution accounts
+exist. The complete repository workflow is defined in `docs/branching.md`.
 
 ## Definition of done
 
