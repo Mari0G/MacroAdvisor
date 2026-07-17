@@ -102,6 +102,12 @@ Do not require linear history because release and hotfix synchronization use mer
 commits. Human approval requirements may be tightened when the project has enough
 maintainers; CI remains required even for a single-maintainer repository.
 
+GitHub branch protection is not currently available for this private repository
+on its selected plan. Until server-side rules can be enabled, contributors and
+automation must enforce the same policy locally: always branch from `develop`,
+open a pull request to the required target, and never push or merge directly to
+`develop` or `main`. The absence of a hosted guard does not relax these rules.
+
 ## Merge methods
 
 | Pull request | Target | Method |

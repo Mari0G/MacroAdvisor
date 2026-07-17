@@ -9,9 +9,8 @@ testing initially focus on Android.
 
 ## Project status
 
-The project is currently in the specification phase. The first implementation
-slice will cover text-based meal entry, AI-assisted nutrition analysis, manual
-correction, local persistence, and a daily nutrition overview.
+The Flutter scaffold is in place. It intentionally contains only a localized
+German/English setup screen; product behavior starts with the next vertical slice.
 
 ## Product principles
 
@@ -28,11 +27,34 @@ The repository workflow is defined in [docs/branching.md](docs/branching.md).
 ## Planned technology
 
 - Flutter and Dart
+- Riverpod for state management and dependency injection
+- Drift for local SQLite persistence
+- `flutter_secure_storage` for user-provided AI keys
+- ARB-based `flutter_localizations` support for German and English
 - Android-first automated testing; iOS remains a supported target
-- SQLite through a repository abstraction
-- Secure platform storage for user-provided API keys
 - Provider-neutral AI integration, starting with Google Gemini
 - GitHub Actions for formatting, analysis, tests, builds, and releases
+
+The binding technical choices and package lines are defined in
+[specs/technical.md](specs/technical.md).
+
+## Local development
+
+Use Flutter 3.44 stable with Dart 3.12 or a compatible newer stable patch, then
+run:
+
+```text
+flutter pub get
+dart format --output=none --set-exit-if-changed .
+flutter analyze --fatal-infos --fatal-warnings
+flutter test
+```
+
+Generate Drift sources after adding or changing a schema with:
+
+```text
+dart run build_runner build --delete-conflicting-outputs
+```
 
 ## Contributing
 
