@@ -6,14 +6,31 @@ Last updated: 2026-07-17
 
 ## Application stack
 
-- Flutter and Dart for Android and iOS
+- Flutter 3.44 stable and Dart 3.12 are the baseline for Android and iOS. The
+  project tracks compatible stable patch releases and declares the minimum SDK
+  constraints in `pubspec.yaml`.
+- Riverpod through `flutter_riverpod` is the required state-management and
+  dependency-injection solution. UI state depends on application interfaces,
+  never directly on persistence or provider adapters.
 - Android as the initial CI build and integration-test target
-- Local SQLite persistence behind repository interfaces
-- Platform-backed secure storage for user-supplied provider credentials
-- ARB-based Flutter localization for German and English
+- Drift (`drift` plus `drift_flutter`) is the required local SQLite persistence
+  layer. Generated Drift sources are produced by `drift_dev` and `build_runner`
+  and are never edited manually. Drift remains behind repository interfaces.
+- `flutter_secure_storage` is the only persistence mechanism for user-supplied
+  AI provider credentials. SQLite and ordinary preferences must never contain
+  provider secrets.
+- `flutter_localizations` with ARB files and Flutter's generated localization
+  support is required for German and English. Every localization key must exist
+  in both locales; English is the source locale and fallback.
+- AI integrations implement the provider-neutral `NutritionAnalysisProvider`
+  interface. Provider adapters, request/response DTOs, SDK types, model names,
+  and credentials remain in infrastructure code and cannot leak into domain or
+  presentation APIs.
 
-Exact package selections are made during scaffolding and recorded here before
-their first use. Dependencies must have a clear purpose and compatible license.
+The initial dependency lines are `flutter_riverpod` 3.x, `drift` 2.x,
+`drift_flutter` 0.3.x, and `flutter_secure_storage` 10.x. Exact resolved versions
+are recorded in `pubspec.lock`; upgrades outside these compatible lines require a
+technical-specification update. All selected packages use permissive licenses.
 
 ## Layer boundaries
 
