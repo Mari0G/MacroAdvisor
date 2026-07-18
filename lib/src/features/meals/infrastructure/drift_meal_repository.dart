@@ -18,9 +18,13 @@ class DriftMealRepository implements MealRepository {
 
   @override
   Future<MealEntry> create(MealEntryDraft draft) async {
+    if (draft.confirmationId != null) {
+      final existing = await findById(draft.confirmationId!);
+      if (existing != null) return existing;
+    }
     final now = _utc(_clock.now());
     final entry = MealEntry(
-      id: _idGenerator.newId(),
+      id: draft.confirmationId ?? _idGenerator.newId(),
       createdAtUtc: now,
       updatedAtUtc: now,
       revision: 0,
