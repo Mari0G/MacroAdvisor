@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 
 /// Starts the app with the production composition root.
@@ -9,6 +10,9 @@ import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 void bootstrap({List<Object?> overrides = const []}) {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    ProviderScope(overrides: overrides.cast(), child: const MacroAdvisorApp()),
+    ProviderScope(
+      overrides: [...productionOverrides(), ...overrides].cast(),
+      child: const MacroAdvisorApp(),
+    ),
   );
 }

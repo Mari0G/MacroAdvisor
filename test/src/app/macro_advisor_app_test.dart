@@ -44,7 +44,7 @@ void main() {
 
     expect(find.text('Settings'), findsOneWidget);
     expect(
-      find.text('Provider, goals, and language settings will appear here.'),
+      find.text('Goals and language settings will appear here.'),
       findsOneWidget,
     );
   });

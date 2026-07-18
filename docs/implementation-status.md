@@ -21,7 +21,7 @@ project-wide status source.
 | Slice | Status | Working branch or PR | Evidence on `develop` | Notes |
 | --- | --- | --- | --- | --- |
 | 0. App foundation and empty Today shell | Merged | — | `test/src/app/macro_advisor_app_test.dart`, `test/src/app/architecture_test.dart`, and `test/src/app/localization_parity_test.dart` | Localized Today and Settings shell. Specification status remains independent. |
-| 1. Provider credential settings | Planned | — | — | Depends on Slice 0. |
+| 1. Provider credential settings | In review | `feat/provider-credential-settings` | — | Controller, contract, and English/German widget tests pass locally; ready for review. |
 | 2. Nutrition domain and local meal persistence | Planned | — | — | Depends on Slice 0. |
 | 3. Text capture, deterministic analysis, review, and save | Planned | — | — | Depends on Slices 1 and 2. |
 | 4. Gemini provider adapter | Planned | — | — | Depends on the provider-neutral contract from Slice 3. |
