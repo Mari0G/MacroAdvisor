@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:macro_advisor/l10n/generated/app_localizations.dart';
-import 'package:macro_advisor/src/features/setup/presentation/setup_page.dart';
+import 'package:macro_advisor/src/app/app_router.dart';
+import 'package:macro_advisor/src/app/app_theme.dart';
 
 class MacroAdvisorApp extends StatelessWidget {
   const MacroAdvisorApp({this.locale, super.key});
@@ -15,11 +16,11 @@ class MacroAdvisorApp extends StatelessWidget {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-      ),
-      home: const SetupPage(),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
+      initialRoute: AppRoutes.today,
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }

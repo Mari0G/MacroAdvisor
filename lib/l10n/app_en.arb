@@ -1,6 +1,19 @@
 {
   "@@locale": "en",
   "appTitle": "MacroAdvisor",
-  "setupTitle": "Your local nutrition overview",
-  "setupBody": "The project setup is ready. Product features follow next."
+  "todayTitle": "Today",
+  "settingsTooltip": "Open settings",
+  "recordMealAction": "Record meal",
+  "dailyNutritionTitle": "Today's nutrition",
+  "dailyNutritionEmpty": "Your daily totals will appear here after you record a meal.",
+  "mealsAndDrinksTitle": "Meals and drinks ({count})",
+  "@mealsAndDrinksTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "todayEmptyTitle": "No meals or drinks recorded",
+  "todayEmptyBody": "Record a meal or drink to begin your local nutrition overview.",
+  "settingsTitle": "Settings",
+  "settingsPlaceholder": "Provider, goals, and language settings will appear here."
 }

@@ -1,6 +1,19 @@
 {
   "@@locale": "de",
   "appTitle": "MacroAdvisor",
-  "setupTitle": "Dein lokaler Ernährungsüberblick",
-  "setupBody": "Das Projekt-Setup steht. Die Produktfunktionen folgen als Nächstes."
+  "todayTitle": "Heute",
+  "settingsTooltip": "Einstellungen öffnen",
+  "recordMealAction": "Mahlzeit erfassen",
+  "dailyNutritionTitle": "Heutige Ernährung",
+  "dailyNutritionEmpty": "Deine Tageswerte erscheinen hier, nachdem du eine Mahlzeit erfasst hast.",
+  "mealsAndDrinksTitle": "Mahlzeiten und Getränke ({count})",
+  "@mealsAndDrinksTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "todayEmptyTitle": "Noch keine Mahlzeiten oder Getränke erfasst",
+  "todayEmptyBody": "Erfasse eine Mahlzeit oder ein Getränk, um deine lokale Ernährungsübersicht zu beginnen.",
+  "settingsTitle": "Einstellungen",
+  "settingsPlaceholder": "Einstellungen für Anbieter, Ziele und Sprache erscheinen hier."
 }
