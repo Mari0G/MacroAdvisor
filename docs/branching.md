@@ -125,3 +125,7 @@ open a pull request to the required target, and never push or merge directly to
 | Successful push to `develop` | Preview artifact and, when signing is available, Pre-Release |
 | Tag `vX.Y.Z` on `main` | Stable Android GitHub Release |
 | Pull request from a fork | Checks only; no secrets or publishing |
+
+The concrete GitHub Actions triggers, artifact locations, signing-secret setup,
+and zero-cost guardrails are documented in
+[release-automation.md](release-automation.md).
