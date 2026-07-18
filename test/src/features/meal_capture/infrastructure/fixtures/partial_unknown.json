@@ -1,0 +1,14 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"confidence\":\"low\",\"items\":[{\"name\":\"Unbekanntes Gericht\",\"amount\":{\"unknown\":true,\"unit\":\"serving\"},\"nutrients\":{\"energy\":{\"value\":null,\"unit\":\"kcal\"},\"protein\":{\"value\":4.5,\"unit\":\"g\"}}}],\"assumptions\":[],\"warnings\":[{\"code\":\"partial\",\"description\":\"Einige Angaben fehlen.\"}]}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ]
+}

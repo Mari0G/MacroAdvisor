@@ -1,0 +1,13 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"confidence\":\"medium\",\"items\":[{\"name\":\"Test\",\"nutrients\":{\"protein\":{\"value\":10,\"unit\":\"mg\"}}}]}"
+          }
+        ]
+      }
+    }
+  ]
+}

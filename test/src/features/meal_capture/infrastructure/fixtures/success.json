@@ -1,0 +1,14 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"detectedLocale\":\"de-DE\",\"confidence\":\"medium\",\"items\":[{\"name\":\"Haferflocken\",\"amount\":{\"value\":80,\"unit\":\"g\"},\"nutrients\":{\"energy\":{\"value\":300,\"unit\":\"kcal\"},\"protein\":{\"value\":10,\"unit\":\"g\"},\"carbohydrates\":{\"value\":48,\"unit\":\"g\"},\"fat\":{\"value\":6,\"unit\":\"g\"},\"fibre\":{\"value\":8,\"unit\":\"g\"},\"sugars\":{\"value\":1,\"unit\":\"g\"},\"salt\":{\"value\":0.1,\"unit\":\"g\"}}}],\"totals\":{\"energy\":{\"value\":300,\"unit\":\"kcal\"},\"protein\":{\"value\":10,\"unit\":\"g\"},\"carbohydrates\":{\"value\":48,\"unit\":\"g\"},\"fat\":{\"value\":6,\"unit\":\"g\"},\"fibre\":{\"value\":8,\"unit\":\"g\"},\"sugars\":{\"value\":1,\"unit\":\"g\"},\"salt\":{\"value\":0.1,\"unit\":\"g\"}},\"assumptions\":[{\"code\":\"portion\",\"description\":\"Die Menge wurde als 80 g interpretiert.\"}],\"warnings\":[]}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ]
+}
