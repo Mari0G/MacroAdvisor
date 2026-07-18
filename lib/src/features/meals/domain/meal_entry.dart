@@ -55,6 +55,7 @@ class MealEntryDraft {
     required this.occurredOffsetMinutes,
     required List<MealItem> items,
     required this.provenance,
+    this.confirmationId,
     this.description,
     this.userEdited = false,
     this.confidence = MealConfidence.medium,
@@ -70,6 +71,9 @@ class MealEntryDraft {
   final String? description;
   final List<MealItem> items;
   final MealProvenance provenance;
+
+  /// A stable client-side confirmation identifier makes a retried save safe.
+  final String? confirmationId;
   final bool userEdited;
   final MealConfidence confidence;
   final List<MealAssumption> assumptions;

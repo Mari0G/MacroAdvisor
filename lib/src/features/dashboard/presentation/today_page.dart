@@ -13,7 +13,7 @@ class TodayPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => TodayView(
     date: ref.watch(clockProvider).now(),
     onOpenSettings: () => Navigator.of(context).pushNamed(AppRoutes.settings),
-    onRecordMeal: () {},
+    onRecordMeal: () => Navigator.of(context).pushNamed(AppRoutes.describeMeal),
   );
 }
 

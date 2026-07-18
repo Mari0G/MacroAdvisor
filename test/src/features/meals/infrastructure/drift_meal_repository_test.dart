@@ -43,6 +43,16 @@ void main() {
       },
     );
 
+    test('returns an existing entry for a retried confirmation identifier', () async {
+      final first = await repository.create(_draft(confirmationId: 'confirm-1'));
+      final retried = await repository.create(
+        _draft(confirmationId: 'confirm-1'),
+      );
+
+      expect(retried.id, first.id);
+      expect(await repository.observeDay(DateTime(2026, 7, 18)).first, hasLength(1));
+    });
+
     test('updates atomically and rejects stale revisions', () async {
       final saved = await repository.create(_draft());
       clock.value = DateTime.utc(2026, 7, 18, 11);
@@ -152,10 +162,12 @@ void main() {
 MealEntryDraft _draft({
   DateTime? occurredAtUtc,
   int occurredOffsetMinutes = 120,
+  String? confirmationId,
 }) => MealEntryDraft(
   occurredAtUtc: occurredAtUtc ?? DateTime.utc(2026, 7, 18, 8),
   occurredOffsetMinutes: occurredOffsetMinutes,
   description: 'Beans on toast',
+  confirmationId: confirmationId,
   items: [_item()],
   provenance: MealProvenance(
     providerId: 'fake',
