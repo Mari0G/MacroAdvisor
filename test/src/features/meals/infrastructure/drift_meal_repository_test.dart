@@ -43,15 +43,23 @@ void main() {
       },
     );
 
-    test('returns an existing entry for a retried confirmation identifier', () async {
-      final first = await repository.create(_draft(confirmationId: 'confirm-1'));
-      final retried = await repository.create(
-        _draft(confirmationId: 'confirm-1'),
-      );
+    test(
+      'returns an existing entry for a retried confirmation identifier',
+      () async {
+        final first = await repository.create(
+          _draft(confirmationId: 'confirm-1'),
+        );
+        final retried = await repository.create(
+          _draft(confirmationId: 'confirm-1'),
+        );
 
-      expect(retried.id, first.id);
-      expect(await repository.observeDay(DateTime(2026, 7, 18)).first, hasLength(1));
-    });
+        expect(retried.id, first.id);
+        expect(
+          await repository.observeDay(DateTime(2026, 7, 18)).first,
+          hasLength(1),
+        );
+      },
+    );
 
     test('updates atomically and rejects stale revisions', () async {
       final saved = await repository.create(_draft());
