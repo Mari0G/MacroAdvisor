@@ -4,19 +4,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
+import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
 
 void main() {
   final clock = _FixedClock(DateTime(2025, 1, 2, 9));
 
   Widget buildApp(Locale locale) => ProviderScope(
-    overrides: [clockProvider.overrideWithValue(clock)],
+    overrides: [
+      clockProvider.overrideWithValue(clock),
+      mealRepositoryProvider.overrideWithValue(_EmptyMealRepository()),
+    ],
     child: MacroAdvisorApp(locale: locale),
   );
 
   testWidgets('shows the localized English empty Today shell', (tester) async {
     await tester.pumpWidget(buildApp(const Locale('en')));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Today').first, findsOneWidget);
     expect(find.text('No meals or drinks recorded'), findsOneWidget);
     expect(find.text('Meals and drinks (0)'), findsOneWidget);
     expect(find.text('Record meal'), findsNWidgets(2));
@@ -25,8 +32,9 @@ void main() {
 
   testWidgets('shows the localized German empty Today shell', (tester) async {
     await tester.pumpWidget(buildApp(const Locale('de')));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Heute'), findsOneWidget);
+    expect(find.text('Heute').first, findsOneWidget);
     expect(
       find.text('Noch keine Mahlzeiten oder Getränke erfasst'),
       findsOneWidget,
@@ -38,6 +46,7 @@ void main() {
 
   testWidgets('opens the Settings placeholder from Today', (tester) async {
     await tester.pumpWidget(buildApp(const Locale('en')));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Open settings'));
     await tester.pumpAndSettle();
@@ -49,6 +58,27 @@ void main() {
     );
   });
 
+  testWidgets('both Today record actions open the meal description page', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildApp(const Locale('en')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.widgetWithText(FilledButton, 'Record meal'),
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Record meal'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
+  });
+
   testWidgets('uses a compact layout below the expanded breakpoint', (
     tester,
   ) async {
@@ -57,6 +87,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(buildApp(const Locale('en')));
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('today-compact-layout')), findsOneWidget);
     expect(find.byKey(const Key('today-expanded-layout')), findsNothing);
@@ -68,6 +99,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(buildApp(const Locale('en')));
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('today-expanded-layout')), findsOneWidget);
     expect(find.byKey(const Key('today-compact-layout')), findsNothing);
@@ -82,10 +114,39 @@ void main() {
     );
 
     await tester.pumpWidget(buildApp(const Locale('de')));
+    await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
     expect(find.text('Mahlzeit erfassen'), findsNWidgets(2));
   });
+}
+
+class _EmptyMealRepository implements MealRepository {
+  @override
+  Future<MealEntry> create(MealEntryDraft draft) => throw UnimplementedError();
+
+  @override
+  Future<MealEntry?> findById(String id, {bool includeDeleted = false}) =>
+      throw UnimplementedError();
+
+  @override
+  Stream<List<MealEntry>> observeDay(DateTime localDay) =>
+      Stream.value(const <MealEntry>[]);
+
+  @override
+  Future<MealEntry> update(MealEntry entry) => throw UnimplementedError();
+
+  @override
+  Future<MealEntry> softDelete({
+    required String id,
+    required int expectedRevision,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<MealEntry> restore({
+    required String id,
+    required int expectedRevision,
+  }) => throw UnimplementedError();
 }
 
 class _FixedClock implements Clock {

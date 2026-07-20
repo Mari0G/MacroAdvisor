@@ -3,6 +3,7 @@ import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dar
 import 'package:macro_advisor/src/features/meal_capture/presentation/describe_meal_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/edit_item_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/review_estimate_page.dart';
+import 'package:macro_advisor/src/features/meals/presentation/meal_detail_page.dart';
 import 'package:macro_advisor/src/features/settings/presentation/provider_settings_page.dart';
 import 'package:macro_advisor/src/features/settings/presentation/settings_page.dart';
 
@@ -13,6 +14,8 @@ abstract final class AppRoutes {
   static const describeMeal = '/capture/describe';
   static const reviewMeal = '/capture/review';
   static const editMealItem = '/capture/item';
+  static const mealDetail = '/meals/detail';
+  static const mealEdit = '/meals/edit';
 }
 
 abstract final class AppRouter {
@@ -37,6 +40,14 @@ abstract final class AppRouter {
       AppRoutes.editMealItem => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => EditItemPage(itemId: settings.arguments! as String),
+      ),
+      AppRoutes.mealDetail => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => MealDetailPage(mealId: settings.arguments! as String),
+      ),
+      AppRoutes.mealEdit => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => MealEditPage(mealId: settings.arguments! as String),
       ),
       _ => MaterialPageRoute<void>(
         settings: settings,

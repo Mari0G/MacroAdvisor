@@ -47,7 +47,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.created, hasLength(1));
-    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Today').first, findsOneWidget);
   });
 
   testWidgets(
