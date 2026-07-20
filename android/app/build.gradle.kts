@@ -38,6 +38,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     flavorDimensions += "distribution"
@@ -85,4 +86,13 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Required by FlutterTestRunner to launch Dart integration tests through
+    // Android's native instrumentation framework.
+    // Keep these compatible with the versions exported by Flutter's
+    // integration_test Android plugin.
+    androidTestImplementation("androidx.test:runner:1.3.0")
+    androidTestImplementation("androidx.test:rules:1.2.0")
 }
