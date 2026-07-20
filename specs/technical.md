@@ -2,7 +2,7 @@
 
 Status: Draft v0.1
 
-Last updated: 2026-07-17
+Last updated: 2026-07-20
 
 ## Application stack
 
@@ -278,7 +278,7 @@ redaction for adapter error mapping and any structured logging boundary.
 The MVP uses bring-your-own-key access and sends requests directly from the mobile
 device over TLS. It ships no shared provider secret and therefore needs no backend.
 
-The first implementation targets stable `gemini-2.5-flash`. Provider-specific
+The first implementation targets stable `gemini-3.5-flash`. Provider-specific
 requests and responses remain inside an infrastructure adapter. Domain code
 consumes a provider-neutral `NutritionAnalysis` contract.
 

@@ -31,7 +31,7 @@ void main() {
         );
 
         expect(result.provenance.providerId, 'gemini');
-        expect(result.provenance.modelId, 'gemini-2.5-flash');
+        expect(result.provenance.modelId, 'gemini-3.5-flash');
         expect(result.provenance.detectedLocale, 'de-DE');
         expect(result.items.single.name, 'Haferflocken');
         expect(result.items.single.normalizedGramsMilli, 80000);
@@ -49,6 +49,7 @@ void main() {
         expect(transport.headers['x-goog-api-key'], 'test-secret');
         expect(transport.body, contains('80 g Haferflocken'));
         expect(transport.body, contains('de-DE'));
+        expect(transport.body, contains('thinkingLevel'));
       },
     );
 
@@ -198,9 +199,51 @@ void main() {
         ProviderConnectionResult.success,
       );
       expect(transport.headers['x-goog-api-key'], 'test-secret');
-      expect(transport.body, contains('connection check'));
+      expect(transport.body, contains('Reply with OK.'));
+      expect(transport.body, isNot(contains('responseSchema')));
+      expect(transport.body, contains('"maxOutputTokens":1'));
+      expect(transport.timeout, const Duration(seconds: 45));
       expect(
         await provider.check('   '),
+        ProviderConnectionResult.invalidCredential,
+      );
+    });
+
+    test(
+      'keeps connection checks independent of structured output support',
+      () async {
+        final provider = _provider(
+          _FakeTransport(
+            response: const GeminiHttpResponse(statusCode: 200, body: '{}'),
+          ),
+        );
+
+        expect(
+          await provider.check('test-secret'),
+          ProviderConnectionResult.success,
+        );
+      },
+    );
+
+    test('maps connection failures to actionable categories', () async {
+      final offlineProvider = _provider(
+        _FakeTransport(error: TimeoutException('network timeout')),
+      );
+      expect(
+        await offlineProvider.check('test-secret'),
+        ProviderConnectionResult.offline,
+      );
+
+      final invalidCredentialProvider = _provider(
+        _FakeTransport(
+          response: const GeminiHttpResponse(
+            statusCode: 400,
+            body: '{"error":{}}',
+          ),
+        ),
+      );
+      expect(
+        await invalidCredentialProvider.check('test-secret'),
         ProviderConnectionResult.invalidCredential,
       );
     });
@@ -262,6 +305,7 @@ final class _FakeTransport implements GeminiHttpTransport {
   Uri? uri;
   Map<String, String> headers = const {};
   String body = '';
+  Duration? timeout;
 
   @override
   Future<GeminiHttpResponse> post({
@@ -273,6 +317,7 @@ final class _FakeTransport implements GeminiHttpTransport {
     this.uri = uri;
     this.headers = headers;
     this.body = body;
+    this.timeout = timeout;
     if (error != null) {
       throw error!;
     }
