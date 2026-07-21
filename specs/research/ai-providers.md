@@ -2,7 +2,7 @@
 
 Status: Research snapshot
 
-Evaluated: 2026-07-17
+Evaluated: 2026-07-20
 
 Pricing, limits, models, and provider terms change frequently. Re-check the linked
 official sources before implementation or release.
@@ -10,7 +10,7 @@ official sources before implementation or release.
 ## Recommendation
 
 Use a bring-your-own-key model for the MVP and implement Google Gemini first with
-stable `gemini-2.5-flash`.
+stable `gemini-3.5-flash`.
 
 Reasons:
 
@@ -31,6 +31,7 @@ Official sources:
 - https://ai.google.dev/gemini-api/docs/pricing
 - https://ai.google.dev/gemini-api/docs/billing
 - https://ai.google.dev/gemini-api/docs/structured-output
+- https://ai.google.dev/gemini-api/docs/deprecations
 - https://ai.google.dev/gemini-api/terms
 
 ## Alternatives

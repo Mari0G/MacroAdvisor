@@ -11,12 +11,9 @@ import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
-import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
-import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
 import 'package:macro_advisor/src/features/settings/application/provider_settings_controller.dart';
 import 'package:macro_advisor/src/features/settings/domain/credential_store.dart';
-import 'package:macro_advisor/src/features/settings/domain/provider_connection_checker.dart';
 import 'package:macro_advisor/src/features/settings/infrastructure/deterministic_connection_checker.dart';
 
 /// Fast, repeatable Android smoke test for agents and CI.

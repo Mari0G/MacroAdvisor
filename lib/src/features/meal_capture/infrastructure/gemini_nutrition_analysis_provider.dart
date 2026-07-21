@@ -11,7 +11,7 @@ import 'package:macro_advisor/src/features/settings/domain/credential_store.dart
 import 'package:macro_advisor/src/features/settings/domain/provider_connection_checker.dart';
 
 const _geminiProviderId = 'gemini';
-const _geminiModelId = 'gemini-2.5-flash';
+const _geminiModelId = 'gemini-3.5-flash';
 const _geminiEndpoint =
     'https://generativelanguage.googleapis.com/v1beta/models/'
     '$_geminiModelId:generateContent';
@@ -54,6 +54,7 @@ final class GeminiNutritionAnalysisProvider
     required this._idGenerator,
     GeminiHttpTransport? transport,
     this.timeout = const Duration(seconds: 20),
+    this.connectionCheckTimeout = const Duration(seconds: 45),
   }) : _transport = transport ?? _IoGeminiHttpTransport(HttpClient());
 
   final CredentialStore _credentialStore;
@@ -61,6 +62,7 @@ final class GeminiNutritionAnalysisProvider
   final IdGenerator _idGenerator;
   final GeminiHttpTransport _transport;
   final Duration timeout;
+  final Duration connectionCheckTimeout;
 
   @override
   Future<NutritionAnalysis> analyzeText(
@@ -72,7 +74,6 @@ final class GeminiNutritionAnalysisProvider
       body: _requestBody(
         localeTag: request.localeTag,
         description: request.description,
-        connectionCheck: false,
       ),
     );
     _throwForHttpResponse(response);
@@ -101,13 +102,12 @@ final class GeminiNutritionAnalysisProvider
     try {
       final response = await _send(
         credential: normalizedCredential,
-        body: _requestBody(
-          localeTag: 'en-US',
-          description: 'Reply with a valid empty nutrition estimate.',
-          connectionCheck: true,
-        ),
+        body: _connectionCheckRequestBody(),
+        timeout: connectionCheckTimeout,
       );
       return _connectionResult(response);
+    } on AnalysisOffline {
+      return ProviderConnectionResult.offline;
     } on SocketException {
       return ProviderConnectionResult.offline;
     } on TimeoutException {
@@ -138,6 +138,7 @@ final class GeminiNutritionAnalysisProvider
   Future<GeminiHttpResponse> _send({
     required String credential,
     required String body,
+    Duration? timeout,
   }) async {
     try {
       return await _transport.post(
@@ -147,7 +148,7 @@ final class GeminiNutritionAnalysisProvider
           'x-goog-api-key': credential,
         },
         body: body,
-        timeout: timeout,
+        timeout: timeout ?? this.timeout,
       );
     } on SocketException {
       throw const AnalysisOffline();
@@ -177,7 +178,6 @@ final class GeminiNutritionAnalysisProvider
   static String _requestBody({
     required String localeTag,
     required String description,
-    required bool connectionCheck,
   }) {
     final instruction = StringBuffer()
       ..write('Analyze the meal description for locale $localeTag. ')
@@ -187,12 +187,6 @@ final class GeminiNutritionAnalysisProvider
         'a defensible estimate; do not invent precision. '
         'Nutrient units must be kcal for energy and g for all other nutrients. ',
       );
-    if (connectionCheck) {
-      instruction.write(
-        'This is a connection check; return an empty items list.',
-      );
-    }
-
     return jsonEncode(<String, Object?>{
       'system_instruction': <String, Object?>{
         'parts': <Object?>[
@@ -211,6 +205,29 @@ final class GeminiNutritionAnalysisProvider
         'responseMimeType': 'application/json',
         'responseSchema': _responseSchema,
         'temperature': 0,
+        'thinkingConfig': <String, String>{'thinkingLevel': 'minimal'},
+      },
+    });
+  }
+
+  /// Builds the smallest valid generation request for credential validation.
+  ///
+  /// A connection check must not depend on the structured-output schema used by
+  /// meal analysis: a key can be valid even when that optional capability is
+  /// unavailable or its validation rules change. The HTTP status is sufficient
+  /// for this operation, so the model response is deliberately not parsed.
+  static String _connectionCheckRequestBody() {
+    return jsonEncode(<String, Object?>{
+      'contents': <Object?>[
+        <String, Object?>{
+          'parts': <Object?>[
+            <String, String>{'text': 'Reply with OK.'},
+          ],
+        },
+      ],
+      'generationConfig': <String, Object?>{
+        'maxOutputTokens': 1,
+        'thinkingConfig': <String, String>{'thinkingLevel': 'minimal'},
       },
     });
   }
@@ -234,6 +251,8 @@ final class GeminiNutritionAnalysisProvider
               'properties': <String, Object?>{
                 'value': <String, Object?>{'type': 'NUMBER'},
                 'unit': <String, Object?>{'type': 'STRING'},
+                'unknown': <String, Object?>{'type': 'BOOLEAN'},
+                'description': <String, Object?>{'type': 'STRING'},
               },
             },
             'nutrients': <String, Object?>{
@@ -253,8 +272,35 @@ final class GeminiNutritionAnalysisProvider
                     'properties': <String, Object?>{
                       'value': <String, Object?>{'type': 'NUMBER'},
                       'unit': <String, Object?>{'type': 'STRING'},
+                      'unknown': <String, Object?>{'type': 'BOOLEAN'},
                     },
                   },
+              },
+            },
+            'confidence': <String, Object?>{
+              'type': 'STRING',
+              'enum': <String>['low', 'medium', 'high'],
+            },
+            'assumptions': <String, Object?>{
+              'type': 'ARRAY',
+              'items': <String, Object?>{
+                'type': 'OBJECT',
+                'properties': <String, Object?>{
+                  'code': <String, Object?>{'type': 'STRING'},
+                  'description': <String, Object?>{'type': 'STRING'},
+                },
+                'required': <String>['code', 'description'],
+              },
+            },
+            'warnings': <String, Object?>{
+              'type': 'ARRAY',
+              'items': <String, Object?>{
+                'type': 'OBJECT',
+                'properties': <String, Object?>{
+                  'code': <String, Object?>{'type': 'STRING'},
+                  'description': <String, Object?>{'type': 'STRING'},
+                },
+                'required': <String>['code', 'description'],
               },
             },
           },
@@ -264,9 +310,48 @@ final class GeminiNutritionAnalysisProvider
       'totals': <String, Object?>{
         'type': 'OBJECT',
         'description': 'Optional totals used for consistency validation.',
+        'properties': <String, Object?>{
+          for (final nutrient in <String>[
+            'energy',
+            'protein',
+            'carbohydrates',
+            'fat',
+            'fibre',
+            'sugars',
+            'salt',
+          ])
+            nutrient: <String, Object?>{
+              'type': 'OBJECT',
+              'properties': <String, Object?>{
+                'value': <String, Object?>{'type': 'NUMBER'},
+                'unit': <String, Object?>{'type': 'STRING'},
+                'unknown': <String, Object?>{'type': 'BOOLEAN'},
+              },
+            },
+        },
       },
-      'assumptions': <String, Object?>{'type': 'ARRAY'},
-      'warnings': <String, Object?>{'type': 'ARRAY'},
+      'assumptions': <String, Object?>{
+        'type': 'ARRAY',
+        'items': <String, Object?>{
+          'type': 'OBJECT',
+          'properties': <String, Object?>{
+            'code': <String, Object?>{'type': 'STRING'},
+            'description': <String, Object?>{'type': 'STRING'},
+          },
+          'required': <String>['code', 'description'],
+        },
+      },
+      'warnings': <String, Object?>{
+        'type': 'ARRAY',
+        'items': <String, Object?>{
+          'type': 'OBJECT',
+          'properties': <String, Object?>{
+            'code': <String, Object?>{'type': 'STRING'},
+            'description': <String, Object?>{'type': 'STRING'},
+          },
+          'required': <String>['code', 'description'],
+        },
+      },
     },
     'required': <String>['items', 'confidence'],
   };
@@ -570,7 +655,8 @@ final class GeminiNutritionAnalysisProvider
     }
     final body = response.body.toLowerCase();
     if (response.statusCode == 401 ||
-        response.statusCode == 403 && !body.contains('safety')) {
+        (response.statusCode == 403 && !body.contains('safety')) ||
+        response.statusCode == 400) {
       return ProviderConnectionResult.invalidCredential;
     }
     if (body.contains('safety') || body.contains('blocked')) {
