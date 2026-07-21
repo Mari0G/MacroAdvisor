@@ -251,6 +251,8 @@ final class GeminiNutritionAnalysisProvider
               'properties': <String, Object?>{
                 'value': <String, Object?>{'type': 'NUMBER'},
                 'unit': <String, Object?>{'type': 'STRING'},
+                'unknown': <String, Object?>{'type': 'BOOLEAN'},
+                'description': <String, Object?>{'type': 'STRING'},
               },
             },
             'nutrients': <String, Object?>{
@@ -270,8 +272,35 @@ final class GeminiNutritionAnalysisProvider
                     'properties': <String, Object?>{
                       'value': <String, Object?>{'type': 'NUMBER'},
                       'unit': <String, Object?>{'type': 'STRING'},
+                      'unknown': <String, Object?>{'type': 'BOOLEAN'},
                     },
                   },
+              },
+            },
+            'confidence': <String, Object?>{
+              'type': 'STRING',
+              'enum': <String>['low', 'medium', 'high'],
+            },
+            'assumptions': <String, Object?>{
+              'type': 'ARRAY',
+              'items': <String, Object?>{
+                'type': 'OBJECT',
+                'properties': <String, Object?>{
+                  'code': <String, Object?>{'type': 'STRING'},
+                  'description': <String, Object?>{'type': 'STRING'},
+                },
+                'required': <String>['code', 'description'],
+              },
+            },
+            'warnings': <String, Object?>{
+              'type': 'ARRAY',
+              'items': <String, Object?>{
+                'type': 'OBJECT',
+                'properties': <String, Object?>{
+                  'code': <String, Object?>{'type': 'STRING'},
+                  'description': <String, Object?>{'type': 'STRING'},
+                },
+                'required': <String>['code', 'description'],
               },
             },
           },
@@ -281,9 +310,48 @@ final class GeminiNutritionAnalysisProvider
       'totals': <String, Object?>{
         'type': 'OBJECT',
         'description': 'Optional totals used for consistency validation.',
+        'properties': <String, Object?>{
+          for (final nutrient in <String>[
+            'energy',
+            'protein',
+            'carbohydrates',
+            'fat',
+            'fibre',
+            'sugars',
+            'salt',
+          ])
+            nutrient: <String, Object?>{
+              'type': 'OBJECT',
+              'properties': <String, Object?>{
+                'value': <String, Object?>{'type': 'NUMBER'},
+                'unit': <String, Object?>{'type': 'STRING'},
+                'unknown': <String, Object?>{'type': 'BOOLEAN'},
+              },
+            },
+        },
       },
-      'assumptions': <String, Object?>{'type': 'ARRAY'},
-      'warnings': <String, Object?>{'type': 'ARRAY'},
+      'assumptions': <String, Object?>{
+        'type': 'ARRAY',
+        'items': <String, Object?>{
+          'type': 'OBJECT',
+          'properties': <String, Object?>{
+            'code': <String, Object?>{'type': 'STRING'},
+            'description': <String, Object?>{'type': 'STRING'},
+          },
+          'required': <String>['code', 'description'],
+        },
+      },
+      'warnings': <String, Object?>{
+        'type': 'ARRAY',
+        'items': <String, Object?>{
+          'type': 'OBJECT',
+          'properties': <String, Object?>{
+            'code': <String, Object?>{'type': 'STRING'},
+            'description': <String, Object?>{'type': 'STRING'},
+          },
+          'required': <String>['code', 'description'],
+        },
+      },
     },
     'required': <String>['items', 'confidence'],
   };

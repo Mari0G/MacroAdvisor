@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -50,6 +51,27 @@ void main() {
         expect(transport.body, contains('80 g Haferflocken'));
         expect(transport.body, contains('de-DE'));
         expect(transport.body, contains('thinkingLevel'));
+
+        final request = jsonDecode(transport.body) as Map<String, dynamic>;
+        final schema =
+            (request['generationConfig']
+                    as Map<String, dynamic>)['responseSchema']
+                as Map<String, dynamic>;
+        final properties = schema['properties'] as Map<String, dynamic>;
+        final items = properties['items'] as Map<String, dynamic>;
+        final itemSchema = items['items'] as Map<String, dynamic>;
+        expect(
+          (itemSchema['properties'] as Map<String, dynamic>)['assumptions'],
+          isA<Map<String, dynamic>>(),
+        );
+        expect(
+          (properties['warnings'] as Map<String, dynamic>)['items'],
+          isA<Map<String, dynamic>>(),
+        );
+        expect(
+          (properties['assumptions'] as Map<String, dynamic>)['items'],
+          isA<Map<String, dynamic>>(),
+        );
       },
     );
 
