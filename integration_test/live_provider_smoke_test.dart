@@ -23,7 +23,11 @@ void main() {
       'Greek yogurt with banana and almonds',
     );
     await tester.tap(find.byKey(const Key('analyze-meal-button')));
-    for (var i = 0; i < 90 && find.text('Review estimate').evaluate().isEmpty; i++) {
+    for (
+      var i = 0;
+      i < 90 && find.text('Review estimate').evaluate().isEmpty;
+      i++
+    ) {
       await tester.pump(const Duration(seconds: 1));
     }
 

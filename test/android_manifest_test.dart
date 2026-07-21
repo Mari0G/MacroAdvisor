@@ -4,8 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('production Android manifest allows provider network requests', () {
-    final manifest = File('android/app/src/main/AndroidManifest.xml')
-        .readAsStringSync();
+    final manifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
 
     expect(
       manifest,
