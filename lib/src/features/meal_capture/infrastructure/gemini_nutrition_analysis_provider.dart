@@ -11,7 +11,7 @@ import 'package:macro_advisor/src/features/settings/domain/credential_store.dart
 import 'package:macro_advisor/src/features/settings/domain/provider_connection_checker.dart';
 
 const _geminiProviderId = 'gemini';
-const _geminiModelId = 'gemini-3.5-flash';
+const _geminiModelId = 'gemini-3.5-flash-lite';
 const _geminiEndpoint =
     'https://generativelanguage.googleapis.com/v1beta/models/'
     '$_geminiModelId:generateContent';
