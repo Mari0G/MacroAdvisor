@@ -1839,6 +1839,347 @@ class MealNutrientValuesCompanion
   }
 }
 
+class $GoalTargetsTable extends GoalTargets
+    with TableInfo<$GoalTargetsTable, GoalTargetRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GoalTargetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _nutrientIdMeta = const VerificationMeta(
+    'nutrientId',
+  );
+  @override
+  late final GeneratedColumn<String> nutrientId = GeneratedColumn<String>(
+    'nutrient_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetTypeMeta = const VerificationMeta(
+    'targetType',
+  );
+  @override
+  late final GeneratedColumn<String> targetType = GeneratedColumn<String>(
+    'target_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _minimumMilliUnitsMeta = const VerificationMeta(
+    'minimumMilliUnits',
+  );
+  @override
+  late final GeneratedColumn<int> minimumMilliUnits = GeneratedColumn<int>(
+    'minimum_milli_units',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _maximumMilliUnitsMeta = const VerificationMeta(
+    'maximumMilliUnits',
+  );
+  @override
+  late final GeneratedColumn<int> maximumMilliUnits = GeneratedColumn<int>(
+    'maximum_milli_units',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    nutrientId,
+    targetType,
+    minimumMilliUnits,
+    maximumMilliUnits,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'goal_targets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GoalTargetRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('nutrient_id')) {
+      context.handle(
+        _nutrientIdMeta,
+        nutrientId.isAcceptableOrUnknown(data['nutrient_id']!, _nutrientIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nutrientIdMeta);
+    }
+    if (data.containsKey('target_type')) {
+      context.handle(
+        _targetTypeMeta,
+        targetType.isAcceptableOrUnknown(data['target_type']!, _targetTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetTypeMeta);
+    }
+    if (data.containsKey('minimum_milli_units')) {
+      context.handle(
+        _minimumMilliUnitsMeta,
+        minimumMilliUnits.isAcceptableOrUnknown(
+          data['minimum_milli_units']!,
+          _minimumMilliUnitsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('maximum_milli_units')) {
+      context.handle(
+        _maximumMilliUnitsMeta,
+        maximumMilliUnits.isAcceptableOrUnknown(
+          data['maximum_milli_units']!,
+          _maximumMilliUnitsMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {nutrientId};
+  @override
+  GoalTargetRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GoalTargetRow(
+      nutrientId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nutrient_id'],
+      )!,
+      targetType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_type'],
+      )!,
+      minimumMilliUnits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}minimum_milli_units'],
+      ),
+      maximumMilliUnits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}maximum_milli_units'],
+      ),
+    );
+  }
+
+  @override
+  $GoalTargetsTable createAlias(String alias) {
+    return $GoalTargetsTable(attachedDatabase, alias);
+  }
+}
+
+class GoalTargetRow extends DataClass implements Insertable<GoalTargetRow> {
+  final String nutrientId;
+  final String targetType;
+  final int? minimumMilliUnits;
+  final int? maximumMilliUnits;
+  const GoalTargetRow({
+    required this.nutrientId,
+    required this.targetType,
+    this.minimumMilliUnits,
+    this.maximumMilliUnits,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['nutrient_id'] = Variable<String>(nutrientId);
+    map['target_type'] = Variable<String>(targetType);
+    if (!nullToAbsent || minimumMilliUnits != null) {
+      map['minimum_milli_units'] = Variable<int>(minimumMilliUnits);
+    }
+    if (!nullToAbsent || maximumMilliUnits != null) {
+      map['maximum_milli_units'] = Variable<int>(maximumMilliUnits);
+    }
+    return map;
+  }
+
+  GoalTargetsCompanion toCompanion(bool nullToAbsent) {
+    return GoalTargetsCompanion(
+      nutrientId: Value(nutrientId),
+      targetType: Value(targetType),
+      minimumMilliUnits: minimumMilliUnits == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minimumMilliUnits),
+      maximumMilliUnits: maximumMilliUnits == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maximumMilliUnits),
+    );
+  }
+
+  factory GoalTargetRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GoalTargetRow(
+      nutrientId: serializer.fromJson<String>(json['nutrientId']),
+      targetType: serializer.fromJson<String>(json['targetType']),
+      minimumMilliUnits: serializer.fromJson<int?>(json['minimumMilliUnits']),
+      maximumMilliUnits: serializer.fromJson<int?>(json['maximumMilliUnits']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'nutrientId': serializer.toJson<String>(nutrientId),
+      'targetType': serializer.toJson<String>(targetType),
+      'minimumMilliUnits': serializer.toJson<int?>(minimumMilliUnits),
+      'maximumMilliUnits': serializer.toJson<int?>(maximumMilliUnits),
+    };
+  }
+
+  GoalTargetRow copyWith({
+    String? nutrientId,
+    String? targetType,
+    Value<int?> minimumMilliUnits = const Value.absent(),
+    Value<int?> maximumMilliUnits = const Value.absent(),
+  }) => GoalTargetRow(
+    nutrientId: nutrientId ?? this.nutrientId,
+    targetType: targetType ?? this.targetType,
+    minimumMilliUnits: minimumMilliUnits.present
+        ? minimumMilliUnits.value
+        : this.minimumMilliUnits,
+    maximumMilliUnits: maximumMilliUnits.present
+        ? maximumMilliUnits.value
+        : this.maximumMilliUnits,
+  );
+  GoalTargetRow copyWithCompanion(GoalTargetsCompanion data) {
+    return GoalTargetRow(
+      nutrientId: data.nutrientId.present
+          ? data.nutrientId.value
+          : this.nutrientId,
+      targetType: data.targetType.present
+          ? data.targetType.value
+          : this.targetType,
+      minimumMilliUnits: data.minimumMilliUnits.present
+          ? data.minimumMilliUnits.value
+          : this.minimumMilliUnits,
+      maximumMilliUnits: data.maximumMilliUnits.present
+          ? data.maximumMilliUnits.value
+          : this.maximumMilliUnits,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoalTargetRow(')
+          ..write('nutrientId: $nutrientId, ')
+          ..write('targetType: $targetType, ')
+          ..write('minimumMilliUnits: $minimumMilliUnits, ')
+          ..write('maximumMilliUnits: $maximumMilliUnits')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(nutrientId, targetType, minimumMilliUnits, maximumMilliUnits);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoalTargetRow &&
+          other.nutrientId == this.nutrientId &&
+          other.targetType == this.targetType &&
+          other.minimumMilliUnits == this.minimumMilliUnits &&
+          other.maximumMilliUnits == this.maximumMilliUnits);
+}
+
+class GoalTargetsCompanion extends UpdateCompanion<GoalTargetRow> {
+  final Value<String> nutrientId;
+  final Value<String> targetType;
+  final Value<int?> minimumMilliUnits;
+  final Value<int?> maximumMilliUnits;
+  final Value<int> rowid;
+  const GoalTargetsCompanion({
+    this.nutrientId = const Value.absent(),
+    this.targetType = const Value.absent(),
+    this.minimumMilliUnits = const Value.absent(),
+    this.maximumMilliUnits = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GoalTargetsCompanion.insert({
+    required String nutrientId,
+    required String targetType,
+    this.minimumMilliUnits = const Value.absent(),
+    this.maximumMilliUnits = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : nutrientId = Value(nutrientId),
+       targetType = Value(targetType);
+  static Insertable<GoalTargetRow> custom({
+    Expression<String>? nutrientId,
+    Expression<String>? targetType,
+    Expression<int>? minimumMilliUnits,
+    Expression<int>? maximumMilliUnits,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (nutrientId != null) 'nutrient_id': nutrientId,
+      if (targetType != null) 'target_type': targetType,
+      if (minimumMilliUnits != null) 'minimum_milli_units': minimumMilliUnits,
+      if (maximumMilliUnits != null) 'maximum_milli_units': maximumMilliUnits,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GoalTargetsCompanion copyWith({
+    Value<String>? nutrientId,
+    Value<String>? targetType,
+    Value<int?>? minimumMilliUnits,
+    Value<int?>? maximumMilliUnits,
+    Value<int>? rowid,
+  }) {
+    return GoalTargetsCompanion(
+      nutrientId: nutrientId ?? this.nutrientId,
+      targetType: targetType ?? this.targetType,
+      minimumMilliUnits: minimumMilliUnits ?? this.minimumMilliUnits,
+      maximumMilliUnits: maximumMilliUnits ?? this.maximumMilliUnits,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (nutrientId.present) {
+      map['nutrient_id'] = Variable<String>(nutrientId.value);
+    }
+    if (targetType.present) {
+      map['target_type'] = Variable<String>(targetType.value);
+    }
+    if (minimumMilliUnits.present) {
+      map['minimum_milli_units'] = Variable<int>(minimumMilliUnits.value);
+    }
+    if (maximumMilliUnits.present) {
+      map['maximum_milli_units'] = Variable<int>(maximumMilliUnits.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoalTargetsCompanion(')
+          ..write('nutrientId: $nutrientId, ')
+          ..write('targetType: $targetType, ')
+          ..write('minimumMilliUnits: $minimumMilliUnits, ')
+          ..write('maximumMilliUnits: $maximumMilliUnits, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1846,6 +2187,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MealItemsTable mealItems = $MealItemsTable(this);
   late final $MealNutrientValuesTable mealNutrientValues =
       $MealNutrientValuesTable(this);
+  late final $GoalTargetsTable goalTargets = $GoalTargetsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1854,6 +2196,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     mealEntries,
     mealItems,
     mealNutrientValues,
+    goalTargets,
   ];
 }
 
@@ -3196,6 +3539,195 @@ typedef $$MealNutrientValuesTableProcessedTableManager =
       MealNutrientValueRow,
       PrefetchHooks Function({bool mealItemId})
     >;
+typedef $$GoalTargetsTableCreateCompanionBuilder =
+    GoalTargetsCompanion Function({
+      required String nutrientId,
+      required String targetType,
+      Value<int?> minimumMilliUnits,
+      Value<int?> maximumMilliUnits,
+      Value<int> rowid,
+    });
+typedef $$GoalTargetsTableUpdateCompanionBuilder =
+    GoalTargetsCompanion Function({
+      Value<String> nutrientId,
+      Value<String> targetType,
+      Value<int?> minimumMilliUnits,
+      Value<int?> maximumMilliUnits,
+      Value<int> rowid,
+    });
+
+class $$GoalTargetsTableFilterComposer
+    extends Composer<_$AppDatabase, $GoalTargetsTable> {
+  $$GoalTargetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get nutrientId => $composableBuilder(
+    column: $table.nutrientId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetType => $composableBuilder(
+    column: $table.targetType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minimumMilliUnits => $composableBuilder(
+    column: $table.minimumMilliUnits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maximumMilliUnits => $composableBuilder(
+    column: $table.maximumMilliUnits,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GoalTargetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GoalTargetsTable> {
+  $$GoalTargetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get nutrientId => $composableBuilder(
+    column: $table.nutrientId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetType => $composableBuilder(
+    column: $table.targetType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minimumMilliUnits => $composableBuilder(
+    column: $table.minimumMilliUnits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maximumMilliUnits => $composableBuilder(
+    column: $table.maximumMilliUnits,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GoalTargetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GoalTargetsTable> {
+  $$GoalTargetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get nutrientId => $composableBuilder(
+    column: $table.nutrientId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get targetType => $composableBuilder(
+    column: $table.targetType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get minimumMilliUnits => $composableBuilder(
+    column: $table.minimumMilliUnits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get maximumMilliUnits => $composableBuilder(
+    column: $table.maximumMilliUnits,
+    builder: (column) => column,
+  );
+}
+
+class $$GoalTargetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GoalTargetsTable,
+          GoalTargetRow,
+          $$GoalTargetsTableFilterComposer,
+          $$GoalTargetsTableOrderingComposer,
+          $$GoalTargetsTableAnnotationComposer,
+          $$GoalTargetsTableCreateCompanionBuilder,
+          $$GoalTargetsTableUpdateCompanionBuilder,
+          (
+            GoalTargetRow,
+            BaseReferences<_$AppDatabase, $GoalTargetsTable, GoalTargetRow>,
+          ),
+          GoalTargetRow,
+          PrefetchHooks Function()
+        > {
+  $$GoalTargetsTableTableManager(_$AppDatabase db, $GoalTargetsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GoalTargetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GoalTargetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GoalTargetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> nutrientId = const Value.absent(),
+                Value<String> targetType = const Value.absent(),
+                Value<int?> minimumMilliUnits = const Value.absent(),
+                Value<int?> maximumMilliUnits = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GoalTargetsCompanion(
+                nutrientId: nutrientId,
+                targetType: targetType,
+                minimumMilliUnits: minimumMilliUnits,
+                maximumMilliUnits: maximumMilliUnits,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String nutrientId,
+                required String targetType,
+                Value<int?> minimumMilliUnits = const Value.absent(),
+                Value<int?> maximumMilliUnits = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GoalTargetsCompanion.insert(
+                nutrientId: nutrientId,
+                targetType: targetType,
+                minimumMilliUnits: minimumMilliUnits,
+                maximumMilliUnits: maximumMilliUnits,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GoalTargetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GoalTargetsTable,
+      GoalTargetRow,
+      $$GoalTargetsTableFilterComposer,
+      $$GoalTargetsTableOrderingComposer,
+      $$GoalTargetsTableAnnotationComposer,
+      $$GoalTargetsTableCreateCompanionBuilder,
+      $$GoalTargetsTableUpdateCompanionBuilder,
+      (
+        GoalTargetRow,
+        BaseReferences<_$AppDatabase, $GoalTargetsTable, GoalTargetRow>,
+      ),
+      GoalTargetRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3206,4 +3738,6 @@ class $AppDatabaseManager {
       $$MealItemsTableTableManager(_db, _db.mealItems);
   $$MealNutrientValuesTableTableManager get mealNutrientValues =>
       $$MealNutrientValuesTableTableManager(_db, _db.mealNutrientValues);
+  $$GoalTargetsTableTableManager get goalTargets =>
+      $$GoalTargetsTableTableManager(_db, _db.goalTargets);
 }

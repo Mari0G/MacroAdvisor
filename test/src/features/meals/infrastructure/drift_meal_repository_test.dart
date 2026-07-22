@@ -133,7 +133,7 @@ void main() {
     );
   });
 
-  test('version 1 schema is created and persists after reopening', () async {
+  test('version 2 schema is created and persists after reopening', () async {
     final directory = await Directory.systemTemp.createTemp(
       'macro_advisor_db_',
     );
@@ -149,7 +149,7 @@ void main() {
     final version = await firstDatabase
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(version.read<int>('user_version'), 1);
+    expect(version.read<int>('user_version'), 2);
     await firstDatabase.close();
 
     final reopened = AppDatabase.forTesting(NativeDatabase(file));

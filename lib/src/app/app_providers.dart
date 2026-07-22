@@ -3,6 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/infrastructure/drift_goal_repository.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/gemini_nutrition_analysis_provider.dart';
@@ -28,6 +30,10 @@ final appMealRepositoryProvider = Provider<DriftMealRepository>((ref) {
     ref.watch(clockProvider),
     ref.watch(idGeneratorProvider),
   );
+});
+
+final appGoalRepositoryProvider = Provider<DriftGoalRepository>((ref) {
+  return DriftGoalRepository(ref.watch(appDatabaseProvider));
 });
 
 /// Production bindings for secure provider configuration.
@@ -56,6 +62,9 @@ final appNutritionAnalysisProvider = Provider<NutritionAnalysisProvider>(
 List<Object?> productionOverrides() => [
   mealRepositoryProvider.overrideWith(
     (ref) => ref.watch(appMealRepositoryProvider),
+  ),
+  goalRepositoryProvider.overrideWith(
+    (ref) => ref.watch(appGoalRepositoryProvider),
   ),
   credentialStoreProvider.overrideWith(
     (ref) => ref.watch(appCredentialStoreProvider),

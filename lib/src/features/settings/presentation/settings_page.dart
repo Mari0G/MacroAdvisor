@@ -21,6 +21,15 @@ class SettingsPage extends StatelessWidget {
               children: [
                 Card(
                   child: ListTile(
+                    title: Text(localizations.goalsSettingsSectionTitle),
+                    subtitle: Text(localizations.goalsSettingsSectionBody),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.goalSettings),
+                  ),
+                ),
+                Card(
+                  child: ListTile(
                     title: Text(localizations.providerSettingsSectionTitle),
                     subtitle: Text(localizations.providerSettingsSectionBody),
                     trailing: const Icon(Icons.chevron_right),

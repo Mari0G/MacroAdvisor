@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
@@ -84,6 +85,13 @@ class DashboardDisplayModel {
 
   DashboardNutrientTotal operator [](NutrientId nutrient) =>
       nutrients[nutrient]!;
+
+  GoalProgress progressFor(NutrientId nutrient, GoalSet goals) =>
+      GoalProgress.calculate(
+        nutrient: nutrient,
+        value: this[nutrient].value,
+        target: goals[nutrient],
+      );
 
   static DateTime _localOccurrence(MealEntry entry) =>
       entry.occurredAtUtc.add(Duration(minutes: entry.occurredOffsetMinutes));

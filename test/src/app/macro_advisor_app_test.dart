@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal_repository.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
@@ -15,6 +18,7 @@ void main() {
     overrides: [
       clockProvider.overrideWithValue(clock),
       mealRepositoryProvider.overrideWithValue(_EmptyMealRepository()),
+      goalRepositoryProvider.overrideWithValue(_EmptyGoalRepository()),
     ],
     child: MacroAdvisorApp(locale: locale),
   );
@@ -147,6 +151,14 @@ class _EmptyMealRepository implements MealRepository {
     required String id,
     required int expectedRevision,
   }) => throw UnimplementedError();
+}
+
+class _EmptyGoalRepository implements GoalRepository {
+  @override
+  Stream<GoalSet> observe() => Stream.value(GoalSet.empty());
+
+  @override
+  Future<void> save(GoalSet goals) => throw UnimplementedError();
 }
 
 class _FixedClock implements Clock {

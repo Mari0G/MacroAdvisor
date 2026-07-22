@@ -8,6 +8,8 @@ import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/infrastructure/drift_goal_repository.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
@@ -55,6 +57,21 @@ void main() {
     await tester.pageBack();
     await _advance(tester);
 
+    await tester.tap(find.byTooltip('Open settings'));
+    await _advance(tester);
+    await tester.tap(find.text('Goals'));
+    await _advance(tester);
+    await tester.tap(find.byKey(const ValueKey('goal-target-protein')));
+    await _advance(tester);
+    await tester.tap(find.text('Minimum').last);
+    await _advance(tester);
+    await tester.enterText(find.byType(TextFormField).first, '20');
+    await tester.tap(find.byKey(const Key('save-goals-button')));
+    await _advance(tester);
+    await tester.pageBack();
+    await _advance(tester);
+    expect(find.text('Goal progress'), findsOneWidget);
+
     await tester.tap(find.text('Record meal').first);
     await _advance(tester);
     await tester.enterText(
@@ -74,6 +91,10 @@ void main() {
 
     await tester.tap(find.byKey(const Key('confirm-save-button')));
     await _advance(tester);
+
+    expect(find.text('Goal progress'), findsOneWidget);
+    expect(find.textContaining('Minimum 20 g'), findsOneWidget);
+    expect(find.text('Within target'), findsOneWidget);
 
     final savedEntries = await harness.repository
         .observeDay(DateTime(2026, 7, 20))
@@ -117,6 +138,7 @@ class _TestHarness {
       database = AppDatabase.forTesting(NativeDatabase.memory()),
       credentials = _InMemoryCredentialStore() {
     repository = DriftMealRepository(database, clock, ids);
+    goals = DriftGoalRepository(database);
   }
 
   final _FixedClock clock;
@@ -124,12 +146,14 @@ class _TestHarness {
   final AppDatabase database;
   final _InMemoryCredentialStore credentials;
   late final DriftMealRepository repository;
+  late final DriftGoalRepository goals;
 
   Widget get app => ProviderScope(
     overrides: [
       clockProvider.overrideWithValue(clock),
       idGeneratorProvider.overrideWithValue(ids),
       mealRepositoryProvider.overrideWithValue(repository),
+      goalRepositoryProvider.overrideWithValue(goals),
       credentialStoreProvider.overrideWithValue(credentials),
       providerConnectionCheckerProvider.overrideWithValue(
         const DeterministicConnectionChecker(),

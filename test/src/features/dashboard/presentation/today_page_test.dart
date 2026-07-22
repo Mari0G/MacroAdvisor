@@ -5,6 +5,7 @@ import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/features/dashboard/application/dashboard_controller.dart';
 import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
 import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
@@ -57,10 +58,12 @@ void main() {
           day: LocalDay(2026, 7, 20),
           currentDay: LocalDay(2026, 7, 20),
           dashboard: AsyncValue.data(_model([entry])),
+          goals: AsyncValue.data(GoalSet.empty()),
           onSelectDay: (_) {},
           onOpenSettings: () {},
           onRecordMeal: () {},
           onOpenMealDetail: (id) => openedId = id,
+          onOpenGoals: () {},
           onRetry: () {},
         ),
       ),
@@ -82,9 +85,50 @@ void main() {
     expect(find.byKey(const Key('today-expanded-layout')), findsOneWidget);
     expect(find.byKey(const Key('today-compact-layout')), findsNothing);
   });
+
+  testWidgets('describes configured goal progress without relying on color', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        _model(const []),
+        const Locale('en'),
+        goals: GoalSet({NutrientId.protein: const MinimumGoalTarget(30000)}),
+      ),
+    );
+
+    expect(
+      find.bySemanticsLabel(
+        RegExp('Protein: 0 g. Target: Minimum 30 g. Status: Below target.'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('offers a direct action to configure daily targets', (
+    tester,
+  ) async {
+    var openedGoals = false;
+    await tester.pumpWidget(
+      _app(
+        _model(const []),
+        const Locale('en'),
+        onOpenGoals: () => openedGoals = true,
+      ),
+    );
+
+    await tester.tap(find.text('Set daily targets'));
+
+    expect(openedGoals, isTrue);
+  });
 }
 
-Widget _app(DashboardDisplayModel model, Locale locale) => MaterialApp(
+Widget _app(
+  DashboardDisplayModel model,
+  Locale locale, {
+  GoalSet? goals,
+  VoidCallback? onOpenGoals,
+}) => MaterialApp(
   locale: locale,
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
@@ -92,10 +136,12 @@ Widget _app(DashboardDisplayModel model, Locale locale) => MaterialApp(
     day: model.day,
     currentDay: model.day,
     dashboard: AsyncValue.data(model),
+    goals: AsyncValue.data(goals ?? GoalSet.empty()),
     onSelectDay: (_) {},
     onOpenSettings: () {},
     onRecordMeal: () {},
     onOpenMealDetail: (_) {},
+    onOpenGoals: onOpenGoals ?? () {},
     onRetry: () {},
   ),
 );

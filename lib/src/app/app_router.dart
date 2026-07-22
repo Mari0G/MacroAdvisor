@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dart';
+import 'package:macro_advisor/src/features/goals/presentation/goal_settings_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/describe_meal_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/edit_item_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/review_estimate_page.dart';
@@ -11,6 +12,7 @@ abstract final class AppRoutes {
   static const today = '/';
   static const settings = '/settings';
   static const providerSettings = '/settings/provider';
+  static const goalSettings = '/settings/goals';
   static const describeMeal = '/capture/describe';
   static const reviewMeal = '/capture/review';
   static const editMealItem = '/capture/item';
@@ -28,6 +30,10 @@ abstract final class AppRouter {
       AppRoutes.providerSettings => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => const ProviderSettingsPage(),
+      ),
+      AppRoutes.goalSettings => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const GoalSettingsPage(),
       ),
       AppRoutes.describeMeal => MaterialPageRoute<void>(
         settings: settings,
