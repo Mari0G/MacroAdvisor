@@ -22,6 +22,10 @@
 - [ ] Generated output is reproducible, if applicable
 - [ ] No credentials, personal data, or meal images are committed or logged
 
+Local Android journey: Passed / Failed / Not required / Not run (reason)
+
+Real Gemini smoke: Passed / Failed / Not relevant / Not run (reason)
+
 Commands run:
 
 ```text

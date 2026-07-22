@@ -21,6 +21,7 @@ Use this packet when assigning a complete slice or a smaller independently valua
 - **Unit or contract tests:**
 - **Widget or golden tests:**
 - **Android integration journey:**
+- **Real Gemini smoke:** Permitted or not relevant; include prerequisites and result.
 - **English states:**
 - **German states:**
 - **Accessibility or failure states:**

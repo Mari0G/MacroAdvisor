@@ -1,10 +1,11 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('Narrow', 'Full', 'Integration')]
+  [ValidateSet('Narrow', 'Full', 'Integration', 'LiveGemini')]
   [string]$Mode = 'Full',
   [string[]]$DartPath = @(),
   [string[]]$TestPath = @(),
   [string]$IntegrationTarget = 'integration_test/mvp_critical_journey_test.dart',
+  [string]$LiveGeminiTarget = 'integration_test/live_provider_smoke_test.dart',
   [switch]$Generate
 )
 
@@ -38,6 +39,25 @@ function Get-RepositoryDartFiles {
   )
 }
 
+function Invoke-AndroidJourney {
+  param(
+    [Parameter(Mandatory)]
+    [string]$Target
+  )
+
+  $targetPath = (Resolve-Path -LiteralPath $Target).Path.Replace('\', '/')
+  Push-Location 'android'
+  try {
+    Invoke-Checked '.\gradlew.bat' @(
+      'app:connectedPreviewDebugAndroidTest',
+      "-Ptarget=$targetPath"
+    )
+  }
+  finally {
+    Pop-Location
+  }
+}
+
 if ($Generate) {
   Invoke-Checked 'dart' @('run', 'build_runner', 'build', '--delete-conflicting-outputs')
 }
@@ -52,6 +72,12 @@ if ($Mode -eq 'Narrow') {
   exit 0
 }
 
+if ($Mode -eq 'LiveGemini') {
+  Write-Warning 'This test makes a real Gemini request. First confirm a connected device and a successfully tested credential in the app Provider settings.'
+  Invoke-AndroidJourney $LiveGeminiTarget
+  exit 0
+}
+
 $dartFiles = Get-RepositoryDartFiles
 if ($dartFiles.Count -eq 0) {
   throw 'No Dart source or test files were found.'
@@ -62,15 +88,5 @@ Invoke-Checked 'flutter' @('analyze', '--fatal-infos', '--fatal-warnings')
 Invoke-Checked 'flutter' @('test')
 
 if ($Mode -eq 'Integration') {
-  $targetPath = (Resolve-Path -LiteralPath $IntegrationTarget).Path.Replace('\', '/')
-  Push-Location 'android'
-  try {
-    Invoke-Checked '.\gradlew.bat' @(
-      'app:connectedPreviewDebugAndroidTest',
-      "-Ptarget=$targetPath"
-    )
-  }
-  finally {
-    Pop-Location
-  }
+  Invoke-AndroidJourney $IntegrationTarget
 }

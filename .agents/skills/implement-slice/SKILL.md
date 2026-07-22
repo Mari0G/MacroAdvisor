@@ -15,7 +15,7 @@ Deliver one reviewable vertical slice from accepted specifications through a dra
 4. Inspect Git status and preserve unrelated changes. If the current branch is not the requested slice branch or unrelated changes are present, do not absorb, move, discard, or commit them; create an isolated branch/worktree from current `develop` when safe, otherwise stop and request disposition.
 5. Work from current `develop` on one short-lived branch allowed by `docs/branching.md`; never push directly to `develop` or `main`.
 6. Check that authenticated draft-PR publication is available before long implementation work. Report an unavailable publication path early, but continue locally unless the user made publication a hard requirement.
-7. Identify the narrow tests to run during implementation and whether code generation or an Android journey is affected.
+7. Identify the narrow tests to run during implementation, whether code generation or a local Android journey is affected, and whether a Gemini adapter/protocol change merits one local live-provider smoke call.
 
 ### Cross-spec routing
 
@@ -67,13 +67,23 @@ Add these slice-specific sections:
    .\tools\verify.ps1 -Mode Full
    ```
 
-4. For a changed user journey, also run:
+4. For changed navigation, persistence, Android configuration, or a critical user journey, run the deterministic Android journey locally on a connected emulator or device:
 
    ```powershell
    .\tools\verify.ps1 -Mode Integration -IntegrationTarget integration_test/mvp_critical_journey_test.dart
    ```
 
-5. Mark the slice `In review` only when required local evidence passes. Never mark it `Merged` before the change reaches `develop`.
+   Do not require this emulator journey in CI. If no local device is available, record it as `Not run: no connected Android device`; never imply that it passed.
+
+5. For changes to the Gemini model, endpoint, authentication, request/response contract, validation, or provider error mapping, a real Gemini smoke call is permitted from a local configured device:
+
+   ```powershell
+   .\tools\verify.ps1 -Mode LiveGemini
+   ```
+
+   Before invoking it, confirm that an Android device is connected and the app's Provider settings show a configured, successfully tested credential. Use only the repository's fixed synthetic description. Keep the provider key in platform-backed secure storage; never read it into chat, pass it on the command line, print it, commit it, or include it in logs. Make at most one successful live call per handoff and at most one retry for a clearly transient failure. Never run this live smoke in ordinary PR CI. If a prerequisite is known to be absent, do not invoke the test and record `Not run` with the reason. Once invoked, report any unsuccessful result as `Failed`, even if the likely cause is credential or network availability.
+
+6. Mark the slice `In review` only when required local evidence passes. Never mark it `Merged` before the change reaches `develop`.
 
 ## Publish
 
@@ -82,7 +92,7 @@ Per the durable authorization in `AGENTS.md`, unless the user opts out of public
 1. Confirm that the diff contains only the requested slice.
 2. Commit the completed change intentionally and push the working branch.
 3. Open a **draft** pull request targeting `develop`; never enable auto-merge or merge it.
-4. Populate the pull request using `.github/pull_request_template.md`, including specifications, acceptance criteria, non-goals, commands run, and environment-only checks.
+4. Populate the pull request using `.github/pull_request_template.md`, including specifications, acceptance criteria, non-goals, commands run, local Android/Gemini results, and environment-only checks.
 5. Observe the initial CI result. If it fails for a branch-owned defect, perform at most one focused repair and push; otherwise report the failure clearly.
 
 At handoff, report the branch, draft PR, implemented criteria, verification evidence, reviewer findings, and any remaining environment-only gate.

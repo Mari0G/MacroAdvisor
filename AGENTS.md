@@ -31,6 +31,9 @@
 
 - Never commit or log credentials, personal data, or meal images.
 - Store user-supplied provider keys only in platform-backed secure storage.
+- Real Gemini calls are permitted for relevant local smoke tests using only the
+  repository's fixed synthetic meal description. Never run them in ordinary PR
+  CI or expose the configured key in commands, chat, output, or logs.
 - Treat AI output as untrusted input and validate it before persistence.
 - Keep nutrition estimates editable and display their estimated nature.
 
