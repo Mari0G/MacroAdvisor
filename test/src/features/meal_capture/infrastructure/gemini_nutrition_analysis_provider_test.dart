@@ -32,7 +32,7 @@ void main() {
         );
 
         expect(result.provenance.providerId, 'gemini');
-        expect(result.provenance.modelId, 'gemini-3.5-flash');
+        expect(result.provenance.modelId, 'gemini-3.5-flash-lite');
         expect(result.provenance.detectedLocale, 'de-DE');
         expect(result.items.single.name, 'Haferflocken');
         expect(result.items.single.normalizedGramsMilli, 80000);

@@ -5,6 +5,7 @@
       "name": "MacroAdvisor Preview",
       "request": "launch",
       "type": "dart",
+      "program": "${workspaceFolder}/lib/main.dart",
       "args": ["--flavor", "preview"]
     }
   ]
