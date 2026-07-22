@@ -4,6 +4,15 @@ MacroAdvisor is an open-source, local-first mobile app for recording meals and
 drinks, estimating their nutritional values with AI, and comparing daily intake
 with personal nutrition goals.
 
+## Project notice
+
+MacroAdvisor is an open-source personal project maintained for educational purposes. It is not a hosted service and does not provide medical or
+nutrition advice. Any AI-generated nutrition values are estimates and must be
+reviewed by the user.
+
+Maintainer: Mario Geilich  
+Contact: 98982803+Mari0G@users.noreply.github.com
+
 The first release targets Android and iOS. Development and automated integration
 testing initially focus on Android.
 
