@@ -45,7 +45,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Local API credentials
+# Local credentials and environment overrides
 .env
 .env.*
 !.env.example

@@ -1,8 +1,8 @@
 # Meal capture and analysis
 
-Status: Draft v0.1
+Status: Accepted v0.1
 
-Last updated: 2026-07-17
+Last updated: 2026-07-22
 
 ## User outcome
 

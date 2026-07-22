@@ -11,9 +11,8 @@ Repository-level progress is recorded in
 
 ## Entry condition
 
-The current specifications are Draft v0.1. Before product behavior is implemented,
-the owner should review and mark the relevant specification Accepted. At minimum,
-the first product slice depends on accepted versions of:
+The current v0.1 product specifications are Accepted. New or revised product
+behavior must continue to depend on accepted versions of:
 
 - `specs/product.md`
 - `specs/technical.md`

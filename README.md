@@ -38,8 +38,8 @@ The repository workflow is defined in [docs/branching.md](docs/branching.md).
 The binding technical choices and package lines are defined in
 [specs/technical.md](specs/technical.md).
 
-The draft screen and interaction plan is defined in
-[specs/ui-ux.md](specs/ui-ux.md). The proposed vertical-slice delivery order is in
+The accepted screen and interaction plan is defined in
+[specs/ui-ux.md](specs/ui-ux.md). The vertical-slice delivery order is in
 [docs/implementation-plan.md](docs/implementation-plan.md), with durable progress
 tracked in [docs/implementation-status.md](docs/implementation-status.md).
 
