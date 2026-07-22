@@ -1,0 +1,109 @@
+name: Android release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate-tag:
+    if: ${{ !contains(github.ref_name, '-') }}
+    name: Validate stable release tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify version and main ancestry
+        shell: bash
+        run: |
+          version=$(sed -n 's/^version: \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p' pubspec.yaml)
+          test -n "$version"
+          test "v$version" = "$GITHUB_REF_NAME"
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+  quality:
+    needs: validate-tag
+    uses: ./.github/workflows/android-quality.yml
+    with:
+      build_flavor: production
+
+  publish-release:
+    name: Build and publish stable release
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          cache: true
+
+      - name: Fetch dependencies
+        run: flutter pub get
+
+      - name: Configure required release signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+
+          keystore_path="$RUNNER_TEMP/macroadvisor-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          {
+            echo "storeFile=$keystore_path"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > android/key.properties
+
+      - name: Build production packages
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          flutter build apk --release --flavor production --build-name="$version" --build-number=${{ github.run_number }}
+          flutter build appbundle --release --flavor production --build-name="$version" --build-number=${{ github.run_number }}
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK: build/app/outputs/flutter-apk/app-production-release.apk
+          AAB: build/app/outputs/bundle/productionRelease/app-production-release.aab
+        shell: bash
+        run: |
+          sha256sum "$APK" "$AAB" > SHA256SUMS.txt
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$APK" "$AAB" SHA256SUMS.txt --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$APK" "$AAB" SHA256SUMS.txt --title "$GITHUB_REF_NAME" --generate-notes
+          fi

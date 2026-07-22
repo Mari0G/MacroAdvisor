@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Slice"
+  short_description: "Implement and publish a verified feature slice"
+  default_prompt: "Use $implement-slice to implement the requested MacroAdvisor slice and open a verified draft pull request."

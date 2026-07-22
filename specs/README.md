@@ -1,6 +1,6 @@
 # MacroAdvisor specifications
 
-Status: Draft v0.1
+Status: Accepted v0.1
 
 These files are the repository's product and behavior source of truth.
 
@@ -8,6 +8,7 @@ These files are the repository's product and behavior source of truth.
 
 - [Product specification](product.md)
 - [Technical specification](technical.md)
+- [UI and interaction specification](ui-ux.md)
 - [Quality and test strategy](quality.md)
 - [Meal capture and analysis](features/meal-capture-and-analysis.md)
 - [Nutrition dashboard](features/nutrition-dashboard.md)
