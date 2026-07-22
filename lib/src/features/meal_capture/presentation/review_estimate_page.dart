@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/app/app_router.dart';
+import 'package:macro_advisor/src/core/presentation/meal_components.dart';
+import 'package:macro_advisor/src/core/presentation/nutrition_text.dart';
 import 'package:macro_advisor/src/core/presentation/responsive_content.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/capture_controllers.dart';
-import 'package:macro_advisor/src/features/meal_capture/presentation/nutrition_text.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
@@ -49,41 +50,12 @@ class ReviewEstimatePage extends ConsumerWidget {
                   child: ListView(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     children: [
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(l10n.estimateNotice),
-                              const SizedBox(height: 8),
-                              Semantics(
-                                label: confidenceText(
-                                  l10n,
-                                  state.analysis!.confidence,
-                                ),
-                                child: Chip(
-                                  label: Text(
-                                    confidenceText(
-                                      l10n,
-                                      state.analysis!.confidence,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (state.analysis!.assumptions.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  l10n.assumptionsTitle,
-                                  style: Theme.of(context).textTheme.titleSmall,
-                                ),
-                                ...state.analysis!.assumptions.map(
-                                  (item) => Text('• ${item.description}'),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
+                      MealEstimateNotice(
+                        confidence: state.analysis!.confidence,
+                        assumptions: [
+                          ...state.analysis!.assumptions,
+                          for (final item in state.items) ...item.assumptions,
+                        ],
                       ),
                       if (state.analysis!.warnings.isNotEmpty)
                         Card(
@@ -140,7 +112,7 @@ class ReviewEstimatePage extends ConsumerWidget {
                         icon: const Icon(Icons.add),
                         label: Text(l10n.addItemAction),
                       ),
-                      _TotalsCard(totals: state.totals),
+                      MealTotalsCard(totals: state.totals),
                       if (state.phase == ReviewPhase.saveFailure)
                         Semantics(
                           liveRegion: true,
@@ -203,36 +175,5 @@ class ReviewEstimatePage extends ConsumerWidget {
           ),
         ) ??
         false;
-  }
-}
-
-class _TotalsCard extends StatelessWidget {
-  const _TotalsCard({required this.totals});
-  final NutritionFacts totals;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.totalsTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            ...NutrientId.core.map(
-              (nutrient) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(nutrientLabel(l10n, nutrient)),
-                trailing: Text(nutritionValueText(context, totals[nutrient])),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

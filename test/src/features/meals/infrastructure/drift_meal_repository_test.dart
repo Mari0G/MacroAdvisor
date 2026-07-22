@@ -131,6 +131,33 @@ void main() {
         );
       },
     );
+
+    test('moves an updated entry between local days', () async {
+      final saved = await repository.create(_draft());
+      final moved = await repository.update(
+        MealEntry(
+          id: saved.id,
+          createdAtUtc: saved.createdAtUtc,
+          updatedAtUtc: saved.updatedAtUtc,
+          revision: saved.revision,
+          occurredAtUtc: DateTime.utc(2026, 7, 19, 8),
+          occurredOffsetMinutes: saved.occurredOffsetMinutes,
+          description: saved.description,
+          items: saved.items,
+          provenance: saved.provenance,
+          userEdited: true,
+          confidence: saved.confidence,
+          assumptions: saved.assumptions,
+        ),
+      );
+
+      expect(moved.revision, saved.revision + 1);
+      expect(await repository.observeDay(DateTime(2026, 7, 18)).first, isEmpty);
+      expect(
+        await repository.observeDay(DateTime(2026, 7, 19)).first,
+        hasLength(1),
+      );
+    });
   });
 
   test('version 1 schema is created and persists after reopening', () async {

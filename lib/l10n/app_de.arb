@@ -80,6 +80,9 @@
   "editItemTitle": "Eintrag bearbeiten",
   "itemNameLabel": "Name des Eintrags",
   "itemNameRequired": "Gib einen Namen ein.",
+  "itemAmountLabel": "Menge und Einheit",
+  "itemNormalizedGramsLabel": "Normierte Menge (optional)",
+  "newItemName": "Neuer Eintrag",
   "saveChangesAction": "Änderungen speichern",
   "removeItemAction": "Eintrag entfernen",
   "occurrenceLabel": "Zeitpunkt",
@@ -92,6 +95,12 @@
   "deleteAction": "Loeschen",
   "deleteMealTitle": "Mahlzeit loeschen?",
   "deleteMealBody": "Die Mahlzeit wird aus deinen Tageswerten entfernt.",
+  "deleteMealBodyNamed": "\"{mealName}\" wird aus deinen Tageswerten entfernt. Der Eintrag wird lokal nur als geloescht markiert.",
+  "@deleteMealBodyNamed": {
+    "placeholders": {
+      "mealName": { "type": "String" }
+    }
+  },
   "deleteFailed": "Die Mahlzeit konnte nicht geloescht werden. Der Eintrag ist weiterhin sicher.",
   "editMealSaveFailed": "Die Mahlzeit konnte nicht aktualisiert werden. Deine Aenderungen sind weiterhin da.",
   "mealIncompleteBody": "Einige Naehrstoffe sind unbekannt. Diese Schaetzung ist unvollstaendig.",
@@ -109,6 +118,8 @@
       "revision": { "type": "int" }
     }
   },
+  "discardMealEditTitle": "Aenderungen verwerfen?",
+  "discardMealEditBody": "Deine Aenderungen an dieser gespeicherten Mahlzeit gehen verloren.",
   "nutrientEnergy": "Energie",
   "nutrientProtein": "Protein",
   "nutrientCarbohydrates": "Kohlenhydrate",

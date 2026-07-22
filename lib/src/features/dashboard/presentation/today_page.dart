@@ -4,10 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/app_router.dart';
+import 'package:macro_advisor/src/core/presentation/nutrition_text.dart';
 import 'package:macro_advisor/src/core/presentation/responsive_content.dart';
 import 'package:macro_advisor/src/features/dashboard/application/dashboard_controller.dart';
 import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
-import 'package:macro_advisor/src/features/meal_capture/presentation/nutrition_text.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/app/app_router.dart';
-import 'package:macro_advisor/src/features/meal_capture/presentation/edit_item_page.dart';
-import 'package:macro_advisor/src/features/meal_capture/presentation/nutrition_text.dart';
+import 'package:macro_advisor/src/core/presentation/meal_components.dart';
+import 'package:macro_advisor/src/core/presentation/nutrition_text.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_detail_controller.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
@@ -60,7 +60,7 @@ class _MealDetailPageState extends ConsumerState<MealDetailPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteMealTitle),
-        content: Text(l10n.deleteMealBody),
+        content: Text(l10n.deleteMealBodyNamed(_mealTitle(entry))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -164,6 +164,10 @@ class _MealDetailView extends StatelessWidget {
                 label: Text(l10n.editedState),
               ),
             ),
+          MealEstimateNotice(
+            confidence: entry.confidence,
+            assumptions: _allAssumptions(entry),
+          ),
           if (incomplete) ...[
             const SizedBox(height: 12),
             Card(
@@ -175,20 +179,19 @@ class _MealDetailView extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
-          if (entry.assumptions.isNotEmpty) ...[
-            Text(
-              l10n.assumptionsTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            ...entry.assumptions.map(
-              (assumption) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.help_outline),
-                title: Text(assumption.description),
+          if (deleteError != null)
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.error_outline),
+                title: Text(l10n.deleteFailed),
+                trailing: TextButton(
+                  key: const Key('retry-delete-button'),
+                  onPressed: onRetryDelete,
+                  child: Text(l10n.retryAction),
+                ),
               ),
             ),
-          ],
+          const SizedBox(height: 12),
           Text(l10n.itemsTitle, style: Theme.of(context).textTheme.titleMedium),
           ...entry.items.map(
             (item) => Card(
@@ -239,18 +242,7 @@ class _MealDetailView extends StatelessWidget {
               ],
             ),
           ),
-          if (deleteError != null)
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.error_outline),
-                title: Text(l10n.deleteFailed),
-                trailing: TextButton(
-                  key: const Key('retry-delete-button'),
-                  onPressed: onRetryDelete,
-                  child: Text(l10n.retryAction),
-                ),
-              ),
-            ),
+          MealTotalsCard(totals: entry.totals),
         ],
       ),
     );
@@ -289,68 +281,83 @@ class _MealEditPageState extends ConsumerState<MealEditPage> {
       data: (entry) {
         _draft ??= MealEditDraftController(entry);
         final draft = _draft!;
-        return Scaffold(
-          appBar: AppBar(title: Text(l10n.editMealTitle)),
-          body: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              _OccurrenceEditor(
-                entry: draft.entry,
-                onChanged: (value) =>
-                    setState(() => draft.updateOccurrence(value)),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.itemsTitle,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              ...draft.entry.items.map(
-                (item) => Card(
-                  child: ListTile(
-                    key: Key('edit-meal-item-${item.id}'),
-                    title: Text(item.name),
-                    subtitle: Text(
-                      nutritionValueText(
-                        context,
-                        item.nutrition[NutrientId.energy],
+        return PopScope(
+          canPop: !draft.isDirty && !_saving,
+          onPopInvokedWithResult: (didPop, _) async {
+            if (didPop || _saving || !draft.isDirty) return;
+            final discard = await _confirmDiscard(context);
+            if (discard && context.mounted) Navigator.of(context).pop();
+          },
+          child: Scaffold(
+            appBar: AppBar(title: Text(l10n.editMealTitle)),
+            body: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                _OccurrenceEditor(
+                  entry: draft.entry,
+                  onChanged: (value) =>
+                      setState(() => draft.updateOccurrence(value)),
+                ),
+                MealEstimateNotice(
+                  confidence: draft.entry.confidence,
+                  assumptions: _allAssumptions(draft.entry),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.itemsTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                ...draft.entry.items.map(
+                  (item) => Card(
+                    child: ListTile(
+                      key: Key('edit-meal-item-${item.id}'),
+                      title: Text(item.name),
+                      subtitle: Text(
+                        nutritionValueText(
+                          context,
+                          item.nutrition[NutrientId.energy],
+                        ),
                       ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _editItem(draft, item),
                     ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _editItem(draft, item),
                   ),
                 ),
-              ),
-              TextButton.icon(
-                onPressed: () {
-                  final id = 'new-${DateTime.now().microsecondsSinceEpoch}';
-                  setState(() => draft.addItem(id));
-                  _editItem(draft, draft.entry.items.last);
-                },
-                icon: const Icon(Icons.add),
-                label: Text(l10n.addItemAction),
-              ),
-              if (_saveError != null)
-                Semantics(
-                  liveRegion: true,
-                  child: Text(l10n.editMealSaveFailed),
+                TextButton.icon(
+                  onPressed: () {
+                    final id = 'new-${DateTime.now().microsecondsSinceEpoch}';
+                    setState(() => draft.addItem(id, name: l10n.newItemName));
+
+                    _editItem(draft, draft.entry.items.last);
+                  },
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.addItemAction),
                 ),
-              const SizedBox(height: 12),
-              FilledButton(
-                key: const Key('save-meal-button'),
-                onPressed: _saving ? null : () => _save(draft),
-                child: _saving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(),
-                      )
-                    : Text(
-                        _saveError == null
-                            ? l10n.saveChangesAction
-                            : l10n.retryAction,
-                      ),
-              ),
-            ],
+                if (_saveError != null)
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(l10n.editMealSaveFailed),
+                  ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  key: const Key('save-meal-button'),
+                  onPressed: _saving ? null : () => _save(draft),
+                  child: _saving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(),
+                        )
+                      : Text(
+                          _saveError == null
+                              ? l10n.saveChangesAction
+                              : l10n.retryAction,
+                        ),
+                ),
+                const SizedBox(height: 12),
+                MealTotalsCard(totals: draft.entry.totals),
+              ],
+            ),
           ),
         );
       },
@@ -381,6 +388,28 @@ class _MealEditPageState extends ConsumerState<MealEditPage> {
     );
   }
 
+  Future<bool> _confirmDiscard(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.discardMealEditTitle),
+            content: Text(l10n.discardMealEditBody),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancelAction),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.discardAction),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   Future<void> _save(MealEditDraftController draft) async {
     setState(() {
       _saving = true;
@@ -400,6 +429,16 @@ class _MealEditPageState extends ConsumerState<MealEditPage> {
     }
   }
 }
+
+String _mealTitle(MealEntry entry) =>
+    entry.description?.trim().isNotEmpty == true
+    ? entry.description!.trim()
+    : entry.items.map((item) => item.name).join(', ');
+
+List<MealAssumption> _allAssumptions(MealEntry entry) => [
+  ...entry.assumptions,
+  for (final item in entry.items) ...item.assumptions,
+];
 
 class _OccurrenceEditor extends StatelessWidget {
   const _OccurrenceEditor({required this.entry, required this.onChanged});

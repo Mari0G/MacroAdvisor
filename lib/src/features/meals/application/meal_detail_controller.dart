@@ -34,14 +34,17 @@ class MealEditDraftController {
   MealEditDraftController(MealEntry original) : _entry = original;
 
   MealEntry _entry;
+  bool _dirty = false;
 
   MealEntry get entry => _entry;
+  bool get isDirty => _dirty;
 
   void replaceItem(MealItem item) {
     final index = _entry.items.indexWhere((current) => current.id == item.id);
     if (index < 0) return;
     final items = [..._entry.items]..[index] = item;
     _entry = _copy(items: items);
+    _dirty = true;
   }
 
   void removeItem(String id) {
@@ -51,20 +54,22 @@ class MealEditDraftController {
           .where((item) => item.id != id)
           .toList(growable: false),
     );
+    _dirty = true;
   }
 
-  void addItem(String id) {
+  void addItem(String id, {String name = 'New item'}) {
     _entry = _copy(
       items: [
         ..._entry.items,
         MealItem(
           id: id,
-          name: 'New item',
+          name: name,
           nutrition: NutritionFacts(const {}),
           confidence: MealConfidence.low,
         ),
       ],
     );
+    _dirty = true;
   }
 
   void updateOccurrence(DateTime localOccurrence) {
@@ -76,6 +81,7 @@ class MealEditDraftController {
       localOccurrence.minute,
     ).subtract(Duration(minutes: _entry.occurredOffsetMinutes));
     _entry = _copy(occurredAtUtc: utc);
+    _dirty = true;
   }
 
   MealEntry _copy({List<MealItem>? items, DateTime? occurredAtUtc}) =>

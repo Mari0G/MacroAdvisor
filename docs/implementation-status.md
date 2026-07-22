@@ -1,6 +1,6 @@
 # MVP implementation status
 
-Last updated: 2026-07-21
+Last updated: 2026-07-22
 
 This file records repository-level progress for the slices defined in
 [`implementation-plan.md`](implementation-plan.md). It tracks durable state that is
@@ -17,6 +17,10 @@ project-wide status source.
   decision recorded in Notes.
 
 ## Progress
+
+Slice 7 is being delivered on `feat/slice-7-saved-meal-detail`; its local
+verification is complete and it is awaiting review. The legacy table row below
+is retained until the branch is merged into `develop`.
 
 | Slice | Status | Working branch or PR | Evidence on `develop` | Notes |
 | --- | --- | --- | --- | --- |

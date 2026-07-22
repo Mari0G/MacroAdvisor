@@ -87,6 +87,38 @@ void main() {
       savedEntries.single.items.single.name,
       'Greek yogurt with banana and almonds',
     );
+
+    await _waitFor(tester, find.text('Greek yogurt with banana and almonds'));
+    await tester.tap(find.text('Greek yogurt with banana and almonds').first);
+    await _advance(tester);
+    expect(find.text('Saved meal'), findsOneWidget);
+    expect(
+      find.text(
+        'This is a nutrition estimate, not a measurement. Review it before saving.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('edit-meal-button')));
+    await _advance(tester);
+    expect(find.text('Edit saved meal'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('save-meal-button')));
+    await _advance(tester);
+
+    final revised = await harness.repository.findById(
+      savedEntries.single.id,
+      includeDeleted: true,
+    );
+    expect(revised!.revision, 1);
+
+    await tester.tap(find.byKey(const Key('delete-meal-button')));
+    await _advance(tester);
+    await tester.tap(find.text('Delete'));
+    await _advance(tester);
+    expect(
+      await harness.repository.observeDay(DateTime(2026, 7, 20)).first,
+      isEmpty,
+    );
   });
 }
 

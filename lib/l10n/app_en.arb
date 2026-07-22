@@ -80,6 +80,9 @@
   "editItemTitle": "Edit item",
   "itemNameLabel": "Item name",
   "itemNameRequired": "Enter an item name.",
+  "itemAmountLabel": "Amount and unit",
+  "itemNormalizedGramsLabel": "Normalized amount (optional)",
+  "newItemName": "New item",
   "saveChangesAction": "Save changes",
   "removeItemAction": "Remove item",
   "occurrenceLabel": "When",
@@ -92,6 +95,12 @@
   "deleteAction": "Delete",
   "deleteMealTitle": "Delete this meal?",
   "deleteMealBody": "The meal will be removed from your totals. You can recover it only through the local data store.",
+  "deleteMealBodyNamed": "\"{mealName}\" will be removed from your daily totals. This is a soft delete and can be recovered from local data.",
+  "@deleteMealBodyNamed": {
+    "placeholders": {
+      "mealName": { "type": "String" }
+    }
+  },
   "deleteFailed": "The meal could not be deleted. Your entry is still safe.",
   "editMealSaveFailed": "The meal could not be updated. Your edits are still here.",
   "mealIncompleteBody": "Some nutrients are unknown. This estimate is incomplete.",
@@ -109,6 +118,8 @@
       "revision": { "type": "int" }
     }
   },
+  "discardMealEditTitle": "Discard meal edits?",
+  "discardMealEditBody": "Your changes to this saved meal will be lost.",
   "nutrientEnergy": "Energy",
   "nutrientProtein": "Protein",
   "nutrientCarbohydrates": "Carbohydrates",

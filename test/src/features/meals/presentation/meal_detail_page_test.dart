@@ -20,12 +20,23 @@ void main() {
 
     expect(find.text('Beans').first, findsOneWidget);
     expect(find.textContaining('Revision 2'), findsOneWidget);
+    expect(
+      find.text(
+        'This is a nutrition estimate, not a measurement. Review it before saving.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Recalculated totals'), findsOneWidget);
     expect(find.text('Estimate provenance'), findsOneWidget);
     expect(find.text('Incomplete data'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('delete-meal-button')));
     await tester.pumpAndSettle();
     expect(find.text('Delete this meal?'), findsOneWidget);
+    expect(
+      find.textContaining('"Beans" will be removed from your daily totals.'),
+      findsOneWidget,
+    );
     expect(repository.deleteCalls, 0);
 
     await tester.tap(find.text('Cancel'));
