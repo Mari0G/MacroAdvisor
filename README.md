@@ -55,6 +55,25 @@ flutter analyze --fatal-infos --fatal-warnings
 flutter test
 ```
 
+For a direct Gemini meal-analysis smoke test, copy `.env.example` to
+`.env.local`, set `GEMINI_API_KEY` in that ignored file, and run:
+
+```powershell
+.\tools\test-gemini-meal.ps1 -Description "oatmeal with banana and yogurt" -Locale en
+```
+
+The script sends the key in an HTTP header, never prints it, and uses the same
+20-second default request timeout as the app. It defaults to the current
+`gemini-3.5-flash-lite` text-generation model; use `-Model` to test another
+available model. If a model returns 404, list the models available to the
+configured key:
+
+```powershell
+.\tools\test-gemini-meal.ps1 -ListModels
+```
+
+Do not commit `.env.local`.
+
 Generate Drift sources after adding or changing a schema with:
 
 ```text

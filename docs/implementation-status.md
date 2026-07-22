@@ -1,6 +1,6 @@
 # MVP implementation status
 
-Last updated: 2026-07-18
+Last updated: 2026-07-21
 
 This file records repository-level progress for the slices defined in
 [`implementation-plan.md`](implementation-plan.md). It tracks durable state that is
@@ -21,13 +21,13 @@ project-wide status source.
 | Slice | Status | Working branch or PR | Evidence on `develop` | Notes |
 | --- | --- | --- | --- | --- |
 | 0. App foundation and empty Today shell | Merged | — | `test/src/app/macro_advisor_app_test.dart`, `test/src/app/architecture_test.dart`, and `test/src/app/localization_parity_test.dart` | Localized Today and Settings shell. Specification status remains independent. |
-| 1. Provider credential settings | In review | `feat/provider-credential-settings` | — | Controller, contract, and English/German widget tests pass locally; ready for review. |
+| 1. Provider credential settings | Merged | — | `test/src/features/settings/application/provider_settings_controller_test.dart`, `test/src/features/settings/infrastructure/credential_store_contract_test.dart`, and `test/src/features/settings/presentation/provider_settings_page_test.dart` | Approved and merged as `571b693`; secure credential storage, connection states, removal, redaction, and localized settings evidence are on `develop`. |
 | 2. Nutrition domain and local meal persistence | Merged | — | `test/src/features/meals/domain/nutrition_test.dart`, `test/src/features/meals/infrastructure/drift_meal_repository_test.dart` | Merged as `8c0fedb`; domain, Drift persistence, repository contract, reopening, and schema-v1 evidence are on `develop`. |
-| 3. Text capture, deterministic analysis, review, and save | In review | `feat/text-meal-entry` | — | Deterministic provider, capture/review/item-edit controllers, localized flow, and save/retry evidence pass locally. Android integration coverage remains deferred until the integration-test scaffold exists. |
+| 3. Text capture, deterministic analysis, review, and save | Merged | — | `test/src/features/meal_capture/application/capture_controllers_test.dart`, `test/src/features/meal_capture/presentation/meal_capture_flow_test.dart`, and `integration_test/mvp_critical_journey_test.dart` | Approved and merged as `be4803c`; deterministic analysis, capture/review/item-edit controllers, localized flow, save/retry behavior, and the Android persistence journey are on `develop`. |
 | 4. Gemini provider adapter | Merged | — | `test/src/features/meal_capture/infrastructure/gemini_nutrition_analysis_provider_test.dart` and sanitized fixtures | Merged via PR #7; Gemini adapter, categorized failures, connection check, validation, redaction, timeout, and Android CI evidence passed. |
-| 5. Daily dashboard | Planned | — | — | Depends on local meal persistence; sequence after Slice 4 keeps delivery linear. |
+| 5. Daily dashboard | Merged | — | `test/src/features/dashboard/application/dashboard_controller_test.dart`, `test/src/features/dashboard/presentation/today_page_test.dart`, and `integration_test/mvp_critical_journey_test.dart` | Merged as `86508a1`; local-day selection, aggregation, reactive updates, localized empty/populated/incomplete states, and meal navigation are on `develop`. Goal progress remains part of Slice 6. |
 | 6. Goal configuration and progress | Planned | — | — | Depends on the dashboard foundation. |
-| 7. Saved meal detail, edit, and delete | Planned | — | — | Depends on meal persistence and dashboard observation. |
+| 7. Saved meal detail, edit, and delete | Merged | — | `test/src/features/meals/application/meal_detail_controller_test.dart` and `test/src/features/meals/presentation/meal_detail_page_test.dart` | Merged as `86508a1`; saved-meal transparency, local edits without re-analysis, soft-delete confirmation, and recoverable delete failure are on `develop`. |
 | 8. Hardening and MVP acceptance | Planned | — | — | Begins after Slices 0–7 are merged. |
 
 ## Update rules
