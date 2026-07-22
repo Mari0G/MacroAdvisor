@@ -31,4 +31,4 @@ Use this packet when assigning a complete slice or a smaller independently valua
 - **Sensitive data or credentials involved:**
 - **Code generation required:**
 - **Environment-only verification:**
-- **Publication:** Per `AGENTS.md`, commit, push, and open a draft pull request targeting `develop` unless explicitly disabled.
+- **Publication:** Per `AGENTS.md`, commit, push, and open a draft pull request targeting `develop` unless explicitly disabled. The GitHub skill's `gh` commands cannot perform GitHub operations inside the sandbox; use the required escalated approval for those commands and never expose credentials in commands, chat, or logs.

@@ -19,6 +19,10 @@
 - Follow `docs/branching.md`: branch from `develop` and target ordinary pull
   requests to `develop`.
 - Never push directly to the protected `develop` or `main` branches.
+- The GitHub skill uses the `gh` CLI, which cannot perform GitHub operations
+  from inside the sandbox. Run requested `gh` inspection or publication
+  commands with the required escalated approval; do not expose credentials in
+  commands, chat, or logs.
 - Implement one vertical slice at a time.
 - Add or update tests with every behavior change.
 - Keep provider, persistence, and UI concerns behind explicit interfaces.
