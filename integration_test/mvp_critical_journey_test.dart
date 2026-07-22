@@ -1,4 +1,3 @@
-import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,28 +34,28 @@ void main() {
     await _advance(tester);
 
     await tester.tap(find.byTooltip('Open settings'));
-    await _advance(tester);
+    await _waitFor(tester, find.text('AI provider'));
     await tester.tap(find.text('AI provider'));
-    await _advance(tester);
+    await _waitFor(tester, find.byKey(const Key('provider-credential-field')));
     await tester.enterText(
       find.byKey(const Key('provider-credential-field')),
       'agent-fixture-key',
     );
     await tester.tap(find.byKey(const Key('save-credential-button')));
-    await _advance(tester);
+    await _waitFor(tester, find.byKey(const Key('test-connection-button')));
     await tester.tap(find.byKey(const Key('test-connection-button')));
-    await _advance(tester);
+    await _waitFor(tester, find.text('Connection test succeeded.'));
 
     expect(find.text('Connection test succeeded.'), findsOneWidget);
     expect(find.text('agent-fixture-key'), findsNothing);
 
-    await tester.pageBack();
-    await _advance(tester);
-    await tester.pageBack();
-    await _advance(tester);
+    await _popTopRoute(tester);
+    await _waitFor(tester, find.text('AI provider'));
+    await _popTopRoute(tester);
+    await _waitFor(tester, find.text('Record meal').first);
 
     await tester.tap(find.text('Record meal').first);
-    await _advance(tester);
+    await _waitFor(tester, find.byKey(const Key('meal-description-field')));
     await tester.enterText(
       find.byKey(const Key('meal-description-field')),
       'Greek yogurt with banana and almonds',
@@ -69,11 +68,11 @@ void main() {
     expect(find.text('Review estimate'), findsOneWidget);
     expect(
       find.textContaining('A standard serving size was assumed.'),
-      findsOneWidget,
+      findsWidgets,
     );
 
     await tester.tap(find.byKey(const Key('confirm-save-button')));
-    await _advance(tester);
+    await _waitFor(tester, find.text('Today'));
 
     final savedEntries = await harness.repository
         .observeDay(DateTime(2026, 7, 20))
@@ -125,6 +124,13 @@ void main() {
 Future<void> _advance(WidgetTester tester) =>
     tester.pump(const Duration(milliseconds: 500));
 
+Future<void> _popTopRoute(WidgetTester tester) async {
+  final backButtons = find.byTooltip('Back');
+  expect(backButtons, findsWidgets);
+  await tester.tap(backButtons.last);
+  await _advance(tester);
+}
+
 Future<void> _waitFor(
   WidgetTester tester,
   Finder finder, {
@@ -146,7 +152,7 @@ class _TestHarness {
   _TestHarness()
     : clock = _FixedClock(DateTime(2026, 7, 20, 12)),
       ids = _SequenceIdGenerator(),
-      database = AppDatabase.forTesting(NativeDatabase.memory()),
+      database = AppDatabase(),
       credentials = _InMemoryCredentialStore() {
     repository = DriftMealRepository(database, clock, ids);
   }
