@@ -9,6 +9,13 @@
 
 ## Working method
 
+- Automatically use the repository skill at
+  `.agents/skills/implement-slice/SKILL.md` whenever a user asks to implement,
+  continue, complete, or finish a numbered slice or equivalent feature work.
+  The user does not need to name the skill explicitly.
+- For those implementation requests, the repository owner authorizes committing,
+  pushing the working branch, and opening a draft pull request after required
+  local gates pass unless the user opts out. Never auto-merge or mark it ready.
 - Follow `docs/branching.md`: branch from `develop` and target ordinary pull
   requests to `develop`.
 - Never push directly to the protected `develop` or `main` branches.
@@ -29,6 +36,6 @@
 
 ## Verification
 
-The Flutter scaffold will define the exact commands. At minimum, changes must
-eventually pass formatting, `flutter analyze`, unit/widget tests, and the relevant
-Android integration tests.
+Use `tools/verify.ps1` for the repository verification ladder. At minimum,
+changes must eventually pass formatting, `flutter analyze`, unit/widget tests,
+and the relevant Android integration tests.

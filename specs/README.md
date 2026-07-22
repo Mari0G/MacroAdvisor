@@ -1,6 +1,6 @@
 # MacroAdvisor specifications
 
-Status: Draft v0.1
+Status: Accepted v0.1
 
 These files are the repository's product and behavior source of truth.
 
