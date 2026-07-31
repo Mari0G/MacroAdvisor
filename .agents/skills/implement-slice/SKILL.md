@@ -1,21 +1,22 @@
 ---
 name: implement-slice
-description: Implement, verify, review, and publish a MacroAdvisor vertical slice. Use whenever a user asks to implement, continue, complete, or finish a numbered slice from docs/implementation-plan.md, or requests feature work tied to its acceptance criteria. Apply automatically even when the user does not name the skill.
+description: Implement, verify, review, and publish a MacroAdvisor delivery slice. Use whenever a user asks to implement, continue, complete, or finish a planned slice or feature work tied to its acceptance criteria. Apply automatically even when the user does not name the skill.
 ---
 
 # Implement a slice
 
-Deliver one reviewable vertical slice from accepted specifications through a draft pull request. Keep one primary agent accountable for writes and integration.
+Deliver one reviewable delivery slice from accepted specifications through a draft
+pull request. Keep one primary agent accountable for writes and integration.
 
 ## Preflight
 
-1. Read `AGENTS.md`, `specs/README.md`, `docs/implementation-plan.md`, `docs/implementation-status.md`, and the relevant feature specification in full. Read only the sections of product, technical, UI, and quality specifications routed by that feature and slice.
-2. Convert the request into the fields in `docs/agent-task-template.md`. Infer safe details from the specifications; ask only when a missing choice materially changes behavior.
+1. Read `AGENTS.md`, `specs/README.md`, `docs/implementation-plan.md`, `docs/implementation-status.md`, and the relevant feature specification in full. Identify the `F-###` feature ID and `S-###` slice ID, then read only the routed product, technical, UI, and quality sections.
+2. Convert the request into the Slice packet in `docs/implementation-plan.md`. Infer safe details from the specifications; ask only when a missing choice materially changes behavior.
 3. Confirm the product, technical, UI, quality, and relevant feature specifications have `Accepted` status. Stop and report any unaccepted requirement or spec/code mismatch before broad edits.
 4. Inspect Git status and preserve unrelated changes. If the current branch is not the requested slice branch or unrelated changes are present, do not absorb, move, discard, or commit them; create an isolated branch/worktree from current `develop` when safe, otherwise stop and request disposition.
 5. Work from current `develop` on one short-lived branch allowed by `docs/branching.md`; never push directly to `develop` or `main`.
 6. Check that authenticated draft-PR publication is available before long implementation work. Report an unavailable publication path early, but continue locally unless the user made publication a hard requirement.
-7. Identify the narrow tests to run during implementation, whether code generation or a local Android journey is affected, and whether a Gemini adapter/protocol change merits one local live-provider smoke call.
+7. For a new product feature, confirm that the feature has exactly one slice. The MVP S-000–S-008 roadmap is a historical exception. Then identify the narrow tests to run, whether code generation or a local Android journey is affected, and whether a Gemini adapter/protocol change merits one local live-provider smoke call.
 
 ### Cross-spec routing
 
@@ -23,17 +24,17 @@ Always inspect Product `Supported platforms and languages`, `Trust and safety`, 
 
 Add these slice-specific sections:
 
-| Slice | Product | Technical | UI | Quality |
+| Slice ID | Product | Technical | UI | Quality |
 | --- | --- | --- | --- | --- |
-| 0 | `MVP outcomes` | `Application stack`, app composition, UI construction, navigation | App bootstrap, Today dashboard | Widget and golden, integration |
-| 1 | `MVP outcomes` | app composition, error/privacy, AI integration | Settings, Provider settings, state/recovery | Unit, contract, widget |
-| 2 | `Nutrient scope` | domain/application modeling, persistence, domain model | Relevant shared components | Unit, contract |
-| 3 | `MVP outcomes`, `Nutrient scope` | domain/application modeling, UI construction, navigation, error behavior | Describe, progress, review, edit item, navigation/recovery | Unit, widget/golden, integration |
-| 4 | `Trust and safety` | AI integration, error/privacy, error behavior | Provider recovery and trust states | Contract, live smoke |
-| 5 | `Nutrient scope` | domain/application modeling, UI construction, persistence | Today dashboard, recovery | Unit, widget/golden, integration |
-| 6 | `Goals` | domain/application modeling, UI construction, navigation, persistence | Today dashboard, Goal settings | Unit, contract, widget/golden, integration |
-| 7 | `MVP outcomes` | domain/application modeling, navigation, persistence | Meal detail/edit, navigation/recovery | Unit, widget/golden, integration |
-| 8 | All MVP outcomes and non-goals | All affected sections | All acceptance-traceability sections | All test layers and CI/release plan |
+| S-000 | `MVP outcomes` | `Application stack`, app composition, UI construction, navigation | App bootstrap, Today dashboard | Widget and golden, integration |
+| S-001 | `MVP outcomes` | app composition, error/privacy, AI integration | Settings, Provider settings, state/recovery | Unit, contract, widget |
+| S-002 | `Nutrient scope` | domain/application modeling, persistence, domain model | Relevant shared components | Unit, contract |
+| S-003 | `MVP outcomes`, `Nutrient scope` | domain/application modeling, UI construction, navigation, error behavior | Describe, progress, review, edit item, navigation/recovery | Unit, widget/golden, integration |
+| S-004 | `Trust and safety` | AI integration, error/privacy, error behavior | Provider recovery and trust states | Contract, live smoke |
+| S-005 | `Nutrient scope` | domain/application modeling, UI construction, persistence | Today dashboard, recovery | Unit, widget/golden, integration |
+| S-006 | `Goals` | domain/application modeling, UI construction, navigation, persistence | Today dashboard, Goal settings | Unit, contract, widget/golden, integration |
+| S-007 | `MVP outcomes` | domain/application modeling, navigation, persistence | Meal detail/edit, navigation/recovery | Unit, widget/golden, integration |
+| S-008 | All MVP outcomes and non-goals | All affected sections | All acceptance-traceability sections | All test layers and CI/release plan |
 
 ## Coordinate agents economically
 

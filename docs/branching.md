@@ -26,7 +26,8 @@ Create short-lived branches from `develop` using one of these prefixes:
 - `test/` for test infrastructure or coverage
 - `codex/` for coding-agent work when a more specific prefix is not appropriate
 
-Use a concise kebab-case suffix, for example `feat/text-meal-entry`.
+Use a concise kebab-case suffix. Feature branches include the delivery slice ID,
+for example `feat/s-009-photo-capture`; maintenance branches do not need one.
 
 Delete working branches after their pull requests are merged.
 
