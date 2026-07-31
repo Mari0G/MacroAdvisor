@@ -1,231 +1,217 @@
-# MVP implementation plan
+# MVP delivery plan
 
-Last updated: 2026-07-18
+Last updated: 2026-07-31
 
-This plan sequences the accepted product, UI, and technical specifications into
-small vertical slices. It is a delivery guide, not a replacement for acceptance
-criteria in `specs/`.
+This plan turns accepted specifications into reviewable delivery slices. It does
+not replace feature acceptance criteria. Progress and merged evidence live in
+[implementation-status.md](implementation-status.md).
 
-Repository-level progress is recorded in
-[`implementation-status.md`](implementation-status.md).
+## How new features are delivered
+
+Before implementation, a new product feature must have:
+
+1. an accepted feature specification with a permanent `F-###` ID;
+2. exactly one planned delivery slice with a permanent `S-###` ID; and
+3. a row in the implementation-status tracker.
+
+One slice may use several focused pull requests, but every pull request uses the
+same slice ID. Include shared infrastructure in the slice for the feature it
+enables. Work with no product feature belongs to maintenance, not a feature
+slice.
+
+The MVP slices below predate this rule. They keep their original scope and may
+relate to more than one feature.
 
 ## Entry condition
 
-The current v0.1 product specifications are Accepted. New or revised product
-behavior must continue to depend on accepted versions of:
+Start only from accepted product, technical, UI, quality, and feature
+specifications. Use the feature acceptance criteria as the behavior source of
+truth, [quality.md](../specs/quality.md) for required evidence, and
+[branching.md](branching.md) for branches and pull requests.
 
-- `specs/product.md`
-- `specs/technical.md`
-- `specs/ui-ux.md`
-- the feature specification named by the slice
+## MVP slice order
 
-Open visual-brand decisions do not block implementation because the UI plan uses
-semantic Material 3 roles and system typography.
+Each slice is independently reviewable, tested, and leaves the app runnable.
+The feature IDs shown here are historical relationships, not new one-to-one
+assignments.
 
-## Slice order
+### S-000 — App foundation and empty Today shell
 
-Each slice is independently reviewable, contains tests for its behavior, and leaves
-the application runnable. Ordinary pull requests target `develop`.
+**Feature:** none (MVP foundation)
 
-### Slice 0: app foundation and empty Today shell
-
-**Outcome:** the app starts through a testable composition root and shows the
+**Outcome:** The app starts through a testable composition root and shows the
 localized, accessible empty Today dashboard shell.
 
-**Includes:**
+**Includes:** app bootstrap; Riverpod composition root; Material 3 theme and
+responsive primitives; Today and Settings placeholders; injectable `Clock` and
+`IdGenerator`; shared failures and async states; architecture and ARB parity
+tests.
 
-- bootstrap and production Riverpod composition root
-- Material 3 light/dark theme structure and responsive content primitives
-- centralized route definitions for Today and Settings placeholders
-- injectable `Clock` and `IdGenerator`
-- shared failure model and async-state rendering
-- initial Today page/view with empty state and record action placeholder
-- architecture import test and ARB key-parity test
+**Evidence:** English/German widget tests, compact and expanded layouts, 200%
+text-scale smoke test, analysis, and formatting.
 
-**Evidence:** English/German widget tests, compact and expanded layout tests, 200
-percent text-scale smoke test, analysis and formatting.
+### S-001 — Provider credential settings
 
-### Slice 1: provider credential settings
+**Feature:** F-001 (historical support)
 
-**Outcome:** a user can securely add, test, replace, and remove a Gemini credential
-without exposing it to local data or logs.
+**Outcome:** A user can securely add, test, replace, and remove a Gemini
+credential without exposing it to local data or logs.
 
-**Includes:**
+**Includes:** `CredentialStore`; provider configuration controller; connection
+check contract and fake; Settings and Provider settings screens; all connection
+states; no stored key in display state.
 
-- `CredentialStore` contract and secure-storage adapter
-- provider configuration application controller
-- provider-neutral connection-check contract and deterministic fake
-- Settings and Provider settings screens
-- missing, invalid, offline, rate-limited, success, and removal states
-- no key value in controller display state after persistence
+**Evidence:** credential-store contract, controller, localized widget, semantic,
+and redaction tests.
 
-**Evidence:** credential-store contract tests with an in-memory fake, controller
-tests, German/English widget tests, semantic tests, and redaction assertions.
+### S-002 — Nutrition domain and local meal persistence
 
-### Slice 2: nutrition domain and local meal persistence
+**Features:** F-001, F-002 (historical shared foundation)
 
-**Outcome:** reviewed meal entries can be stored, observed by local day, edited,
-soft-deleted, and restored after database restart.
+**Outcome:** Reviewed meal entries can be stored, observed by local day, edited,
+soft-deleted, and restored after a database restart.
 
-**Includes:**
+**Includes:** meal and nutrient models; decimal-safe calculations; unknown-value
+aggregation; `MealRepository`; Drift schema, mappers, transactions, revisions,
+and tombstones; deterministic IDs/timestamps; schema-v1 migration harness.
 
-- nutrient, meal item, meal entry, provenance, confidence, and assumption models
-- decimal-safe calculations and unknown-value aggregation
-- `MealRepository` contract
-- Drift schema, mappers, transactions, revision and tombstone behavior
-- deterministic IDs/timestamps and repository contract suite
-- database migration-test harness at schema version 1
+**Evidence:** domain, repository-contract, persistence-reopen, and generated-code
+reproducibility tests.
 
-**Evidence:** domain validation/aggregation tests, shared repository contract tests
-against in-memory Drift, persistence reopen test, and generated-code reproducibility
-check.
+### S-003 — Text capture, deterministic analysis, review, and save
 
-### Slice 3: text capture, deterministic analysis, review, and save
+**Feature:** F-001 (historical)
 
-**Outcome:** using a fake provider, a user can enter text, review an itemized
+**Outcome:** Using a fake provider, a user can enter text, review an itemized
 estimate, correct it, and save it locally.
 
-**Includes:**
+**Includes:** `NutritionAnalysisProvider`; analysis models; explicit capture,
+review, and item-edit state machines; capture screens; local recalculation;
+warnings, assumptions, confidence, idempotent save, and unsaved-change handling.
 
-- `NutritionAnalysisProvider` contract and provider-neutral analysis models
-- description, review, and item-edit controllers as an explicit state machine
-- Describe meal, Review estimate, and Edit item screens
-- local recalculation after every valid edit
-- unknown nutrient values, warnings, assumptions, and confidence presentation
-- idempotent confirmation and unsaved-change protection
-- deterministic fake provider for tests and development
+**Evidence:** validation and controller tests; localized widget tests for input,
+loading, review, editing, cancellation, and save failure; Android save journey.
 
-**Evidence:** validation/controller unit tests; English/German widget tests for
-input, loading, review, editing, cancellation, and save failure; Android journey
-through save using an in-memory or isolated test database.
+### S-004 — Gemini provider adapter
 
-### Slice 4: Gemini provider adapter
+**Feature:** F-001 (historical)
 
-**Outcome:** configured users can request a validated estimate from the documented
-Gemini model while all provider details remain in infrastructure.
+**Outcome:** Configured users can request a validated estimate from the documented
+Gemini model while provider details stay in infrastructure.
 
-**Includes:**
+**Includes:** adapter-owned TLS client; internal request and response types;
+locale instruction; structured response validation; categorized errors and
+redaction; supported cancellation/timeout behavior; connection check.
 
-- narrow TLS client owned by the Gemini adapter
-- request schema and response DTOs internal to the adapter
-- locale instruction and structured response contract
-- shape, unit, finite/non-negative, plausibility, and total-consistency validation
-- categorized error mapping and credential redaction
-- cancellation/timeout behavior where supported
-- connection check using the same credential boundary
+**Evidence:** sanitized fixture contract tests for valid, partial, invalid,
+unsupported-unit, credential, rate-limit, rejected-content, and redaction cases.
+Live calls are opt-in and non-blocking.
 
-**Evidence:** sanitized fixture-based contract tests for success, partial/unknown
-data, invalid JSON/schema, unsupported units, credential errors, rate limit,
-content rejection, and redaction. Live calls remain opt-in and non-blocking.
+Document any new HTTP or serialization production dependency in
+[technical.md](../specs/technical.md) before adding it.
 
-Any new HTTP or serialization production dependency must be justified and added to
-`specs/technical.md` before it is introduced.
+### S-005 — Daily dashboard
 
-### Slice 5: daily dashboard
+**Feature:** F-002 (historical)
 
-**Outcome:** Today displays localized totals, incomplete-data states, and the meals
+**Outcome:** Today shows localized totals, incomplete-data states, and the meals
 that contribute to the selected local day.
 
-**Includes:**
+**Includes:** observe-day use case; dashboard model and controller; day selector;
+nutrient and entry views; empty, loading, populated, incomplete, and failure
+states; repository-driven refresh after changes.
 
-- observe-day use case with local day-boundary handling
-- dashboard display model and controller
-- day selector, nutrient overview, all-nutrient section, and entry list
-- empty, loading, populated, incomplete, and observation-failure states
-- automatic refresh from repository streams after save/edit/delete
+**Evidence:** local-day and daylight-saving tests, aggregation tests, localized
+widget/golden tests, accessibility semantics, and capture-to-dashboard journey.
 
-**Evidence:** local-day and daylight-saving boundary unit tests, aggregation tests,
-English/German widget and golden tests, accessibility semantics, and the integration
-journey continuing from capture to updated totals.
+### S-006 — Goal configuration and progress
 
-### Slice 6: goal configuration and progress
+**Feature:** F-002 (historical)
 
-**Outcome:** a user can configure minimum, maximum, or range targets and understand
-progress on Today without relying on color.
+**Outcome:** A user can configure minimum, maximum, or range targets and
+understand progress on Today without relying on color.
 
-**Includes:**
+**Includes:** typed targets; validation and progress calculations;
+`GoalRepository` and Drift adapter; atomic Goal settings form; accessible progress
+cards; no-goal state; reviewed optional presets.
 
-- typed goal targets, validation, and progress calculation
-- `GoalRepository` contract and Drift adapter
-- atomic Goal settings form
-- accessible dashboard progress cards and no-goal state
-- optional presets only if their numeric values are specified and reviewed
-
-**Evidence:** goal-domain and repository contract tests, form/controller tests,
+**Evidence:** domain and repository-contract tests, form/controller tests,
 screen-reader semantics, localized widget/golden tests, and dashboard integration.
 
-### Slice 7: saved meal detail, edit, and delete
+### S-007 — Saved meal detail, edit, and delete
 
-**Outcome:** a confirmed entry remains transparent and correctable, and dashboard
+**Features:** F-001, F-002 (historical)
+
+**Outcome:** A confirmed entry remains transparent and correctable, and dashboard
 totals react immediately to revision or tombstone changes.
 
-**Includes:**
+**Includes:** meal detail with provenance and warnings; edit flow without a
+provider request; soft-delete confirmation and recovery; occurrence-time edits
+that can move an entry between local days.
 
-- Meal detail with provenance, assumptions, edited state, and incomplete warnings
-- edit flow reusing review/item components without a provider request
-- explicit soft-delete confirmation and failure recovery
-- occurrence-time edits that can move an entry between local days
+**Evidence:** revision/tombstone tests, detail/edit/delete widget tests, day-move
+test, and an extended Android persistence journey.
 
-**Evidence:** revision/tombstone unit tests, detail/edit/delete widget tests, day
-movement test, and extension of the Android persistence journey.
+### S-008 — Hardening and MVP acceptance
 
-### Slice 8: hardening and MVP acceptance
+**Features:** F-001, F-002 (historical MVP gate)
 
-**Outcome:** all accepted feature criteria have automated evidence and the text MVP
-is ready for Android preview testing.
+**Outcome:** All accepted feature criteria have automated evidence and the text
+MVP is ready for Android preview testing.
 
-**Includes:**
+**Includes:** critical restart/persistence journey; localized golden baselines;
+keyboard, rotation, theme, text-scale, and screen-reader audit; sensitive logging
+and fixture audit; build/release verification; specification status updates only
+after all criteria have evidence.
 
-- full critical Android restart/persistence journey
-- golden baselines for required German/English states
-- keyboard, rotation, dark theme, text scale, and screen-reader audit
-- sensitive logging and fixture audit
-- build/release workflow verification
-- specification status updates only when every criterion has evidence
+Photo capture starts as a new feature with its own feature and slice IDs after
+this gate.
 
-Photo capture begins as a new feature slice only after this gate.
+## New-feature checklist
 
-## Pull-request boundaries
+- Assign the next unused `F-###` ID and add it to [the specification index](../specs/README.md).
+- Write the feature specification with user outcome, scope, non-goals, behavior,
+  edge cases, acceptance criteria, and verification.
+- Assign the next unused `S-###` ID, add one slice for that feature here, and add
+  its status row.
+- Keep the same IDs in task packets, branches, pull requests, tests, and status
+  updates. IDs never change or get reused.
 
-A slice may use more than one pull request when a change is still independently
-valuable, but a pull request should not mix unrelated layers. A typical sequence is:
+## Slice packet
 
-1. domain contracts and tests
-2. infrastructure adapter and contract evidence
-3. application controller and state tests
-4. localized presentation and widget tests
-5. integration-journey extension
+Use this packet when assigning a slice. Fill it from accepted specifications, not
+implementation guesses.
 
-Database schema and the repository behavior it supports belong in the same pull
-request. Generated output is committed only when the repository convention
-requires it and must be reproducible from the documented command.
+### Outcome
 
-## Agent-ready work packets
+- **Feature ID:**
+- **Slice ID:**
+- **User outcome:**
+- **Specification sections:**
+- **Acceptance criteria in scope:**
 
-Every implementation task should name:
+### Boundaries
 
-- the accepted specification section and acceptance criteria in scope
-- expected files or owning feature, without prescribing generated output
-- interfaces that may change and layers that must not change
-- required English and German localization states
-- required unit, widget, golden, contract, or integration evidence
-- explicit non-goals and any sensitive data involved
+- **Included work or expected files:**
+- **Interfaces that may change:**
+- **Interfaces that must not change:**
+- **Non-goals:**
 
-Agents should first inspect the current branch and related tests, implement the
-smallest complete behavior, and report spec/code mismatches before widening scope.
-Unrelated worktree changes must be preserved.
+### Evidence and handoff
 
-## Standard verification ladder
+- **Tests:** unit/contract, widget/golden, and Android journey as applicable
+- **Locales, accessibility, and failure states:**
+- **Sensitive data or credentials:**
+- **Code generation:**
+- **Environment-only verification:**
+- **Publication:** follow `AGENTS.md` and `docs/branching.md`.
 
-Run the narrowest relevant test during iteration, then before handoff run:
+Keep unrelated worktree changes intact. Report a spec/code mismatch before
+widening the change.
 
-```text
-dart format --output=none --set-exit-if-changed .
-flutter analyze --fatal-infos --fatal-warnings
-flutter test
-```
+## Verification
 
-Run code generation before those gates whenever schemas or generated providers are
-changed. Run affected Android integration tests for critical-journey changes. The
-pull request should state which commands ran and identify any environment-only gate
-that remains for CI.
+Run the narrowest relevant tests while working. Before handoff, use the required
+repository checks from [quality.md](../specs/quality.md) and `tools/verify.ps1`.
+Run code generation before those checks when schemas or generated providers
+change. State commands run and any environment-only gate in the pull request.

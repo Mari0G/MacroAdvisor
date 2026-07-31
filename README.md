@@ -18,8 +18,8 @@ testing initially focus on Android.
 
 ## Project status
 
-The Flutter scaffold is in place. It intentionally contains only a localized
-German/English setup screen; product behavior starts with the next vertical slice.
+MVP delivery is in progress. The current slice status and evidence are tracked in
+[docs/implementation-status.md](docs/implementation-status.md).
 
 ## Product principles
 
@@ -27,7 +27,7 @@ German/English setup screen; product behavior starts with the next vertical slic
 - User-owned AI credentials for the MVP
 - AI results are transparent, editable estimates
 - German and English from the first feature
-- Feature work starts with acceptance criteria and tests
+- Each new feature has an accepted specification and one tracked delivery slice
 - Cloud synchronization remains optional
 
 The current specifications are indexed in [specs/README.md](specs/README.md).
@@ -48,9 +48,9 @@ The binding technical choices and package lines are defined in
 [specs/technical.md](specs/technical.md).
 
 The accepted screen and interaction plan is defined in
-[specs/ui-ux.md](specs/ui-ux.md). The vertical-slice delivery order is in
-[docs/implementation-plan.md](docs/implementation-plan.md), with durable progress
-tracked in [docs/implementation-status.md](docs/implementation-status.md).
+[specs/ui-ux.md](specs/ui-ux.md). Feature specifications and their stable IDs are
+in [specs/README.md](specs/README.md); delivery slices are in
+[docs/implementation-plan.md](docs/implementation-plan.md).
 
 ## Local development
 

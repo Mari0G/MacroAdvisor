@@ -2,7 +2,8 @@
 
 ## Source of truth
 
-- Read `specs/README.md` and the relevant feature spec before changing behavior.
+- Read `specs/README.md` and the relevant feature specification before changing
+  behavior.
 - Treat acceptance criteria as requirements, not suggestions.
 - If code and a spec disagree, stop and surface the mismatch before broad changes.
 - Do not create or commit Architecture Decision Records.
@@ -23,7 +24,10 @@
   from inside the sandbox. Run requested `gh` inspection or publication
   commands with the required escalated approval; do not expose credentials in
   commands, chat, or logs.
-- Implement one vertical slice at a time.
+- Implement one delivery slice at a time.
+- For a new product feature, use its permanent `F-###` feature ID and exactly one
+  `S-###` delivery slice from `docs/implementation-plan.md`. The MVP S-000–S-008
+  roadmap is a documented historical exception.
 - Add or update tests with every behavior change.
 - Keep provider, persistence, and UI concerns behind explicit interfaces.
 - Make generated code reproducible; never hand-edit generated files.
