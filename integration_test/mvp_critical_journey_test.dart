@@ -157,8 +157,8 @@ void main() {
     expect(find.text('900 kcal'), findsWidgets);
 
     await tester.tap(find.text('Greek yogurt with banana and almonds').first);
-    await _advance(tester);
-    expect(find.text('Revision 1'), findsOneWidget);
+    await _waitFor(tester, find.text('Saved meal'));
+    await _waitFor(tester, find.textContaining('Revision 1'));
     expect(find.text('Edited'), findsOneWidget);
     expect(harness.provider.calls, 1);
   });
