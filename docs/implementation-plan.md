@@ -156,16 +156,84 @@ test, and an extended Android persistence journey.
 
 **Features:** F-001, F-002 (historical MVP gate)
 
-**Outcome:** All accepted feature criteria have automated evidence and the text
-MVP is ready for Android preview testing.
+**Outcome:** The remaining non-accessibility MVP hardening criteria have
+automated evidence, including native Android coverage for saving and editing
+meals, and the text MVP is ready for Android preview testing subject to the
+recorded accessibility evidence gap.
 
-**Includes:** critical restart/persistence journey; localized golden baselines;
-keyboard, rotation, theme, text-scale, and screen-reader audit; sensitive logging
-and fixture audit; build/release verification; specification status updates only
-after all criteria have evidence.
+**Includes:** a critical Android emulator journey that saves and then edits a
+meal; restart/persistence coverage for the saved revision; localized golden
+baselines; keyboard, rotation, theme, and text-scale checks; sensitive logging
+and fixture audit; and build/release verification. Screen-reader checks and
+accessibility tests are not included in this slice.
 
 Photo capture starts as a new feature with its own feature and slice IDs after
 this gate.
+
+#### S-008 slice packet
+
+##### Outcome
+
+- **Feature ID:** F-001 and F-002 (historical MVP gate)
+- **Slice ID:** S-008
+- **User outcome:** A user can save a reviewed text meal, correct that saved
+  meal, and retain the corrected record after an app restart; these critical
+  flows have deterministic native Android emulator evidence.
+- **Specification sections:** F-001 Behavior and Acceptance criteria; F-002
+  Behavior and Acceptance criteria; `quality.md` Integration tests and Quality
+  gates; `technical.md` Persistence and transaction boundaries; `ui-ux.md`
+  Navigation, Privacy and trust requirements, and Acceptance traceability.
+- **Acceptance criteria in scope:** F-001 local confirmation survives restart
+  and edits recalculate locally without another AI request; F-002 confirmed and
+  edited entries refresh the selected day's totals, including when an occurrence
+  moves between local days. Existing localized presentation, privacy, and
+  failure-state evidence is audited rather than reimplemented.
+
+##### Boundaries
+
+- **Included work or expected files:** Extend
+  `integration_test/mvp_critical_journey_test.dart` to drive the production
+  navigation stack with the deterministic provider and test seams; save a
+  reviewed meal, open its detail, edit a nutrient and occurrence time, save the
+  revision, verify Today updates, and recreate the app with the same test
+  database before verifying the persisted revision. Update
+  `integration_test/README.md` if its native command or prerequisites change.
+  Add focused unit/widget or golden tests only where the hardening audit finds a
+  missing functional or localized assertion.
+- **Interfaces that may change:** Integration-test-only harness and test support;
+  no production interface change is planned.
+- **Interfaces that must not change:** `MealRepository`, provider contracts,
+  credential storage, Drift production schema, and route payload privacy
+  boundaries.
+- **Non-goals:** Photo capture; new nutrition or goal behavior; provider/model
+  changes; production dependency additions; screen-reader checks and all new
+  accessibility-specific tests. Because F-002 requires progress to be
+  understandable with screen readers, do not update either feature
+  specification to **Implemented** until that separate evidence exists.
+
+##### Evidence and handoff
+
+- **Tests:** Run the deterministic Android emulator journey on a connected
+  device or emulator. It must prove initial meal save, saved-meal nutrient edit
+  without a second provider request, day-total refresh, occurrence-day move,
+  and restart persistence of the revised record. Run focused unit/widget/golden
+  tests introduced by the audit, followed by formatting, analysis, and the full
+  Flutter test suite.
+- **Locales, accessibility, and failure states:** Preserve English and German
+  localization parity and exercise localized critical presentation baselines.
+  Accessibility-specific testing is explicitly deferred; record it as remaining
+  evidence rather than treating this slice as full feature acceptance.
+- **Sensitive data or credentials:** Use only the deterministic provider and
+  fixture credential; assert that neither credentials nor meal descriptions are
+  exposed by test output or committed fixtures.
+- **Code generation:** Not expected. Run generation only if an audited source
+  change modifies a generated input.
+- **Environment-only verification:** Native Android integration requires a
+  connected emulator/device and a configured JDK/Gradle environment. If absent,
+  record the journey as not run with the reason; do not report it as passing.
+- **Publication:** Follow `AGENTS.md` and `docs/branching.md`; branch from
+  `develop`, target a draft pull request to `develop`, and do not mark S-008
+  merged before all scoped evidence is on `develop`.
 
 ## New-feature checklist
 
