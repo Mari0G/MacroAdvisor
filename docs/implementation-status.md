@@ -29,7 +29,7 @@ features. New rows use one feature ID and one slice ID.
 | S-005 | F-002 | Merged | — | `test/src/features/dashboard/application/dashboard_controller_test.dart`, `test/src/features/dashboard/presentation/today_page_test.dart`, and `integration_test/mvp_critical_journey_test.dart` | Merged as `86508a1`; local-day selection, aggregation, reactive updates, localized empty/populated/incomplete states, and meal navigation are on `develop`. Goal progress remains part of S-006. |
 | S-006 | F-002 | In progress | `codex/slice6-goal-progress` | — | Full format/analyze/unit/widget gate passes; Android integration is blocked locally because Gradle has no configured JDK. |
 | S-007 | F-001, F-002 | Merged | — | `test/src/features/meals/application/meal_detail_controller_test.dart` and `test/src/features/meals/presentation/meal_detail_page_test.dart` | Merged as `86508a1`; saved-meal transparency, local edits without re-analysis, soft-delete confirmation, and recoverable delete failure are on `develop`. |
-| S-008 | F-001, F-002 | Planned | — | — | Begins after S-000–S-007 are merged. |
+| S-008 | F-001, F-002 | In progress | `codex/slice8-hardening` | — | Deterministic Android save/edit/day-move/restart hardening is in progress; accessibility evidence remains explicitly deferred. |
 
 ## Update rules
 
