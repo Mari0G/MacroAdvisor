@@ -41,24 +41,31 @@ void _configureCompactView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-Widget _app(Locale locale) => MaterialApp(
-  locale: locale,
-  theme: AppTheme.light(),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: TodayView(
-    day: LocalDay(2026, 7, 20),
-    currentDay: LocalDay(2026, 7, 20),
-    dashboard: AsyncValue.data(
-      DashboardDisplayModel.fromEntries(LocalDay(2026, 7, 20), [_entry()]),
+Widget _app(Locale locale) {
+  final theme = AppTheme.light();
+  return MaterialApp(
+    locale: locale,
+    // Pin the test font so the checked-in pixels match Linux CI and local runs.
+    theme: theme.copyWith(
+      textTheme: theme.textTheme.apply(fontFamily: 'Ahem'),
+      primaryTextTheme: theme.primaryTextTheme.apply(fontFamily: 'Ahem'),
     ),
-    onSelectDay: (_) {},
-    onOpenSettings: () {},
-    onRecordMeal: () {},
-    onOpenMealDetail: (_) {},
-    onRetry: () {},
-  ),
-);
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: TodayView(
+      day: LocalDay(2026, 7, 20),
+      currentDay: LocalDay(2026, 7, 20),
+      dashboard: AsyncValue.data(
+        DashboardDisplayModel.fromEntries(LocalDay(2026, 7, 20), [_entry()]),
+      ),
+      onSelectDay: (_) {},
+      onOpenSettings: () {},
+      onRecordMeal: () {},
+      onOpenMealDetail: (_) {},
+      onRetry: () {},
+    ),
+  );
+}
 
 MealEntry _entry() => MealEntry(
   id: 'golden-meal',
