@@ -1,0 +1,14 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"confidence\":\"medium\",\"items\":[{\"name\":\"Oatmeal\",\"amount\":{\"value\":150,\"unit\":\"g\"},\"nutrients\":{\"energy\":{\"value\":150},\"protein\":{\"value\":5,\"unit\":\"g\"}}}]}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ]
+}

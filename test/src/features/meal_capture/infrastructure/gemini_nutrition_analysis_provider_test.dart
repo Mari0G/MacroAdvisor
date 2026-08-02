@@ -60,6 +60,37 @@ void main() {
         final properties = schema['properties'] as Map<String, dynamic>;
         final items = properties['items'] as Map<String, dynamic>;
         final itemSchema = items['items'] as Map<String, dynamic>;
+        final itemProperties = itemSchema['properties'] as Map<String, dynamic>;
+        final itemNutrients =
+            (itemProperties['nutrients'] as Map<String, dynamic>)['properties']
+                as Map<String, dynamic>;
+        final totals = properties['totals'] as Map<String, dynamic>;
+        final totalsProperties = totals['properties'] as Map<String, dynamic>;
+        for (final nutrient in <String>[
+          'energy',
+          'protein',
+          'carbohydrates',
+          'fat',
+          'fibre',
+          'sugars',
+          'salt',
+        ]) {
+          expect(
+            (itemNutrients[nutrient] as Map<String, dynamic>)['required'],
+            contains('unit'),
+            reason: 'item nutrient $nutrient must require a unit',
+          );
+          expect(
+            (totalsProperties[nutrient] as Map<String, dynamic>)['required'],
+            contains('unit'),
+            reason: 'total nutrient $nutrient must require a unit',
+          );
+        }
+        expect(
+          (itemProperties['amount'] as Map<String, dynamic>)['required'],
+          isNull,
+          reason: 'meal amount units remain optional',
+        );
         expect(
           (itemSchema['properties'] as Map<String, dynamic>)['assumptions'],
           isA<Map<String, dynamic>>(),
@@ -74,6 +105,27 @@ void main() {
         );
       },
     );
+
+    test('maps missing nutrient units to invalid response', () async {
+      final provider = _provider(
+        _FakeTransport(
+          response: GeminiHttpResponse(
+            statusCode: 200,
+            body: _fixture('missing_nutrient_unit.json'),
+          ),
+        ),
+      );
+
+      await expectLater(
+        provider.analyzeText(
+          const NutritionAnalysisRequest(
+            description: 'oatmeal with banana and yogurt',
+            localeTag: 'en',
+          ),
+        ),
+        throwsA(isA<InvalidAnalysisResponse>()),
+      );
+    });
 
     test('preserves partial and unknown values as editable data', () async {
       final provider = _provider(
