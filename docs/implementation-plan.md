@@ -1,6 +1,6 @@
-# MVP delivery plan
+# Delivery plan
 
-Last updated: 2026-07-31
+Last updated: 2026-08-02
 
 This plan turns accepted specifications into reviewable delivery slices. It does
 not replace feature acceptance criteria. Progress and merged evidence live in
@@ -235,6 +235,14 @@ this gate.
   `develop`, target a draft pull request to `develop`, and do not mark S-008
   merged before all scoped evidence is on `develop`.
 
+### S-009 — Photo meal capture
+
+**Feature specification:** [F-003 — Photo meal capture](../specs/features/photo-meal-capture.md)
+
+**Outcome:** A user can take or choose one meal photo, understand and control what
+will be sent to the configured provider, review the resulting itemized estimate,
+and save corrected nutrition values without the app retaining the photo.
+
 ## New-feature checklist
 
 - Assign the next unused `F-###` ID and add it to [the specification index](../specs/README.md).
@@ -242,37 +250,26 @@ this gate.
   edge cases, acceptance criteria, and verification.
 - Assign the next unused `S-###` ID, add one slice for that feature here, and add
   its status row.
-- Keep the same IDs in task packets, branches, pull requests, tests, and status
+- Keep the same IDs in implementation tasks, branches, pull requests, tests, and status
   updates. IDs never change or get reused.
 
-## Slice packet
+## Slice entry format
 
-Use this packet when assigning a slice. Fill it from accepted specifications, not
-implementation guesses.
+Keep new feature slices as navigation metadata. The accepted feature specification
+is the complete definition; do not repeat its scope, behavior, boundaries,
+acceptance criteria, non-goals, or verification details here.
 
-### Outcome
+```markdown
+### S-### — Slice name
 
-- **Feature ID:**
-- **Slice ID:**
-- **User outcome:**
-- **Specification sections:**
-- **Acceptance criteria in scope:**
+**Feature specification:** [F-### — Feature name](../specs/features/feature-name.md)
 
-### Boundaries
+**Outcome:** One sentence describing the user-visible result.
+```
 
-- **Included work or expected files:**
-- **Interfaces that may change:**
-- **Interfaces that must not change:**
-- **Non-goals:**
-
-### Evidence and handoff
-
-- **Tests:** unit/contract, widget/golden, and Android journey as applicable
-- **Locales, accessibility, and failure states:**
-- **Sensitive data or credentials:**
-- **Code generation:**
-- **Environment-only verification:**
-- **Publication:** follow `AGENTS.md` and `docs/branching.md`.
+The detailed S-008 packet remains as a historical MVP exception because that
+hardening slice spans older feature specifications. Do not add detailed packets
+for one-feature/one-slice work that has its own specification.
 
 Keep unrelated worktree changes intact. Report a spec/code mismatch before
 widening the change.

@@ -11,7 +11,14 @@ pull request. Keep one primary agent accountable for writes and integration.
 ## Preflight
 
 1. Read `AGENTS.md`, `specs/README.md`, `docs/implementation-plan.md`, `docs/implementation-status.md`, and the relevant feature specification in full. Identify the `F-###` feature ID and `S-###` slice ID, then read only the routed product, technical, UI, and quality sections.
-2. Convert the request into the Slice packet in `docs/implementation-plan.md`. Infer safe details from the specifications; ask only when a missing choice materially changes behavior.
+2. Treat the accepted feature specification as the complete slice definition. If
+   the slice has its own feature specification, confirm that
+   `docs/implementation-plan.md` contains only its compact slice ID, linked
+   feature specification, and outcome; do not copy scope, behavior, boundaries,
+   acceptance criteria, non-goals, or verification into the plan. Use an existing
+   detailed packet only for a documented historical exception. Infer safe
+   implementation details from the specifications; ask only when a missing choice
+   materially changes behavior.
 3. Confirm the product, technical, UI, quality, and relevant feature specifications have `Accepted` status. Stop and report any unaccepted requirement or spec/code mismatch before broad edits.
 4. Inspect Git status and preserve unrelated changes. If the current branch is not the requested slice branch or unrelated changes are present, do not absorb, move, discard, or commit them; create an isolated branch/worktree from current `develop` when safe, otherwise stop and request disposition.
 5. Work from current `develop` on one short-lived branch allowed by `docs/branching.md`; never push directly to `develop` or `main`.
@@ -35,6 +42,7 @@ Add these slice-specific sections:
 | S-006 | `Goals` | domain/application modeling, UI construction, navigation, persistence | Today dashboard, Goal settings | Unit, contract, widget/golden, integration |
 | S-007 | `MVP outcomes` | domain/application modeling, navigation, persistence | Meal detail/edit, navigation/recovery | Unit, widget/golden, integration |
 | S-008 | All MVP outcomes and non-goals | All affected sections | All acceptance-traceability sections | All test layers and CI/release plan |
+| S-009 | `Planned post-MVP scope`, trust and local-first behavior | Photo input boundary, AI integration, error/privacy | Photo meal, navigation/recovery, privacy | All test layers, F-003 photo journey |
 
 ## Coordinate agents economically
 

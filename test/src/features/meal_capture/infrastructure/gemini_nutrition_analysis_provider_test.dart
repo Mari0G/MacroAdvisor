@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/gemini_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
@@ -105,6 +107,40 @@ void main() {
         );
       },
     );
+
+    test('sends a normalized image only as inline JPEG data', () async {
+      final transport = _FakeTransport(
+        response: GeminiHttpResponse(
+          statusCode: 200,
+          body: _fixture('success.json'),
+        ),
+      );
+      final provider = _provider(transport);
+
+      await provider.analyzeImage(
+        NutritionImageAnalysisRequest(
+          localeTag: 'en',
+          photo: MealPhoto(
+            jpegBytes: Uint8List.fromList([1, 2, 3]),
+            width: 1,
+            height: 1,
+          ),
+        ),
+      );
+
+      final request = jsonDecode(transport.body) as Map<String, dynamic>;
+      final parts =
+          ((request['contents'] as List).single
+                  as Map<String, dynamic>)['parts']
+              as List<dynamic>;
+      final inlineData =
+          (parts.single as Map<String, dynamic>)['inlineData']
+              as Map<String, dynamic>;
+      expect(inlineData['mimeType'], MealPhoto.mimeType);
+      expect(inlineData['data'], base64Encode([1, 2, 3]));
+      expect(transport.body, isNot(contains('filename')));
+      expect(transport.body, isNot(contains('fileUri')));
+    });
 
     test('maps missing nutrient units to invalid response', () async {
       final provider = _provider(

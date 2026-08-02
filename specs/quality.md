@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-02
 
 ## Quality gates
 
@@ -49,6 +49,12 @@ a deterministic fake AI provider. Initial critical journey:
 5. confirm and save
 6. observe updated daily progress
 7. restart and verify persistence
+
+The F-003 photo journey adds two deterministic Android variants: one synthetic
+system-library selection and one test-controlled camera result. Each proceeds
+through the same review/edit/save flow and proves that restart persistence
+contains reviewed nutrition values but no photo, path, filename, or metadata.
+Real personal meal photos and physical camera hardware are never CI inputs.
 
 ### Live smoke tests
 
