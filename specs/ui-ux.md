@@ -407,7 +407,7 @@ must not cover the active field or primary action.
 
 ## Deferred decisions
 
-These choices do not block the text-entry vertical slice:
+These choices do not block the text-entry delivery slice:
 
 - brand illustration, custom typography, and final marketing color palette
 - week/month navigation and whether it introduces a second root destination

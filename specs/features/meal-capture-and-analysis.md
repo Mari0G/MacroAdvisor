@@ -2,7 +2,9 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Feature ID: F-001
+
+Last updated: 2026-07-31
 
 ## User outcome
 

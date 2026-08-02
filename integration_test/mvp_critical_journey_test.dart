@@ -9,8 +9,10 @@ import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
+import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
 import 'package:macro_advisor/src/features/settings/application/provider_settings_controller.dart';
 import 'package:macro_advisor/src/features/settings/domain/credential_store.dart';
@@ -25,7 +27,7 @@ import 'package:macro_advisor/src/features/settings/infrastructure/deterministic
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('tests a provider and creates a reviewed meal locally', (
+  testWidgets('saves, edits, moves, and restores a reviewed meal', (
     tester,
   ) async {
     final harness = _TestHarness();
@@ -79,14 +81,86 @@ void main() {
         .observeDay(DateTime(2026, 7, 20))
         .first;
     expect(savedEntries, hasLength(1));
+    final savedEntry = savedEntries.single;
+    expect(savedEntry.description, 'Greek yogurt with banana and almonds');
     expect(
-      savedEntries.single.description,
+      savedEntry.items.single.name,
       'Greek yogurt with banana and almonds',
     );
-    expect(
-      savedEntries.single.items.single.name,
-      'Greek yogurt with banana and almonds',
+    expect(harness.provider.calls, 1);
+    expect(find.text('Meals and drinks (1)'), findsOneWidget);
+    expect(find.text('450 kcal'), findsWidgets);
+
+    await tester.tap(find.text('Greek yogurt with banana and almonds').first);
+    await _advance(tester);
+    expect(find.text('Saved meal'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('edit-meal-button')));
+    await _advance(tester);
+    expect(find.text('Edit saved meal'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(Key('edit-meal-item-${savedEntry.items.single.id}')),
     );
+    await _advance(tester);
+    final energyField = find.byKey(const Key('item-nutrient-energy'));
+    await tester.ensureVisible(energyField);
+    await tester.enterText(energyField, '900');
+    await tester.tap(find.byKey(const Key('save-item-button')));
+    await _advance(tester);
+
+    await tester.tap(find.byKey(const Key('meal-occurrence-button')));
+    await _advance(tester);
+    await tester.tap(find.text('19').last);
+    await _advance(tester);
+    await tester.tap(find.text('OK').last);
+    await _advance(tester);
+    await tester.tap(find.text('OK').last);
+    await _advance(tester);
+
+    await tester.tap(find.byKey(const Key('save-meal-button')));
+    await _advance(tester);
+
+    final revisedEntry = await harness.repository.findById(savedEntry.id);
+    expect(revisedEntry, isNotNull);
+    expect(revisedEntry!.revision, 1);
+    expect(revisedEntry.userEdited, isTrue);
+    expect(
+      revisedEntry.items.single.nutrition[NutrientId.energy],
+      isA<KnownNutritionValue>(),
+    );
+    expect(
+      (revisedEntry.items.single.nutrition[NutrientId.energy]
+              as KnownNutritionValue)
+          .milliUnits,
+      900000,
+    );
+    expect(revisedEntry.occursOnLocalDay(DateTime(2026, 7, 19)), isTrue);
+    expect(revisedEntry.occursOnLocalDay(DateTime(2026, 7, 20)), isFalse);
+    expect(harness.provider.calls, 1);
+
+    await tester.pageBack();
+    await _waitFor(tester, find.text('Meals and drinks (0)'));
+    expect(find.text('No meals or drinks recorded'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Previous day'));
+    await _waitFor(tester, find.text('Meals and drinks (1)'));
+    expect(find.text('900 kcal'), findsWidgets);
+
+    // Recreate the app with the same database to prove the revised entry is
+    // persisted, rather than only reflected by the in-memory edit state.
+    await tester.pumpWidget(harness.app);
+    await _advance(tester);
+    expect(find.text('Meals and drinks (0)'), findsOneWidget);
+    await tester.tap(find.byTooltip('Previous day'));
+    await _waitFor(tester, find.text('Meals and drinks (1)'));
+    expect(find.text('900 kcal'), findsWidgets);
+
+    await tester.tap(find.text('Greek yogurt with banana and almonds').first);
+    await _waitFor(tester, find.text('Saved meal'));
+    await _waitFor(tester, find.textContaining('Revision 1'));
+    expect(find.text('Edited'), findsOneWidget);
+    expect(harness.provider.calls, 1);
   });
 }
 
@@ -117,15 +191,21 @@ class _TestHarness {
       database = AppDatabase.forTesting(NativeDatabase.memory()),
       credentials = _InMemoryCredentialStore() {
     repository = DriftMealRepository(database, clock, ids);
+    provider = _CountingNutritionAnalysisProvider(
+      DeterministicNutritionAnalysisProvider(clock, ids),
+    );
   }
 
   final _FixedClock clock;
   final _SequenceIdGenerator ids;
   final AppDatabase database;
   final _InMemoryCredentialStore credentials;
+  late final _CountingNutritionAnalysisProvider provider;
   late final DriftMealRepository repository;
+  var _appVersion = 0;
 
   Widget get app => ProviderScope(
+    key: ValueKey('test-app-${++_appVersion}'),
     overrides: [
       clockProvider.overrideWithValue(clock),
       idGeneratorProvider.overrideWithValue(ids),
@@ -134,14 +214,25 @@ class _TestHarness {
       providerConnectionCheckerProvider.overrideWithValue(
         const DeterministicConnectionChecker(),
       ),
-      nutritionAnalysisProvider.overrideWithValue(
-        DeterministicNutritionAnalysisProvider(clock, ids),
-      ),
+      nutritionAnalysisProvider.overrideWithValue(provider),
     ],
     child: const MacroAdvisorApp(locale: Locale('en')),
   );
 
   Future<void> dispose() => database.close();
+}
+
+class _CountingNutritionAnalysisProvider implements NutritionAnalysisProvider {
+  _CountingNutritionAnalysisProvider(this._delegate);
+
+  final NutritionAnalysisProvider _delegate;
+  var calls = 0;
+
+  @override
+  Future<NutritionAnalysis> analyzeText(NutritionAnalysisRequest request) {
+    calls++;
+    return _delegate.analyzeText(request);
+  }
 }
 
 class _FixedClock implements Clock {

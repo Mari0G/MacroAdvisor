@@ -4,7 +4,8 @@
 
 ## Specification
 
-- Slice:
+- Feature ID:
+- Slice ID:
 - Specification sections:
 - Acceptance criteria covered:
 
