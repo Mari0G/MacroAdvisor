@@ -18,6 +18,8 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await tester.tap(find.text('Record meal').first);
     await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.byKey(const Key('describe-meal-source')));
+    await tester.pump(const Duration(seconds: 1));
     await tester.enterText(
       find.byKey(const Key('meal-description-field')),
       'Greek yogurt with banana and almonds',

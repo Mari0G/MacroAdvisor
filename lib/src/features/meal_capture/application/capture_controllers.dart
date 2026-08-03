@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
@@ -136,6 +138,184 @@ final descriptionControllerProvider =
       DescriptionController.new,
     );
 
+enum PhotoPhase {
+  chooser,
+  preparing,
+  preview,
+  analyzing,
+  failure,
+  readyForReview,
+}
+
+class PhotoState {
+  const PhotoState({
+    required this.occurredAt,
+    this.phase = PhotoPhase.chooser,
+    this.photo,
+    this.failure,
+    this.analysis,
+  });
+
+  final DateTime occurredAt;
+  final PhotoPhase phase;
+  final MealPhoto? photo;
+  final Object? failure;
+  final NutritionAnalysis? analysis;
+
+  bool get hasPhoto => photo != null;
+  bool get canAnalyze =>
+      hasPhoto &&
+      (phase == PhotoPhase.preview ||
+          (phase == PhotoPhase.failure && failure is NutritionAnalysisFailure));
+
+  PhotoState copyWith({
+    DateTime? occurredAt,
+    PhotoPhase? phase,
+    MealPhoto? photo,
+    Object? failure,
+    NutritionAnalysis? analysis,
+    bool clearPhoto = false,
+    bool clearFailure = false,
+    bool clearAnalysis = false,
+  }) => PhotoState(
+    occurredAt: occurredAt ?? this.occurredAt,
+    phase: phase ?? this.phase,
+    photo: clearPhoto ? null : photo ?? this.photo,
+    failure: clearFailure ? null : failure ?? this.failure,
+    analysis: clearAnalysis ? null : analysis ?? this.analysis,
+  );
+}
+
+class PhotoController extends Notifier<PhotoState> {
+  var _requestVersion = 0;
+
+  @override
+  PhotoState build() => PhotoState(occurredAt: ref.read(clockProvider).now());
+
+  Future<void> recoverLostPickerData() async {
+    if (state.phase != PhotoPhase.chooser) return;
+    final recovered = await ref.read(mealPhotoSourceProvider).recoverLostData();
+    if (recovered != null) await _prepare(recovered);
+  }
+
+  Future<void> chooseSource(MealPhotoSourceType source) async {
+    if (state.phase == PhotoPhase.preparing ||
+        state.phase == PhotoPhase.analyzing) {
+      return;
+    }
+    final retainsPreview = state.photo != null;
+    state = state.copyWith(
+      phase: PhotoPhase.preparing,
+      clearFailure: true,
+      clearAnalysis: true,
+    );
+    await _prepare(
+      await ref.read(mealPhotoSourceProvider).acquire(source),
+      retainsPreview: retainsPreview,
+    );
+  }
+
+  Future<void> _prepare(
+    MealPhotoAcquisition acquisition, {
+    bool retainsPreview = false,
+  }) async {
+    switch (acquisition) {
+      case CancelledMealPhotoAcquisition():
+        state = state.copyWith(
+          phase: retainsPreview ? PhotoPhase.preview : PhotoPhase.chooser,
+          clearFailure: true,
+        );
+      case FailedMealPhotoAcquisition(:final failure):
+        state = state.copyWith(
+          phase: retainsPreview ? PhotoPhase.preview : PhotoPhase.failure,
+          failure: failure,
+        );
+      case AcquiredMealPhoto(:final bytes):
+        final version = ++_requestVersion;
+        state = state.copyWith(phase: PhotoPhase.preparing, clearFailure: true);
+        try {
+          final photo = await ref
+              .read(mealPhotoNormalizerProvider)
+              .normalize(bytes);
+          if (version != _requestVersion) return;
+          state = state.copyWith(
+            phase: PhotoPhase.preview,
+            photo: photo,
+            clearFailure: true,
+            clearAnalysis: true,
+          );
+        } on MealPhotoFailure catch (failure) {
+          if (version != _requestVersion) return;
+          state = state.copyWith(
+            phase: PhotoPhase.failure,
+            failure: failure,
+            clearPhoto: true,
+          );
+        } catch (_) {
+          if (version != _requestVersion) return;
+          state = state.copyWith(
+            phase: PhotoPhase.failure,
+            failure: const UnreadableMealPhoto(),
+            clearPhoto: true,
+          );
+        }
+    }
+  }
+
+  void updateOccurredAt(DateTime occurredAt) {
+    if (state.phase == PhotoPhase.analyzing) return;
+    state = state.copyWith(occurredAt: occurredAt);
+  }
+
+  Future<void> analyze(String localeTag) async {
+    final photo = state.photo;
+    if (photo == null || state.phase != PhotoPhase.preview) return;
+    final version = ++_requestVersion;
+    state = state.copyWith(
+      phase: PhotoPhase.analyzing,
+      clearFailure: true,
+      clearAnalysis: true,
+    );
+    try {
+      final analysis = await ref
+          .read(nutritionAnalysisProvider)
+          .analyzeImage(
+            NutritionImageAnalysisRequest(photo: photo, localeTag: localeTag),
+          );
+      if (version != _requestVersion) return;
+      state = state.copyWith(
+        phase: PhotoPhase.readyForReview,
+        analysis: analysis,
+        clearPhoto: true,
+      );
+    } on NutritionAnalysisFailure catch (failure) {
+      if (version != _requestVersion) return;
+      state = state.copyWith(phase: PhotoPhase.failure, failure: failure);
+    } catch (_) {
+      if (version != _requestVersion) return;
+      state = state.copyWith(
+        phase: PhotoPhase.failure,
+        failure: const UnknownAnalysisFailure(),
+      );
+    }
+  }
+
+  void cancelAnalysis() {
+    if (state.phase != PhotoPhase.analyzing) return;
+    _requestVersion++;
+    state = state.copyWith(phase: PhotoPhase.preview);
+  }
+
+  void discard() {
+    _requestVersion++;
+    state = PhotoState(occurredAt: ref.read(clockProvider).now());
+  }
+}
+
+final photoControllerProvider = NotifierProvider<PhotoController, PhotoState>(
+  PhotoController.new,
+);
+
 enum ReviewPhase { unavailable, reviewing, saving, saveFailure, saved }
 
 class ReviewState {
@@ -176,20 +356,47 @@ class ReviewState {
 
 class ReviewController extends Notifier<ReviewState> {
   String? _confirmationId;
+  NutritionAnalysis? _activeAnalysis;
 
   @override
   ReviewState build() {
+    final photo = ref.watch(photoControllerProvider);
+    if (photo.phase == PhotoPhase.readyForReview && photo.analysis != null) {
+      return _startReview(
+        description: null,
+        occurredAt: photo.occurredAt,
+        analysis: photo.analysis!,
+      );
+    }
     final description = ref.watch(descriptionControllerProvider);
     if (description.phase != DescriptionPhase.readyForReview ||
         description.analysis == null) {
+      _activeAnalysis = null;
+      _confirmationId = null;
       return const ReviewState(phase: ReviewPhase.unavailable);
+    }
+    return _startReview(
+      description: description.description.trim(),
+      occurredAt: description.occurredAt,
+      analysis: description.analysis!,
+    );
+  }
+
+  ReviewState _startReview({
+    required String? description,
+    required DateTime occurredAt,
+    required NutritionAnalysis analysis,
+  }) {
+    if (!identical(_activeAnalysis, analysis)) {
+      _activeAnalysis = analysis;
+      _confirmationId = null;
     }
     return ReviewState(
       phase: ReviewPhase.reviewing,
-      description: description.description.trim(),
-      occurredAt: description.occurredAt,
-      analysis: description.analysis,
-      items: List.unmodifiable(description.analysis!.items),
+      description: description,
+      occurredAt: occurredAt,
+      analysis: analysis,
+      items: List.unmodifiable(analysis.items),
     );
   }
 
@@ -249,6 +456,8 @@ class ReviewController extends Notifier<ReviewState> {
             ),
           );
       state = state.copyWith(phase: ReviewPhase.saved);
+      _confirmationId = null;
+      _activeAnalysis = null;
     } catch (_) {
       state = state.copyWith(phase: ReviewPhase.saveFailure);
     }

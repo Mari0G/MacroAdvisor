@@ -1,6 +1,6 @@
-# MVP implementation status
+# Implementation status
 
-Last updated: 2026-07-31
+Last updated: 2026-08-03
 
 This tracker records durable delivery progress for the slices in
 [implementation-plan.md](implementation-plan.md). It does not replace feature
@@ -30,6 +30,8 @@ features. New rows use one feature ID and one slice ID.
 | S-006 | F-002 | In progress | `codex/slice6-goal-progress` | — | Full format/analyze/unit/widget gate passes; Android integration is blocked locally because Gradle has no configured JDK. |
 | S-007 | F-001, F-002 | Merged | — | `test/src/features/meals/application/meal_detail_controller_test.dart` and `test/src/features/meals/presentation/meal_detail_page_test.dart` | Merged as `86508a1`; saved-meal transparency, local edits without re-analysis, soft-delete confirmation, and recoverable delete failure are on `develop`. |
 | S-008 | F-001, F-002 | In review | `codex/slice8-hardening` | — | Deterministic Android save/edit/day-move/restart hardening passes locally on an Android emulator; accessibility evidence remains explicitly deferred. |
+| S-009 | F-003 | In review | `feat/s-009-photo-capture` | — | Full local gate and deterministic Android library/camera journeys pass; draft PR pending. |
+| S-010 | F-001 | Planned | — | — | Permits unknown/noncanonical item amount units as descriptive, non-fatal values; adds a distinct `AnalysisTimedOut` provider failure and localized recovery. |
 
 ## Update rules
 

@@ -1,14 +1,19 @@
+import 'dart:typed_data';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as image;
 import 'package:integration_test/integration_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
@@ -58,6 +63,8 @@ void main() {
     await _advance(tester);
 
     await tester.tap(find.text('Record meal').first);
+    await _advance(tester);
+    await tester.tap(find.byKey(const Key('describe-meal-source')));
     await _advance(tester);
     await tester.enterText(
       find.byKey(const Key('meal-description-field')),
@@ -162,6 +169,61 @@ void main() {
     expect(find.text('Edited'), findsOneWidget);
     expect(harness.provider.calls, 1);
   });
+
+  testWidgets('library and camera photo meals save nutrition without media', (
+    tester,
+  ) async {
+    final harness = _TestHarness();
+    addTearDown(harness.dispose);
+
+    await tester.pumpWidget(harness.app);
+    await _advance(tester);
+
+    final sources = <Finder>[
+      find.byKey(const Key('choose-photo-source')),
+      find.byKey(const Key('take-photo-source')),
+    ];
+    for (var index = 0; index < sources.length; index++) {
+      final source = sources[index];
+      await tester.tap(find.text('Record meal').first);
+      await _advance(tester);
+      await tester.tap(source);
+      await _waitFor(tester, find.text('Photo meal or drink'));
+      final analyzeButton = find.byKey(const Key('analyze-photo-button')).last;
+      await tester.scrollUntilVisible(
+        analyzeButton,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(analyzeButton);
+      await _waitFor(tester, find.text('Review estimate'));
+      await tester.tap(find.byKey(const Key('confirm-save-button')));
+      await _advance(tester);
+      if (index < sources.length - 1) {
+        await tester.pumpWidget(harness.app);
+        await _advance(tester);
+      }
+    }
+
+    final saved = await harness.repository
+        .observeDay(DateTime(2026, 7, 20))
+        .first;
+    expect(saved, hasLength(2));
+    expect(saved.map((entry) => entry.description), everyElement(isNull));
+    expect(harness.photoSource.sources, [
+      MealPhotoSourceType.library,
+      MealPhotoSourceType.camera,
+    ]);
+    expect(harness.provider.calls, 2);
+
+    await tester.pumpWidget(harness.app);
+    await _advance(tester);
+    final restored = await harness.repository
+        .observeDay(DateTime(2026, 7, 20))
+        .first;
+    expect(restored, hasLength(2));
+    expect(restored.map((entry) => entry.description), everyElement(isNull));
+  });
 }
 
 Future<void> _advance(WidgetTester tester) =>
@@ -202,6 +264,7 @@ class _TestHarness {
   final _InMemoryCredentialStore credentials;
   late final _CountingNutritionAnalysisProvider provider;
   late final DriftMealRepository repository;
+  final photoSource = _TestPhotoSource();
   var _appVersion = 0;
 
   Widget get app => ProviderScope(
@@ -215,6 +278,8 @@ class _TestHarness {
         const DeterministicConnectionChecker(),
       ),
       nutritionAnalysisProvider.overrideWithValue(provider),
+      mealPhotoSourceProvider.overrideWithValue(photoSource),
+      mealPhotoNormalizerProvider.overrideWithValue(_TestPhotoNormalizer()),
     ],
     child: const MacroAdvisorApp(locale: Locale('en')),
   );
@@ -233,6 +298,35 @@ class _CountingNutritionAnalysisProvider implements NutritionAnalysisProvider {
     calls++;
     return _delegate.analyzeText(request);
   }
+
+  @override
+  Future<NutritionAnalysis> analyzeImage(
+    NutritionImageAnalysisRequest request,
+  ) {
+    calls++;
+    return _delegate.analyzeImage(request);
+  }
+}
+
+class _TestPhotoSource implements MealPhotoSource {
+  final sources = <MealPhotoSourceType>[];
+
+  @override
+  Future<MealPhotoAcquisition> acquire(MealPhotoSourceType source) async {
+    sources.add(source);
+    final picture = image.Image(width: 1, height: 1)
+      ..clear(image.ColorRgb8(0, 0, 0));
+    return AcquiredMealPhoto(Uint8List.fromList(image.encodeJpg(picture)));
+  }
+
+  @override
+  Future<MealPhotoAcquisition?> recoverLostData() async => null;
+}
+
+class _TestPhotoNormalizer implements MealPhotoNormalizer {
+  @override
+  Future<MealPhoto> normalize(Uint8List sourceBytes) async =>
+      MealPhoto(jpegBytes: sourceBytes, width: 1, height: 1);
 }
 
 class _FixedClock implements Clock {

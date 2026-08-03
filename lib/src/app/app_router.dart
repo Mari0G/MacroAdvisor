@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/describe_meal_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/edit_item_page.dart';
+import 'package:macro_advisor/src/features/meal_capture/presentation/meal_source_chooser_page.dart';
+import 'package:macro_advisor/src/features/meal_capture/presentation/photo_meal_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/review_estimate_page.dart';
 import 'package:macro_advisor/src/features/meals/presentation/meal_detail_page.dart';
 import 'package:macro_advisor/src/features/settings/presentation/provider_settings_page.dart';
@@ -12,6 +14,8 @@ abstract final class AppRoutes {
   static const settings = '/settings';
   static const providerSettings = '/settings/provider';
   static const describeMeal = '/capture/describe';
+  static const chooseMealSource = '/capture/source';
+  static const photoMeal = '/capture/photo';
   static const reviewMeal = '/capture/review';
   static const editMealItem = '/capture/item';
   static const mealDetail = '/meals/detail';
@@ -32,6 +36,14 @@ abstract final class AppRouter {
       AppRoutes.describeMeal => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => const DescribeMealPage(),
+      ),
+      AppRoutes.chooseMealSource => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const MealSourceChooserPage(),
+      ),
+      AppRoutes.photoMeal => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const PhotoMealPage(),
       ),
       AppRoutes.reviewMeal => MaterialPageRoute<void>(
         settings: settings,

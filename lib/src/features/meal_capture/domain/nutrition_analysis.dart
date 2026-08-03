@@ -1,3 +1,4 @@
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 
 /// A provider-neutral, validated estimate. Provider SDK DTOs and credentials
@@ -39,8 +40,20 @@ class NutritionAnalysisRequest {
   final String localeTag;
 }
 
+class NutritionImageAnalysisRequest {
+  const NutritionImageAnalysisRequest({
+    required this.photo,
+    required this.localeTag,
+  });
+
+  final MealPhoto photo;
+  final String localeTag;
+}
+
 abstract interface class NutritionAnalysisProvider {
   Future<NutritionAnalysis> analyzeText(NutritionAnalysisRequest request);
+
+  Future<NutritionAnalysis> analyzeImage(NutritionImageAnalysisRequest request);
 }
 
 sealed class NutritionAnalysisFailure implements Exception {
@@ -69,6 +82,10 @@ final class InvalidAnalysisResponse extends NutritionAnalysisFailure {
 
 final class AnalysisContentRejected extends NutritionAnalysisFailure {
   const AnalysisContentRejected();
+}
+
+final class NoMealDetected extends NutritionAnalysisFailure {
+  const NoMealDetected();
 }
 
 final class UnknownAnalysisFailure extends NutritionAnalysisFailure {
