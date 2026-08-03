@@ -54,7 +54,7 @@ final class GeminiNutritionAnalysisProvider
     required this._clock,
     required this._idGenerator,
     GeminiHttpTransport? transport,
-    this.timeout = const Duration(seconds: 20),
+    this.timeout = const Duration(seconds: 60),
     this.connectionCheckTimeout = const Duration(seconds: 45),
   }) : _transport = transport ?? _IoGeminiHttpTransport(HttpClient());
 

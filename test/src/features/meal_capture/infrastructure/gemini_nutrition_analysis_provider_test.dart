@@ -53,6 +53,7 @@ void main() {
         expect(transport.body, contains('80 g Haferflocken'));
         expect(transport.body, contains('de-DE'));
         expect(transport.body, contains('thinkingLevel'));
+        expect(transport.timeout, const Duration(seconds: 60));
 
         final request = jsonDecode(transport.body) as Map<String, dynamic>;
         final schema =
@@ -138,6 +139,7 @@ void main() {
               as Map<String, dynamic>;
       expect(inlineData['mimeType'], MealPhoto.mimeType);
       expect(inlineData['data'], base64Encode([1, 2, 3]));
+      expect(transport.timeout, const Duration(seconds: 60));
       expect(transport.body, isNot(contains('filename')));
       expect(transport.body, isNot(contains('fileUri')));
     });
