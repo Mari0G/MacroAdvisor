@@ -32,6 +32,9 @@ features. New rows use one feature ID and one slice ID.
 | S-008 | F-001, F-002 | In review | `codex/slice8-hardening` | — | Deterministic Android save/edit/day-move/restart hardening passes locally on an Android emulator; accessibility evidence remains explicitly deferred. |
 | S-009 | F-003 | In review | `feat/s-009-photo-capture` | — | Full local gate and deterministic Android library/camera journeys pass; draft PR pending. |
 | S-010 | F-001 | Planned | — | — | Permits unknown/noncanonical item amount units as descriptive, non-fatal values; adds a distinct `AnalysisTimedOut` provider failure and localized recovery. |
+| S-011 | Planned feature | Planned | — | — | Reserved for configurable nutrient goals and maximums, contextual Today progress, and charted history. Detailed feature specification and slice plan are pending. |
+| S-012 | Planned feature | Planned | — | — | Reserved for opt-out local retention of a small, low-resolution food image. It requires an accepted revision to F-003's current no-image-persistence requirement before implementation. |
+| S-013 | — | Planned | — | — | Reserved maintenance slice for compact, expandable warning and information UI and visual-spacing fixes. Detailed slice plan is pending. |
 
 ## Update rules
 

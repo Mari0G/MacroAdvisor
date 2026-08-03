@@ -251,6 +251,37 @@ and save corrected nutrition values without the app retaining the photo.
 uses an unknown unit, and a provider-response timeout is shown as a distinct,
 localized recoverable failure.
 
+## Reserved future slices
+
+The following slice IDs reserve the agreed delivery order. They are planning
+placeholders only: each must receive its feature specification and complete
+slice plan in its dedicated planning task before implementation starts.
+
+### S-011 — Goals, home-screen progress, and history
+
+**Feature specification:** To be created (planned successor to the in-progress
+goal work in F-002).
+
+**Outcome:** A user can configure nutrient goals and maximum values, follow
+contextual progress on Today, and explore weekly, monthly, and other historical
+views with charts.
+
+### S-012 — Local food-image retention
+
+**Feature specification:** To be created (requires a revision to F-003's
+privacy and persistence requirements before implementation).
+
+**Outcome:** By default, the app retains a small, low-resolution local food
+image for a saved meal, and the user can disable that retention in Settings.
+
+### S-013 — UI cleanup
+
+**Feature:** none (maintenance).
+
+**Outcome:** Warning and information UI uses less space while retaining
+expandable detail, and visual spacing defects between interface items are
+corrected.
+
 ## New-feature checklist
 
 - Assign the next unused `F-###` ID and add it to [the specification index](../specs/README.md).
