@@ -1,6 +1,6 @@
 # Delivery plan
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 This plan turns accepted specifications into reviewable delivery slices. It does
 not replace feature acceptance criteria. Progress and merged evidence live in
@@ -242,6 +242,14 @@ this gate.
 **Outcome:** A user can take or choose one meal photo, understand and control what
 will be sent to the configured provider, review the resulting itemized estimate,
 and save corrected nutrition values without the app retaining the photo.
+
+### S-010 — Analysis response resilience
+
+**Feature specification:** [F-001 — Meal capture and analysis](../specs/features/meal-capture-and-analysis.md)
+
+**Outcome:** A valid nutrition estimate remains editable when its item amount
+uses an unknown unit, and a provider-response timeout is shown as a distinct,
+localized recoverable failure.
 
 ## New-feature checklist
 
