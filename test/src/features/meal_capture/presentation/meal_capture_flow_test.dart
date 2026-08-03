@@ -8,6 +8,9 @@ import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal_repository.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
@@ -127,6 +130,7 @@ Widget _app(Locale locale, _Repository repository, {_PhotoSource? source}) {
       clockProvider.overrideWithValue(clock),
       idGeneratorProvider.overrideWithValue(ids),
       mealRepositoryProvider.overrideWithValue(repository),
+      goalRepositoryProvider.overrideWithValue(_EmptyGoalRepository()),
       nutritionAnalysisProvider.overrideWithValue(
         DeterministicNutritionAnalysisProvider(clock, ids),
       ),
@@ -183,6 +187,9 @@ class _Repository implements MealRepository {
   @override
   Stream<List<MealEntry>> observeDay(DateTime localDay) => Stream.value([]);
   @override
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end) =>
+      Stream.value([]);
+  @override
   Future<MealEntry> restore({
     required String id,
     required int expectedRevision,
@@ -194,6 +201,17 @@ class _Repository implements MealRepository {
   }) => throw UnimplementedError();
   @override
   Future<MealEntry> update(MealEntry entry) => throw UnimplementedError();
+}
+
+class _EmptyGoalRepository implements GoalRepository {
+  @override
+  Future<GoalSet> read() async => GoalSet.empty();
+
+  @override
+  Stream<GoalSet> observe() => Stream.value(GoalSet.empty());
+
+  @override
+  Future<GoalSet> replace(GoalSet goals) async => goals;
 }
 
 class _Clock implements Clock {

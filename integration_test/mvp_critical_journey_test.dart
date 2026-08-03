@@ -11,6 +11,8 @@ import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/infrastructure/drift_goal_repository.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
@@ -43,6 +45,23 @@ void main() {
 
     await tester.tap(find.byTooltip('Open settings'));
     await _advance(tester);
+    await tester.tap(find.text('Nutrition goals'));
+    await _advance(tester);
+    await tester.tap(find.text('Minimum').first);
+    await _advance(tester);
+    await tester.enterText(find.byType(TextFormField).first, '1800');
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('save-goals-button')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('save-goals-button')));
+    await _advance(tester);
+    await tester.pageBack();
+    await _advance(tester);
+
+    await tester.tap(find.byTooltip('Open settings'));
+    await _advance(tester);
     await tester.tap(find.text('AI provider'));
     await _advance(tester);
     await tester.enterText(
@@ -62,8 +81,8 @@ void main() {
     await tester.pageBack();
     await _advance(tester);
 
-    await tester.tap(find.text('Record meal').first);
-    await _advance(tester);
+    await tester.tap(find.byType(FloatingActionButton));
+    await _waitFor(tester, find.byKey(const Key('describe-meal-source')));
     await tester.tap(find.byKey(const Key('describe-meal-source')));
     await _advance(tester);
     await tester.enterText(
@@ -97,8 +116,21 @@ void main() {
     expect(harness.provider.calls, 1);
     expect(find.text('Meals and drinks (1)'), findsOneWidget);
     expect(find.text('450 kcal'), findsWidgets);
+    expect(find.text('Progress toward goals'), findsOneWidget);
+    expect(find.text('Below minimum'), findsOneWidget);
 
-    await tester.tap(find.text('Greek yogurt with banana and almonds').first);
+    await tester.tap(find.byTooltip('Open nutrition history'));
+    await _advance(tester);
+    expect(find.text('Nutrition history'), findsOneWidget);
+    expect(find.text('Daily values'), findsOneWidget);
+    await tester.pageBack();
+    await _advance(tester);
+
+    final savedMealFinder = find
+        .text('Greek yogurt with banana and almonds')
+        .first;
+    await tester.ensureVisible(savedMealFinder);
+    await tester.tap(savedMealFinder);
     await _advance(tester);
     expect(find.text('Saved meal'), findsOneWidget);
 
@@ -150,7 +182,9 @@ void main() {
     await _waitFor(tester, find.text('Meals and drinks (0)'));
     expect(find.text('No meals or drinks recorded'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Previous day'));
+    final previousDayFinder = find.byTooltip('Previous day');
+    await tester.ensureVisible(previousDayFinder);
+    await tester.tap(previousDayFinder);
     await _waitFor(tester, find.text('Meals and drinks (1)'));
     expect(find.text('900 kcal'), findsWidgets);
 
@@ -159,6 +193,7 @@ void main() {
     await tester.pumpWidget(harness.app);
     await _advance(tester);
     expect(find.text('Meals and drinks (0)'), findsOneWidget);
+    expect(find.text('Progress toward goals'), findsOneWidget);
     await tester.tap(find.byTooltip('Previous day'));
     await _waitFor(tester, find.text('Meals and drinks (1)'));
     expect(find.text('900 kcal'), findsWidgets);
@@ -273,6 +308,7 @@ class _TestHarness {
       clockProvider.overrideWithValue(clock),
       idGeneratorProvider.overrideWithValue(ids),
       mealRepositoryProvider.overrideWithValue(repository),
+      goalRepositoryProvider.overrideWithValue(DriftGoalRepository(database)),
       credentialStoreProvider.overrideWithValue(credentials),
       providerConnectionCheckerProvider.overrideWithValue(
         const DeterministicConnectionChecker(),

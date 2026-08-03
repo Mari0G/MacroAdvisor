@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal_repository.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
@@ -16,6 +19,7 @@ void main() {
     overrides: [
       clockProvider.overrideWithValue(clock),
       mealRepositoryProvider.overrideWithValue(_EmptyMealRepository()),
+      goalRepositoryProvider.overrideWithValue(_EmptyGoalRepository()),
       mealPhotoSourceProvider.overrideWithValue(_NoopPhotoSource()),
     ],
     child: MacroAdvisorApp(locale: locale),
@@ -153,6 +157,10 @@ class _EmptyMealRepository implements MealRepository {
       Stream.value(const <MealEntry>[]);
 
   @override
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end) =>
+      Stream.value(const <MealEntry>[]);
+
+  @override
   Future<MealEntry> update(MealEntry entry) => throw UnimplementedError();
 
   @override
@@ -166,6 +174,17 @@ class _EmptyMealRepository implements MealRepository {
     required String id,
     required int expectedRevision,
   }) => throw UnimplementedError();
+}
+
+class _EmptyGoalRepository implements GoalRepository {
+  @override
+  Future<GoalSet> read() async => GoalSet.empty();
+
+  @override
+  Stream<GoalSet> observe() => Stream.value(GoalSet.empty());
+
+  @override
+  Future<GoalSet> replace(GoalSet goals) async => goals;
 }
 
 class _FixedClock implements Clock {

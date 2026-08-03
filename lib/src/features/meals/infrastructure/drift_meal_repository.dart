@@ -67,6 +67,29 @@ class DriftMealRepository implements MealRepository {
   }
 
   @override
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end) {
+    final first = DateTime.utc(start.year, start.month, start.day);
+    final last = DateTime.utc(end.year, end.month, end.day);
+    return _database.select(_database.mealEntries).watch().asyncMap((
+      rows,
+    ) async {
+      if (last.isBefore(first)) return const <MealEntry>[];
+      final entries = await Future.wait(
+        rows.where((row) => row.deletedAtUtc == null).map(_readEntry),
+      );
+      return entries
+          .where((entry) {
+            final local = entry.occurredAtUtc.add(
+              Duration(minutes: entry.occurredOffsetMinutes),
+            );
+            final occurrence = DateTime.utc(local.year, local.month, local.day);
+            return !occurrence.isBefore(first) && !occurrence.isAfter(last);
+          })
+          .toList(growable: false);
+    });
+  }
+
+  @override
   Future<MealEntry> update(MealEntry entry) async {
     return _database.transaction(() async {
       final existing = await _entryOrThrow(entry.id);

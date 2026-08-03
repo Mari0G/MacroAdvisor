@@ -8,6 +8,10 @@ abstract interface class MealRepository {
   /// Emits active entries whose recorded local occurrence falls on [localDay].
   Stream<List<MealEntry>> observeDay(DateTime localDay);
 
+  /// Emits active entries whose recorded local occurrence is in the inclusive
+  /// bounded range.
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end);
+
   /// Replaces an active entry when [entry.revision] matches the stored revision.
   Future<MealEntry> update(MealEntry entry);
 

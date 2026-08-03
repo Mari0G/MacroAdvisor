@@ -48,3 +48,15 @@ class MealNutrientValues extends Table {
   @override
   Set<Column<Object>> get primaryKey => {mealItemId, nutrientId};
 }
+
+@DataClassName('GoalTargetRow')
+class GoalTargets extends Table {
+  TextColumn get nutrientId => text()();
+  TextColumn get unit => text()();
+  TextColumn get targetKind => text()();
+  IntColumn get minimumMilliUnits => integer().nullable()();
+  IntColumn get maximumMilliUnits => integer().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {nutrientId};
+}

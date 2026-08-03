@@ -7,6 +7,10 @@ import 'package:macro_advisor/src/app/app_router.dart';
 import 'package:macro_advisor/src/core/presentation/responsive_content.dart';
 import 'package:macro_advisor/src/features/dashboard/application/dashboard_controller.dart';
 import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/application/today_progress.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
+import 'package:macro_advisor/src/features/goals/presentation/goal_text.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/nutrition_text.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
@@ -22,8 +26,12 @@ class TodayPage extends ConsumerWidget {
       day: selectedDay,
       currentDay: currentDay,
       dashboard: ref.watch(dashboardDisplayProvider(selectedDay)),
+      goals: ref.watch(activeGoalSetProvider),
       onSelectDay: ref.read(dashboardControllerProvider.notifier).selectDay,
       onOpenSettings: () => Navigator.of(context).pushNamed(AppRoutes.settings),
+      onOpenHistory: () => Navigator.of(
+        context,
+      ).pushNamed(AppRoutes.history, arguments: selectedDay.date),
       onRecordMeal: () =>
           Navigator.of(context).pushNamed(AppRoutes.chooseMealSource),
       onOpenMealDetail: (id) =>
@@ -38,8 +46,10 @@ class TodayView extends StatelessWidget {
     required this.day,
     required this.currentDay,
     required this.dashboard,
+    this.goals,
     required this.onSelectDay,
     required this.onOpenSettings,
+    this.onOpenHistory,
     required this.onRecordMeal,
     required this.onOpenMealDetail,
     required this.onRetry,
@@ -49,8 +59,10 @@ class TodayView extends StatelessWidget {
   final LocalDay day;
   final LocalDay currentDay;
   final AsyncValue<DashboardDisplayModel> dashboard;
+  final AsyncValue<GoalSet>? goals;
   final ValueChanged<LocalDay> onSelectDay;
   final VoidCallback onOpenSettings;
+  final VoidCallback? onOpenHistory;
   final VoidCallback onRecordMeal;
   final ValueChanged<String> onOpenMealDetail;
   final VoidCallback onRetry;
@@ -73,6 +85,12 @@ class TodayView extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            key: const Key('history-button'),
+            icon: const Icon(Icons.history),
+            tooltip: l10n.historyTooltip,
+            onPressed: onOpenHistory,
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l10n.settingsTooltip,
@@ -108,6 +126,7 @@ class TodayView extends StatelessWidget {
                       final expanded = MediaQuery.sizeOf(context).width >= 840;
                       final content = _DashboardBody(
                         dashboard: dashboard,
+                        goals: goals ?? AsyncData(GoalSet.empty()),
                         onRecordMeal: onRecordMeal,
                         onOpenMealDetail: onOpenMealDetail,
                         onRetry: onRetry,
@@ -209,12 +228,14 @@ class _DaySelector extends StatelessWidget {
 class _DashboardBody extends StatelessWidget {
   const _DashboardBody({
     required this.dashboard,
+    required this.goals,
     required this.onRecordMeal,
     required this.onOpenMealDetail,
     required this.onRetry,
   });
 
   final AsyncValue<DashboardDisplayModel> dashboard;
+  final AsyncValue<GoalSet> goals;
   final VoidCallback onRecordMeal;
   final ValueChanged<String> onOpenMealDetail;
   final VoidCallback onRetry;
@@ -225,6 +246,9 @@ class _DashboardBody extends StatelessWidget {
     error: (error, _) => _DashboardFailure(onRetry: onRetry),
     data: (model) => _DashboardData(
       model: model,
+      goals: goals is AsyncData<GoalSet>
+          ? goals.value ?? GoalSet.empty()
+          : GoalSet.empty(),
       onRecordMeal: onRecordMeal,
       onOpenMealDetail: onOpenMealDetail,
     ),
@@ -283,11 +307,13 @@ class _DashboardFailure extends StatelessWidget {
 class _DashboardData extends StatelessWidget {
   const _DashboardData({
     required this.model,
+    required this.goals,
     required this.onRecordMeal,
     required this.onOpenMealDetail,
   });
 
   final DashboardDisplayModel model;
+  final GoalSet goals;
   final VoidCallback onRecordMeal;
   final ValueChanged<String> onOpenMealDetail;
 
@@ -300,6 +326,7 @@ class _DashboardData extends StatelessWidget {
       NutrientId.carbohydrates,
       NutrientId.fat,
     ];
+    final progress = TodayProgressModel.fromDashboard(model, goals);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -332,6 +359,8 @@ class _DashboardData extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        _GoalProgressSection(progress: progress),
+        const SizedBox(height: 12),
         Card(
           child: ExpansionTile(
             title: Text(l10n.allNutrientsTitle),
@@ -357,6 +386,84 @@ class _DashboardData extends StatelessWidget {
               onTap: () => onOpenMealDetail(entry.id),
             ),
       ],
+    );
+  }
+}
+
+class _GoalProgressSection extends StatelessWidget {
+  const _GoalProgressSection({required this.progress});
+
+  final TodayProgressModel progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (!progress.hasGoals) {
+      return Card(
+        child: ListTile(
+          leading: const Icon(Icons.flag_outlined),
+          title: Text(l10n.noGoalsTitle),
+          subtitle: Text(l10n.noGoalsBody),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.goalProgressTitle,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        for (final nutrient in progress.nutrients)
+          _GoalProgressCard(progress: nutrient),
+      ],
+    );
+  }
+}
+
+class _GoalProgressCard extends StatelessWidget {
+  const _GoalProgressCard({required this.progress});
+
+  final TodayNutrientProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final nutrient = nutrientLabel(l10n, progress.nutrient);
+    final current = nutritionValueText(context, progress.total.value);
+    final target = goalTargetText(context, progress.nutrient, progress.target);
+    final status = goalStatusText(l10n, progress.progress.status);
+    return Semantics(
+      container: true,
+      label: l10n.goalProgressSemantics(nutrient, current, target, status),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text(nutrient)),
+                  Text(status),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('$current · $target'),
+              if (progress.progress.ratio case final ratio?) ...[
+                const SizedBox(height: 8),
+                LinearProgressIndicator(value: ratio),
+              ],
+              if (progress.progress.isIncomplete)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(l10n.incompleteDataTitle),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -225,6 +225,9 @@ class _FakeMealRepository implements MealRepository {
   @override
   Stream<List<MealEntry>> observeDay(DateTime localDay) => Stream.value([]);
   @override
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end) =>
+      Stream.value([]);
+  @override
   Future<MealEntry> restore({
     required String id,
     required int expectedRevision,
