@@ -4,7 +4,7 @@ Status: Accepted v0.1
 
 Feature ID: F-001
 
-Last updated: 2026-07-31
+Last updated: 2026-08-03
 
 ## User outcome
 
@@ -37,7 +37,9 @@ An analysis contains:
 - non-fatal validation warnings
 
 The provider must not invent a precise quantity without expressing the assumption.
-Unknown values are represented as unknown, not zero.
+Unknown values are represented as unknown, not zero. A provider-reported item
+amount with an unknown or noncanonical unit remains editable as a descriptive
+amount; it is not converted to mass without defensible food-specific evidence.
 
 ## Behavior
 
@@ -55,8 +57,13 @@ Unknown values are represented as unknown, not zero.
 - A description may contain multiple foods and drinks.
 - Ambiguous portions produce assumptions and lower confidence.
 - Partial provider output remains editable if core validation succeeds.
-- Negative, infinite, non-numeric, or unsupported-unit values are rejected.
-- A timeout or rate limit keeps the original input available for retry.
+- Negative, infinite, non-numeric, or unsupported nutrient-unit values are
+  rejected. A finite item amount with an unknown or noncanonical unit is
+  preserved as an editable descriptive amount with a non-fatal warning and no
+  inferred normalized mass.
+- A timeout, rate limit, or offline failure keeps the original input available
+  for retry. A provider-response timeout is categorized separately from an
+  offline failure.
 - Repeated confirmation cannot create duplicate records.
 - Decimal input accepts the conventions of the active locale.
 
@@ -71,13 +78,15 @@ Unknown values are represented as unknown, not zero.
 - Editing an item nutrient immediately updates totals without a second AI request.
 - Confirming stores the reviewed values locally and they survive an app restart.
 - Cancelling does not alter daily totals.
-- Missing or invalid credentials, offline state, rate limiting, and invalid provider
-  responses each produce a localized, recoverable state.
+- Missing or invalid credentials, offline state, provider-response timeout, rate
+  limiting, and invalid provider responses each produce a localized, recoverable
+  state.
 - No credential or meal description is emitted to logs during the journey.
 
 ## Verification
 
-- unit tests for validation, totals, edits, and error mapping
+- unit tests for validation, totals, edits, descriptive unknown-unit amounts,
+  and error mapping including provider-response timeout
 - shared provider contract tests using sanitized fixtures
 - widget tests in German and English
 - Android integration test using a deterministic fake provider
