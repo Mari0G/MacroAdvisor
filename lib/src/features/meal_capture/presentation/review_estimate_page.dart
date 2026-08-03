@@ -97,7 +97,8 @@ class ReviewEstimatePage extends ConsumerWidget {
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 ...state.analysis!.warnings.map(
-                                  (warning) => Text(warning.description),
+                                  (warning) =>
+                                      Text(analysisWarningText(l10n, warning)),
                                 ),
                               ],
                             ),

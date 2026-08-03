@@ -13,16 +13,18 @@ import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
 void main() {
   late _FakeMealRepository repository;
+  late _Provider provider;
   late ProviderContainer container;
 
   setUp(() {
     repository = _FakeMealRepository();
+    provider = _Provider();
     container = ProviderContainer(
       overrides: [
         clockProvider.overrideWithValue(_FixedClock(DateTime(2026, 7, 18, 12))),
         idGeneratorProvider.overrideWithValue(_Ids()),
         mealRepositoryProvider.overrideWithValue(repository),
-        nutritionAnalysisProvider.overrideWithValue(_Provider()),
+        nutritionAnalysisProvider.overrideWithValue(provider),
       ],
     );
   });
@@ -96,22 +98,52 @@ void main() {
     );
     expect(container.read(reviewControllerProvider).items, hasLength(1));
   });
+
+  test('timeout preserves the description and can be retried', () async {
+    provider.timeoutFirstRequest = true;
+    final controller = container.read(descriptionControllerProvider.notifier);
+    controller.updateDescription('Beans on toast');
+
+    await controller.analyze('en');
+
+    final failureState = container.read(descriptionControllerProvider);
+    expect(failureState.phase, DescriptionPhase.failure);
+    expect(failureState.failure, isA<AnalysisTimedOut>());
+    expect(failureState.description, 'Beans on toast');
+
+    await controller.analyze('en');
+
+    expect(
+      container.read(descriptionControllerProvider).phase,
+      DescriptionPhase.readyForReview,
+    );
+    expect(provider.calls, 2);
+  });
 }
 
 class _Provider implements NutritionAnalysisProvider {
+  bool timeoutFirstRequest = false;
+  int calls = 0;
+
   @override
   Future<NutritionAnalysis> analyzeText(
     NutritionAnalysisRequest request,
-  ) async => NutritionAnalysis(
-    provenance: MealProvenance(
-      providerId: 'fake',
-      modelId: 'fixture',
-      analyzedAtUtc: DateTime.utc(2026, 7, 18),
-      detectedLocale: request.localeTag,
-    ),
-    confidence: MealConfidence.medium,
-    items: [_item('item-1')],
-  );
+  ) async {
+    calls++;
+    if (timeoutFirstRequest && calls == 1) {
+      throw const AnalysisTimedOut();
+    }
+    return NutritionAnalysis(
+      provenance: MealProvenance(
+        providerId: 'fake',
+        modelId: 'fixture',
+        analyzedAtUtc: DateTime.utc(2026, 7, 18),
+        detectedLocale: request.localeTag,
+      ),
+      confidence: MealConfidence.medium,
+      items: [_item('item-1')],
+    );
+  }
 }
 
 MealItem _item(String id, {int protein = 20000}) => MealItem(

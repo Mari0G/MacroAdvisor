@@ -75,6 +75,7 @@ final class GeminiNutritionAnalysisProvider
         localeTag: request.localeTag,
         description: request.description,
       ),
+      timeoutFailure: const AnalysisTimedOut(),
     );
     _throwForHttpResponse(response);
 
@@ -139,6 +140,7 @@ final class GeminiNutritionAnalysisProvider
     required String credential,
     required String body,
     Duration? timeout,
+    NutritionAnalysisFailure? timeoutFailure,
   }) async {
     try {
       return await _transport.post(
@@ -153,6 +155,9 @@ final class GeminiNutritionAnalysisProvider
     } on SocketException {
       throw const AnalysisOffline();
     } on TimeoutException {
+      if (timeoutFailure != null) {
+        throw timeoutFailure;
+      }
       throw const AnalysisOffline();
     } on HandshakeException {
       throw const AnalysisOffline();
@@ -185,7 +190,9 @@ final class GeminiNutritionAnalysisProvider
         'Return only JSON matching the supplied response schema. '
         'Use unknown nutrient values when the description does not support '
         'a defensible estimate; do not invent precision. '
-        'Nutrient units must be kcal for energy and g for all other nutrients. ',
+        'Nutrient units must be kcal for energy and g for all other nutrients. '
+        'Keep finite amounts with unfamiliar units as descriptive amounts; '
+        'do not infer a mass conversion. ',
       );
     return jsonEncode(<String, Object?>{
       'system_instruction': <String, Object?>{
@@ -250,7 +257,12 @@ final class GeminiNutritionAnalysisProvider
               'type': 'OBJECT',
               'properties': <String, Object?>{
                 'value': <String, Object?>{'type': 'NUMBER'},
-                'unit': <String, Object?>{'type': 'STRING'},
+                'unit': <String, Object?>{
+                  'type': 'STRING',
+                  'description':
+                      'Canonical or descriptive portion unit; unfamiliar '
+                      'units remain editable and are not converted to mass.',
+                },
                 'unknown': <String, Object?>{'type': 'BOOLEAN'},
                 'description': <String, Object?>{'type': 'STRING'},
               },
@@ -521,8 +533,7 @@ final class GeminiNutritionAnalysisProvider
       'servings',
     };
     if (rawValue == null || raw['unknown'] == true) {
-      if (unit != null &&
-          (unit is! String || !supported.contains(unit.toLowerCase()))) {
+      if (unit != null && unit is! String) {
         throw const _InvalidGeminiPayload();
       }
       warnings.add(
@@ -533,15 +544,28 @@ final class GeminiNutritionAnalysisProvider
       );
       return _ParsedAmount(description: _optionalString(raw, 'description'));
     }
-    if (rawValue is! num ||
-        !rawValue.isFinite ||
-        rawValue < 0 ||
-        unit is! String) {
+    if (rawValue is! num || !rawValue.isFinite || rawValue < 0) {
       throw const _InvalidGeminiPayload();
     }
-    final normalizedUnit = unit.toLowerCase();
-    if (!supported.contains(normalizedUnit) || rawValue > 1000000) {
+    if (rawValue > 1000000 || unit != null && unit is! String) {
       throw const _InvalidGeminiPayload();
+    }
+    final unitText = unit is String && unit.trim().isNotEmpty
+        ? unit.trim()
+        : null;
+    final normalizedUnit = unitText?.toLowerCase();
+    final description =
+        _optionalString(raw, 'description') ??
+        '${rawValue.toString()}${unitText == null ? '' : ' $unitText'}';
+    if (normalizedUnit == null || !supported.contains(normalizedUnit)) {
+      warnings.add(
+        const AnalysisWarning(
+          code: 'unknown-amount-unit',
+          description:
+              'The item amount uses an unfamiliar unit and remains editable.',
+        ),
+      );
+      return _ParsedAmount(description: description);
     }
     final normalizedGramsMilli = switch (normalizedUnit) {
       'g' || 'gram' || 'grams' => (rawValue * 1000).round(),
@@ -549,9 +573,7 @@ final class GeminiNutritionAnalysisProvider
       _ => null,
     };
     return _ParsedAmount(
-      description: raw['description'] is String
-          ? raw['description'] as String
-          : '${rawValue.toString()} $unit',
+      description: description,
       normalizedGramsMilli: normalizedGramsMilli,
     );
   }

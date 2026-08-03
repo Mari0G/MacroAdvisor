@@ -6,6 +6,7 @@ import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
@@ -50,6 +51,91 @@ void main() {
     expect(find.text('Today').first, findsOneWidget);
   });
 
+  testWidgets('English timeout is distinct from offline and can be retried', (
+    tester,
+  ) async {
+    final clock = _Clock(DateTime(2026, 7, 18, 12));
+    final ids = _Ids();
+    final provider = _TimeoutThenSuccessProvider(
+      DeterministicNutritionAnalysisProvider(clock, ids),
+    );
+    await tester.pumpWidget(
+      _app(const Locale('en'), _Repository(), provider: provider),
+    );
+
+    await tester.tap(find.text('Record meal').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('meal-description-field')),
+      'Tomato soup',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('analyze-meal-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('The provider took too long to respond. Try again.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'No connection is available. Check your network and try again.',
+      ),
+      findsNothing,
+    );
+    expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('meal-description-field')))
+          .controller
+          ?.text,
+      'Tomato soup',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Review estimate'), findsOneWidget);
+  });
+
+  testWidgets('German timeout has localized recovery copy', (tester) async {
+    final clock = _Clock(DateTime(2026, 7, 18, 12));
+    final ids = _Ids();
+    final provider = _TimeoutThenSuccessProvider(
+      DeterministicNutritionAnalysisProvider(clock, ids),
+    );
+    await tester.pumpWidget(
+      _app(const Locale('de'), _Repository(), provider: provider),
+    );
+
+    await tester.tap(find.text('Mahlzeit erfassen').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('meal-description-field')),
+      'Tomatensuppe',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('analyze-meal-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Der Anbieter hat zu lange für eine Antwort gebraucht. Versuche es erneut.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(FilledButton, 'Erneut versuchen'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Keine Verbindung verfügbar. Prüfe dein Netzwerk und versuche es erneut.',
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets(
     'German description form is localized and whitespace cannot submit',
     (tester) async {
@@ -74,7 +160,11 @@ void main() {
   );
 }
 
-Widget _app(Locale locale, _Repository repository) {
+Widget _app(
+  Locale locale,
+  _Repository repository, {
+  NutritionAnalysisProvider? provider,
+}) {
   final clock = _Clock(DateTime(2026, 7, 18, 12));
   final ids = _Ids();
   return ProviderScope(
@@ -83,11 +173,27 @@ Widget _app(Locale locale, _Repository repository) {
       idGeneratorProvider.overrideWithValue(ids),
       mealRepositoryProvider.overrideWithValue(repository),
       nutritionAnalysisProvider.overrideWithValue(
-        DeterministicNutritionAnalysisProvider(clock, ids),
+        provider ?? DeterministicNutritionAnalysisProvider(clock, ids),
       ),
     ],
     child: MacroAdvisorApp(locale: locale),
   );
+}
+
+class _TimeoutThenSuccessProvider implements NutritionAnalysisProvider {
+  _TimeoutThenSuccessProvider(this._delegate);
+
+  final NutritionAnalysisProvider _delegate;
+  int _calls = 0;
+
+  @override
+  Future<NutritionAnalysis> analyzeText(NutritionAnalysisRequest request) {
+    _calls++;
+    if (_calls == 1) {
+      return Future<NutritionAnalysis>.error(const AnalysisTimedOut());
+    }
+    return _delegate.analyzeText(request);
+  }
 }
 
 class _Repository implements MealRepository {

@@ -162,6 +162,35 @@ void main() {
     });
 
     test(
+      'preserves finite amounts with unknown units as descriptive editable data',
+      () async {
+        final provider = _provider(
+          _FakeTransport(
+            response: GeminiHttpResponse(
+              statusCode: 200,
+              body: _fixture('unknown_amount_unit.json'),
+            ),
+          ),
+        );
+
+        final result = await provider.analyzeText(
+          const NutritionAnalysisRequest(
+            description: 'a cup of tomato soup',
+            localeTag: 'en',
+          ),
+        );
+
+        final item = result.items.single;
+        expect(item.amountDescription, '1 cup');
+        expect(item.normalizedGramsMilli, isNull);
+        expect(
+          result.warnings.map((warning) => warning.code),
+          contains('unknown-amount-unit'),
+        );
+      },
+    );
+
+    test(
       'maps malformed JSON, schema, and unsupported units to invalid response',
       () async {
         for (final fixture in <String>[
@@ -246,9 +275,9 @@ void main() {
       );
     });
 
-    test('maps transport timeouts to an offline failure', () async {
+    test('maps provider-response timeouts to a distinct failure', () async {
       final provider = _provider(
-        _FakeTransport(error: TimeoutException('secret meal')),
+        _FakeTransport(error: TimeoutException('response headers')),
       );
 
       await expectLater(
@@ -258,7 +287,7 @@ void main() {
             localeTag: 'en',
           ),
         ),
-        throwsA(isA<AnalysisOffline>()),
+        throwsA(isA<AnalysisTimedOut>()),
       );
     });
 

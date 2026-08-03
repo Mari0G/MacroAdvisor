@@ -343,7 +343,8 @@ objects, credentials, image bytes, or provider DTOs.
 | Dashboard | incomplete | known subtotal plus incomplete label | inspect contributors |
 | Analyze | missing credential | description preserved | open provider settings |
 | Analyze | invalid credential | localized explanation | replace/test credential |
-| Analyze | offline/timeout | description preserved | retry |
+| Analyze | offline | description preserved | retry |
+| Analyze | provider-response timeout | description preserved; timeout is distinct from offline | retry |
 | Analyze | rate limited | description preserved; wait guidance | retry later |
 | Analyze | invalid response | no unvalidated draft shown | retry or edit description |
 | Review | non-fatal warning | editable warning plus affected item | edit or confirm if valid |

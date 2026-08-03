@@ -59,6 +59,10 @@ final class AnalysisOffline extends NutritionAnalysisFailure {
   const AnalysisOffline();
 }
 
+final class AnalysisTimedOut extends NutritionAnalysisFailure {
+  const AnalysisTimedOut();
+}
+
 final class AnalysisRateLimited extends NutritionAnalysisFailure {
   const AnalysisRateLimited();
 }
