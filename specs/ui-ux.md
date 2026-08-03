@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Purpose
 
@@ -12,9 +12,10 @@ architecture, screen responsibilities, layout, interaction states, accessibility
 and responsive behavior. It does not change the behavior or acceptance criteria
 in the feature specifications.
 
-Week and month trends, account features, and cloud synchronization remain future
-scope. Photo entry points are introduced only with F-003/S-009; until then the
-implemented text-only behavior remains unchanged.
+F-004 plans daily goals and local week/month/custom-range history. Account
+features and cloud synchronization remain future scope. Photo entry points are
+introduced only with F-003/S-009; until then the implemented text-only behavior
+remains unchanged.
 
 ## Experience principles
 
@@ -41,9 +42,9 @@ not used for only one meaningful destination. The root scaffold contains:
 - the day's confirmed entries
 - a floating primary action to record a meal or drink
 
-Settings, goal configuration, capture, review, and meal detail are pushed routes.
-This leaves room for a future History or Trends destination without exposing an
-empty tab in the MVP.
+Settings, goal configuration, History, capture, review, and meal detail are
+pushed routes. F-004 adds History from Today's app bar, retaining Today as the
+only root destination and avoiding an empty navigation tab.
 
 ```text
 App start
@@ -53,6 +54,7 @@ App start
   |     |                    `-- Photo -> Analyze -----|-> Review -> Saved -> Today
   |     |-- Meal detail -> Edit or delete -> Today
   |     |-- Goal summary -> Goal settings -> Today
+  |     |-- History -> Select nutrient and period -> Today
   |     `-- Settings -> Provider / Language
   `-- Bootstrap failure -> Recoverable full-screen state
 ```
@@ -98,6 +100,8 @@ used for localized text. Cards wrap or grow vertically instead of clipping.
 - `AppAsyncView`: consistent loading, error, empty, and data rendering
 - `NutrientValueText`: localized value, unknown marker, and unit
 - `NutrientProgressCard`: target wording, current value, and accessible progress
+- `NutritionHistoryChart`: visual daily values with an equivalent accessible text
+  summary and day-by-day list
 - `MealEntryCard`: time, description or item summary, energy, and data warnings
 - `EstimateNotice`: visible estimate disclaimer and optional confidence summary
 - `InlineRecovery`: error explanation with retry or settings action
@@ -334,7 +338,26 @@ Validation requires finite, non-negative values and range minimum less than or
 equal to maximum. Save applies the set atomically and returns to Today. Leaving
 with changes asks for confirmation.
 
-### 9. Settings
+### 9. History
+
+**Purpose:** reveal local nutrition patterns without presenting estimates as
+medical advice.
+
+**Layout:** app bar with back navigation; a nutrient selector; period controls
+for rolling seven days, the selected calendar month, and a custom inclusive date
+range; a chart; a text summary; and a day-by-day accessible list. The chart is
+never the only representation of a value or target comparison.
+
+**States:**
+
+- empty: state that no meals were recorded for the period
+- populated: show localized daily values and any current-goal reference
+- incomplete: distinguish known subtotals from complete daily values and explain
+  that a precise comparison is unavailable
+- invalid range: keep entered dates visible with localized field-level guidance
+- failure: show a recoverable local-data error and Retry; never call a provider
+
+### 10. Settings
 
 **Purpose:** hold infrequent app and provider configuration.
 
@@ -349,7 +372,7 @@ Sections:
 Settings never displays a stored credential or includes it in screenshots or
 copyable diagnostics.
 
-### 10. Provider settings
+### 11. Provider settings
 
 **Purpose:** securely add, validate, replace, or remove a user-owned provider key.
 
@@ -451,6 +474,7 @@ must not cover the active field or primary action.
 | Cancellation does not change totals | controller/repository integration test |
 | Recoverable provider failures | Describe meal state-matrix widget tests |
 | Daily goal progress is accessible | semantic widget tests and goldens |
+| Local nutrition history is accessible | History widget, golden, and semantic tests |
 | German text does not clip | localized golden tests at target sizes |
 | Photo capture is private and recoverable | source/preview widget tests, adapter contract tests, privacy audit, and Android journeys |
 
@@ -459,6 +483,5 @@ must not cover the active field or primary action.
 These choices do not block the text-entry delivery slice:
 
 - brand illustration, custom typography, and final marketing color palette
-- week/month navigation and whether it introduces a second root destination
 - nutrient contribution drill-down beyond basic meal filtering
 - iPad/tablet-specific navigation beyond the responsive layout rules above

@@ -126,6 +126,11 @@ widget/golden tests, accessibility semantics, and capture-to-dashboard journey.
 
 ### S-006 — Goal configuration and progress
 
+**Delivery note (2026-08-03):** The implementation on
+`codex/slice6-goal-progress` was never merged to `develop`. This historical MVP
+slice is blocked and its unmerged scope is superseded by F-004/S-011; do not
+resume or merge that branch as S-006.
+
 **Feature:** F-002 (historical)
 
 **Outcome:** A user can configure minimum, maximum, or range targets and
@@ -251,20 +256,19 @@ and save corrected nutrition values without the app retaining the photo.
 uses an unknown unit, and a provider-response timeout is shown as a distinct,
 localized recoverable failure.
 
+### S-011 — Nutrition goals and history
+
+**Feature specification:** [F-004 — Nutrition goals and history](../specs/features/nutrition-goals-and-history.md)
+
+**Outcome:** A user can set daily nutrient targets, understand localized and
+accessible progress on Today, and explore local nutrition history by week,
+month, or custom date range.
+
 ## Reserved future slices
 
 The following slice IDs reserve the agreed delivery order. They are planning
 placeholders only: each must receive its feature specification and complete
 slice plan in its dedicated planning task before implementation starts.
-
-### S-011 — Goals, home-screen progress, and history
-
-**Feature specification:** To be created (planned successor to the in-progress
-goal work in F-002).
-
-**Outcome:** A user can configure nutrient goals and maximum values, follow
-contextual progress on Today, and explore weekly, monthly, and other historical
-views with charts.
 
 ### S-012 — Local food-image retention
 

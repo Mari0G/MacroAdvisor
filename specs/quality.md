@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Quality gates
 
@@ -23,8 +23,9 @@ pull requests from forks.
 
 ### Unit tests
 
-Cover domain calculations, validation, goal progress, repository contracts,
-provider response mapping, error mapping, and sync metadata transitions.
+Cover domain calculations, target validation and progress, local-history range
+aggregation, repository contracts, provider response mapping, error mapping, and
+sync metadata transitions.
 
 ### Contract tests
 
@@ -35,7 +36,9 @@ hand-reviewed fixtures; live provider calls are opt-in and never required in CI.
 ### Widget and golden tests
 
 Cover empty, loading, populated, validation, offline, and error states in German
-and English. Golden tests pin fonts, locale, device size, and animation state.
+and English. Goal and history coverage includes non-color semantic alternatives
+for target and chart data. Golden tests pin fonts, locale, device size, and
+animation state.
 
 ### Integration tests
 

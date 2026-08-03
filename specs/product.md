@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Vision
 
@@ -57,12 +57,16 @@ Protein, carbohydrates, and fat form the initial macronutrient group. The model
 must allow later nutrients without requiring changes to every persistence and UI
 boundary. Salt and sodium must not be treated as interchangeable values.
 
-## Goals
+## Goals and history
 
 Initial goals are daily target ranges for individual nutrients. Presets may offer
 high-protein or high-fibre defaults, but users can inspect and modify the numeric
 targets. Optional body characteristics may inform suggestions in a later feature;
 they are not required to use the app.
+
+F-004 defines the planned local goal configuration, contextual daily progress,
+and nutrition history. Historical views compare past days against the currently
+configured targets; goal-version history is not part of the initial feature.
 
 ## Trust and safety
 
@@ -85,7 +89,6 @@ analysis is the only operation that requires network access.
 
 ## Future scope
 
-- Week and month trends
 - Optional body characteristics
 - Additional nutrients
 - Optional account and Neon-backed synchronization

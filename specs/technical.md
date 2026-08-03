@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 ## Application stack
 
@@ -39,6 +39,9 @@ and metadata removal. Exact resolved versions are recorded in `pubspec.lock`;
 upgrades outside these compatible lines require a technical-specification update.
 All selected packages use permissive licenses.
 
+F-004 chart presentation uses Flutter/Material drawing primitives. It does not
+add a charting production dependency.
+
 ## Layer boundaries
 
 The codebase uses feature-oriented modules with four dependency directions:
@@ -58,6 +61,10 @@ Required boundaries include:
 - `MealPhotoNormalizer` for bounded, metadata-free provider input
 - `CredentialStore` for provider secrets
 - `Clock` and ID generation abstractions for deterministic tests
+
+`MealRepository` exposes bounded local-date observations needed by dashboard and
+history use cases. Chart aggregation stays in domain/application code and does
+not expose Drift query or data-class types to presentation.
 
 ### Project structure
 
@@ -91,6 +98,10 @@ lib/
     features/
       dashboard/
         application/
+        presentation/
+      history/
+        application/
+        domain/
         presentation/
       meals/
         domain/
@@ -237,10 +248,10 @@ defined in [ui-ux.md](ui-ux.md).
 ### Navigation
 
 The text MVP uses Flutter's Router/Navigator APIs without an additional navigation
-dependency. The app has one root Today route and pushed routes for capture, review,
-item edit, meal detail, goals, and settings. Route definitions and redirect/back
-policy are centralized in `app_router.dart`; leaf widgets emit navigation intents
-instead of constructing provider or persistence objects.
+dependency. The app has one root Today route and pushed routes for History,
+capture, review, item edit, meal detail, goals, and settings. Route definitions
+and redirect/back policy are centralized in `app_router.dart`; leaf widgets emit
+navigation intents instead of constructing provider or persistence objects.
 
 Routes carry stable IDs and small serializable arguments only. Domain entities are
 loaded through application interfaces so process recreation and deep links do not
