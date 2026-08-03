@@ -2,18 +2,19 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-02
 
 ## Purpose
 
 This specification turns the product outcomes into an implementable mobile UI for
-the text-entry MVP. It defines information architecture, screen responsibilities,
-layout, interaction states, accessibility, and responsive behavior. It does not
-change the behavior or acceptance criteria in the feature specifications.
+the text-entry MVP and its planned photo-capture extension. It defines information
+architecture, screen responsibilities, layout, interaction states, accessibility,
+and responsive behavior. It does not change the behavior or acceptance criteria
+in the feature specifications.
 
-Photo capture, week and month trends, account features, and cloud synchronization
-remain future scope. Entry points for those features are not shown until the
-corresponding behavior is implemented.
+Week and month trends, account features, and cloud synchronization remain future
+scope. Photo entry points are introduced only with F-003/S-009; until then the
+implemented text-only behavior remains unchanged.
 
 ## Experience principles
 
@@ -47,7 +48,9 @@ empty tab in the MVP.
 ```text
 App start
   |-- Today
-  |     |-- Record meal -> Describe -> Analyze -> Review -> Saved -> Today
+  |     |-- Record meal -> Choose input
+  |     |                    |-- Describe -> Analyze --|
+  |     |                    `-- Photo -> Analyze -----|-> Review -> Saved -> Today
   |     |-- Meal detail -> Edit or delete -> Today
   |     |-- Goal summary -> Goal settings -> Today
   |     `-- Settings -> Provider / Language
@@ -190,7 +193,48 @@ Submitted text is trimmed but otherwise preserved exactly for retry.
 - while analyzing, the text remains visible and selectable; leaving asks whether
   to cancel the request and keep the local draft
 
-Photo controls are absent in the text MVP. A disabled camera button is not shown.
+Before F-003 is implemented, photo controls remain absent and no disabled camera
+button is shown. With F-003, source selection happens before this screen; Describe
+meal remains focused on text input.
+
+### 3a. Photo meal
+
+**Purpose:** acquire and preview one meal photo while making provider disclosure
+and non-retention clear before analysis.
+
+Selecting Record meal opens a short source chooser with Describe meal, Take photo,
+and Choose photo. The chooser uses text and icons, restores focus to Record meal
+when dismissed, and does not request permissions before a source is selected.
+
+After a photo is returned, Photo meal contains:
+
+- app bar with Back and “Photo meal or drink”
+- a bounded, aspect-preserving preview with a semantic description that does not
+  attempt to identify the food
+- guidance for a clear, well-lit image and a disclosure that the normalized photo
+  is sent to the configured AI provider but not attached to the saved meal
+- Replace and Remove actions
+- occurrence date/time defaulting to now
+- full-width Analyze estimate action above the safe-area inset
+
+**Interactions and states:**
+
+- cancelling the system camera/library returns to the chooser without an error
+- local preparation shows progress and prevents repeated source or analyze actions
+- unreadable, unsupported, or oversized images show localized inline recovery and
+  keep the occurrence time
+- missing credentials opens provider settings and restores the in-memory preview
+  on return while the process remains alive
+- camera/library denial explains the affected source; permanent denial offers
+  Open settings while the alternate photo source and Describe meal remain usable
+- while analyzing, preview and guidance remain visible, controls become read-only,
+  and supported cancellation returns to the preview
+- provider failures and no-meal detection preserve the preview for retry or
+  replacement
+- Back with a selected photo asks whether to discard it; discarding releases
+  app-owned temporary media
+- success replaces Photo meal with Review estimate, which does not display or
+  retain the photo
 
 ### 4. Analysis in progress
 
@@ -383,6 +427,10 @@ must not cover the active field or primary action.
 
 - Meal descriptions are never placed in logs, analytics, crash breadcrumbs, or
   route names.
+- Meal photos, thumbnails, paths, filenames, metadata, decoded objects, and inline
+  provider payloads are never placed in persistence, logs, analytics, crash
+  breadcrumbs, route state, fixtures, or screenshots. The preview explains
+  provider transmission and photo non-retention before analysis.
 - Credentials never appear in SQLite, ordinary preferences, logs, fixtures,
   screenshots, clipboard actions, or error details.
 - Provider/model identifiers may be shown as provenance; credentials and raw
@@ -405,6 +453,7 @@ must not cover the active field or primary action.
 | Recoverable provider failures | Describe meal state-matrix widget tests |
 | Daily goal progress is accessible | semantic widget tests and goldens |
 | German text does not clip | localized golden tests at target sizes |
+| Photo capture is private and recoverable | source/preview widget tests, adapter contract tests, privacy audit, and Android journeys |
 
 ## Deferred decisions
 
@@ -412,6 +461,5 @@ These choices do not block the text-entry delivery slice:
 
 - brand illustration, custom typography, and final marketing color palette
 - week/month navigation and whether it introduces a second root destination
-- photo source chooser and camera permission education
 - nutrient contribution drill-down beyond basic meal filtering
 - iPad/tablet-specific navigation beyond the responsive layout rules above

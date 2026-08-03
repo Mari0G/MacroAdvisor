@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-02
 
 ## Vision
 
@@ -37,7 +37,9 @@ The MVP enables a user to:
 6. View daily totals and progress toward selected goals.
 7. Use the app in German or English.
 
-Photo input is part of the product scope but follows the proven text-entry slice.
+Photo input is part of the product scope and is planned as F-003 after the proven
+text-entry slices. It reuses the mandatory review-and-correct step and does not
+retain the source photo with the saved meal.
 
 ## Nutrient scope
 
@@ -77,9 +79,12 @@ All confirmed entries, goals, preferences, and optional profile values are store
 locally. Account creation and cloud synchronization are not part of the MVP. AI
 analysis is the only operation that requires network access.
 
+## Planned post-MVP scope
+
+- F-003 meal and drink photo analysis from camera or device image library
+
 ## Future scope
 
-- Meal and drink photo analysis
 - Week and month trends
 - Optional body characteristics
 - Additional nutrients

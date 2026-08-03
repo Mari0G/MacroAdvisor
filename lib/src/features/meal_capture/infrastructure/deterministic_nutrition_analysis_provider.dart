@@ -81,5 +81,15 @@ class DeterministicNutritionAnalysisProvider
     );
   }
 
+  @override
+  Future<NutritionAnalysis> analyzeImage(
+    NutritionImageAnalysisRequest request,
+  ) => analyzeText(
+    NutritionAnalysisRequest(
+      description: 'Photo meal',
+      localeTag: request.localeTag,
+    ),
+  );
+
   static DateTime _utc(DateTime value) => value.isUtc ? value : value.toUtc();
 }

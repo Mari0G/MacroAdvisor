@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-02
 
 ## Application stack
 
@@ -26,11 +26,18 @@ Last updated: 2026-07-22
   interface. Provider adapters, request/response DTOs, SDK types, model names,
   and credentials remain in infrastructure code and cannot leak into domain or
   presentation APIs.
+- Photo acquisition implements a provider-neutral `MealPhotoSource` interface.
+  Platform picker types, paths, filenames, and image-processing objects remain in
+  infrastructure and cannot leak into application, domain, route, or persistence
+  APIs.
 
 The initial dependency lines are `flutter_riverpod` 3.x, `drift` 2.x,
-`drift_flutter` 0.3.x, and `flutter_secure_storage` 10.x. Exact resolved versions
-are recorded in `pubspec.lock`; upgrades outside these compatible lines require a
-technical-specification update. All selected packages use permissive licenses.
+`drift_flutter` 0.3.x, and `flutter_secure_storage` 10.x. Photo capture adds
+`image_picker` 1.x for the system image library and camera surfaces and `image`
+4.x for deterministic decode, resize, orientation normalization, JPEG encoding,
+and metadata removal. Exact resolved versions are recorded in `pubspec.lock`;
+upgrades outside these compatible lines require a technical-specification update.
+All selected packages use permissive licenses.
 
 ## Layer boundaries
 
@@ -47,6 +54,8 @@ Required boundaries include:
 - `MealRepository` for meal persistence and observation
 - `GoalRepository` for goal persistence and observation
 - `NutritionAnalysisProvider` for text and image analysis
+- `MealPhotoSource` for camera/library acquisition and temporary-file ownership
+- `MealPhotoNormalizer` for bounded, metadata-free provider input
 - `CredentialStore` for provider secrets
 - `Clock` and ID generation abstractions for deterministic tests
 
@@ -297,6 +306,37 @@ User-provided keys must:
 Provider output is untrusted. Validate JSON shape, finite and non-negative values,
 units, plausible upper bounds, and item-total consistency before showing results.
 Semantic validation warnings do not silently discard user data.
+
+### Photo input boundary
+
+Photo capture is a separate input path into the existing analysis and review
+pipeline. `MealPhotoSource` owns `image_picker` calls, source cancellation,
+permission/platform failures, Android lost-data recovery, and cleanup of
+app-owned camera cache files. It returns an opaque acquisition handle only to the
+photo-capture application workflow; widgets and routes never receive an `XFile`
+or filesystem path.
+
+`MealPhotoNormalizer` validates one JPEG, PNG, or WebP source, corrects decoded
+orientation, limits the longest edge to 2048 pixels, strips source metadata by
+re-encoding, and returns a provider-neutral `MealPhoto` containing at most 6 MiB
+of JPEG bytes plus dimensions and `image/jpeg`. Decode, resize, and encode work
+must not block the UI isolate. Empty, unreadable, unsupported, and oversized
+inputs are local categorized failures and never reach the AI adapter.
+
+`NutritionAnalysisProvider` exposes distinct `analyzeText` and `analyzeImage`
+methods. The image request contains only `MealPhoto` and the locale tag. The
+Gemini adapter sends the normalized image as inline data in the existing TLS
+request and does not use public URLs or the provider Files API. Both methods
+return the same validated `NutritionAnalysis`. A recognizable-food failure is
+provider-neutral and distinct from malformed provider output.
+
+Normalized bytes live only in capture workflow memory. The gallery original is
+read-only. App-owned camera cache and temporary normalized data are released on
+successful analysis or discard and cleaned up best-effort after interruption.
+Retries may retain the in-memory normalized bytes while the process lives, but
+photo drafts are not restored after ordinary process death. No schema migration
+is required because meals store only reviewed nutrition data and standard
+provenance, never media or media identifiers.
 
 ## Domain model
 

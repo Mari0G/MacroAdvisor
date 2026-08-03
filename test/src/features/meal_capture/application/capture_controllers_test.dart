@@ -1,10 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/capture_controllers.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
@@ -14,17 +18,21 @@ import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 void main() {
   late _FakeMealRepository repository;
   late _Provider provider;
+  late _PhotoSource photoSource;
   late ProviderContainer container;
 
   setUp(() {
     repository = _FakeMealRepository();
     provider = _Provider();
+    photoSource = _PhotoSource();
     container = ProviderContainer(
       overrides: [
         clockProvider.overrideWithValue(_FixedClock(DateTime(2026, 7, 18, 12))),
         idGeneratorProvider.overrideWithValue(_Ids()),
         mealRepositoryProvider.overrideWithValue(repository),
         nutritionAnalysisProvider.overrideWithValue(provider),
+        mealPhotoSourceProvider.overrideWithValue(photoSource),
+        mealPhotoNormalizerProvider.overrideWithValue(_PhotoNormalizer()),
       ],
     );
   });
@@ -119,6 +127,43 @@ void main() {
     );
     expect(provider.calls, 2);
   });
+
+  test('cancelled photo selection is neutral', () async {
+    photoSource.next = const CancelledMealPhotoAcquisition();
+
+    await container
+        .read(photoControllerProvider.notifier)
+        .chooseSource(MealPhotoSourceType.library);
+
+    final state = container.read(photoControllerProvider);
+    expect(state.phase, PhotoPhase.chooser);
+    expect(state.photo, isNull);
+    expect(state.failure, isNull);
+  });
+
+  test(
+    'photo analysis releases media before the shared review and save path',
+    () async {
+      photoSource.next = AcquiredMealPhoto(Uint8List.fromList([1, 2, 3]));
+      final photo = container.read(photoControllerProvider.notifier);
+
+      await photo.chooseSource(MealPhotoSourceType.camera);
+      expect(container.read(photoControllerProvider).phase, PhotoPhase.preview);
+      await photo.analyze('en');
+
+      expect(
+        container.read(photoControllerProvider).phase,
+        PhotoPhase.readyForReview,
+      );
+      expect(container.read(photoControllerProvider).photo, isNull);
+      final review = container.read(reviewControllerProvider.notifier);
+      expect(container.read(reviewControllerProvider).items, hasLength(1));
+      await review.save();
+
+      expect(repository.created.single.description, isNull);
+      expect(repository.created.single.items.single.name, 'Beans');
+    },
+  );
 }
 
 class _Provider implements NutritionAnalysisProvider {
@@ -144,6 +189,33 @@ class _Provider implements NutritionAnalysisProvider {
       items: [_item('item-1')],
     );
   }
+
+  @override
+  Future<NutritionAnalysis> analyzeImage(
+    NutritionImageAnalysisRequest request,
+  ) => analyzeText(
+    NutritionAnalysisRequest(
+      description: 'Photo meal',
+      localeTag: request.localeTag,
+    ),
+  );
+}
+
+class _PhotoSource implements MealPhotoSource {
+  MealPhotoAcquisition next = const CancelledMealPhotoAcquisition();
+
+  @override
+  Future<MealPhotoAcquisition> acquire(MealPhotoSourceType source) async =>
+      next;
+
+  @override
+  Future<MealPhotoAcquisition?> recoverLostData() async => null;
+}
+
+class _PhotoNormalizer implements MealPhotoNormalizer {
+  @override
+  Future<MealPhoto> normalize(Uint8List sourceBytes) async =>
+      MealPhoto(jpegBytes: Uint8List.fromList([1, 2, 3]), width: 1, height: 1);
 }
 
 MealItem _item(String id, {int protein = 20000}) => MealItem(

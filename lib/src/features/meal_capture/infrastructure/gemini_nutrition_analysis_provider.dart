@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
@@ -53,7 +54,7 @@ final class GeminiNutritionAnalysisProvider
     required this._clock,
     required this._idGenerator,
     GeminiHttpTransport? transport,
-    this.timeout = const Duration(seconds: 20),
+    this.timeout = const Duration(seconds: 60),
     this.connectionCheckTimeout = const Duration(seconds: 45),
   }) : _transport = transport ?? _IoGeminiHttpTransport(HttpClient());
 
@@ -71,7 +72,7 @@ final class GeminiNutritionAnalysisProvider
     final credential = await _readCredential();
     final response = await _send(
       credential: credential,
-      body: _requestBody(
+      body: _textRequestBody(
         localeTag: request.localeTag,
         description: request.description,
       ),
@@ -83,7 +84,35 @@ final class GeminiNutritionAnalysisProvider
       final wireResult = _GeminiWireResponse.fromJson(
         _decodeJson(response.body),
       );
-      return _toDomain(wireResult, request);
+      return _toDomain(wireResult, request.localeTag);
+    } on _InvalidGeminiPayload {
+      throw const InvalidAnalysisResponse();
+    } on NutritionAnalysisFailure {
+      rethrow;
+    } catch (_) {
+      throw const UnknownAnalysisFailure();
+    }
+  }
+
+  @override
+  Future<NutritionAnalysis> analyzeImage(
+    NutritionImageAnalysisRequest request,
+  ) async {
+    final credential = await _readCredential();
+    final response = await _send(
+      credential: credential,
+      body: _imageRequestBody(
+        localeTag: request.localeTag,
+        photo: request.photo,
+      ),
+    );
+    _throwForHttpResponse(response);
+
+    try {
+      final wireResult = _GeminiWireResponse.fromJson(
+        _decodeJson(response.body),
+      );
+      return _toDomain(wireResult, request.localeTag);
     } on _InvalidGeminiPayload {
       throw const InvalidAnalysisResponse();
     } on NutritionAnalysisFailure {
@@ -180,7 +209,7 @@ final class GeminiNutritionAnalysisProvider
     }
   }
 
-  static String _requestBody({
+  static String _textRequestBody({
     required String localeTag,
     required String description,
   }) {
@@ -205,6 +234,47 @@ final class GeminiNutritionAnalysisProvider
           'role': 'user',
           'parts': <Object?>[
             <String, String>{'text': description},
+          ],
+        },
+      ],
+      'generationConfig': <String, Object?>{
+        'responseMimeType': 'application/json',
+        'responseSchema': _responseSchema,
+        'temperature': 0,
+        'thinkingConfig': <String, String>{'thinkingLevel': 'minimal'},
+      },
+    });
+  }
+
+  static String _imageRequestBody({
+    required String localeTag,
+    required MealPhoto photo,
+  }) {
+    final instruction = StringBuffer()
+      ..write('Analyze the meal photo for locale $localeTag. ')
+      ..write(
+        'If no meal or drink is recognizable, return an empty items array. '
+        'Return only JSON matching the supplied response schema. '
+        'Use unknown nutrient values when the image does not support a '
+        'defensible estimate; do not invent precision. '
+        'Nutrient units must be kcal for energy and g for all other nutrients. ',
+      );
+    return jsonEncode(<String, Object?>{
+      'system_instruction': <String, Object?>{
+        'parts': <Object?>[
+          <String, String>{'text': instruction.toString()},
+        ],
+      },
+      'contents': <Object?>[
+        <String, Object?>{
+          'role': 'user',
+          'parts': <Object?>[
+            <String, Object?>{
+              'inlineData': <String, String>{
+                'mimeType': MealPhoto.mimeType,
+                'data': base64Encode(photo.jpegBytes),
+              },
+            },
           ],
         },
       ],
@@ -370,10 +440,7 @@ final class GeminiNutritionAnalysisProvider
     'required': <String>['items', 'confidence'],
   };
 
-  NutritionAnalysis _toDomain(
-    _GeminiWireResponse response,
-    NutritionAnalysisRequest request,
-  ) {
+  NutritionAnalysis _toDomain(_GeminiWireResponse response, String localeTag) {
     final warnings = <AnalysisWarning>[
       ...response.warnings,
       const AnalysisWarning(
@@ -393,7 +460,7 @@ final class GeminiNutritionAnalysisProvider
         providerId: _geminiProviderId,
         modelId: _geminiModelId,
         analyzedAtUtc: _utc(_clock.now()),
-        detectedLocale: response.detectedLocale ?? request.localeTag,
+        detectedLocale: response.detectedLocale ?? localeTag,
       ),
       items: items,
       confidence: response.confidence,
@@ -805,7 +872,10 @@ final class _GeminiWireResponse {
       throw const _InvalidGeminiPayload();
     }
     final rawItems = decoded['items'] as List;
-    if (rawItems.isEmpty || rawItems.any((item) => item is! Map)) {
+    if (rawItems.isEmpty) {
+      throw const NoMealDetected();
+    }
+    if (rawItems.any((item) => item is! Map)) {
       throw const _InvalidGeminiPayload();
     }
     final confidence = GeminiNutritionAnalysisProvider._confidence(

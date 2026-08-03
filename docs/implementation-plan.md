@@ -1,4 +1,4 @@
-# MVP delivery plan
+# Delivery plan
 
 Last updated: 2026-08-03
 
@@ -235,66 +235,21 @@ this gate.
   `develop`, target a draft pull request to `develop`, and do not mark S-008
   merged before all scoped evidence is on `develop`.
 
-## S-010 - Analysis response resilience
+### S-009 — Photo meal capture
 
-**Feature:** F-001
+**Feature specification:** [F-003 — Photo meal capture](../specs/features/photo-meal-capture.md)
 
-**Outcome:** A valid nutrition estimate remains editable when an item amount
+**Outcome:** A user can take or choose one meal photo, understand and control what
+will be sent to the configured provider, review the resulting itemized estimate,
+and save corrected nutrition values without the app retaining the photo.
+
+### S-010 — Analysis response resilience
+
+**Feature specification:** [F-001 — Meal capture and analysis](../specs/features/meal-capture-and-analysis.md)
+
+**Outcome:** A valid nutrition estimate remains editable when its item amount
 uses an unknown unit, and a provider-response timeout is shown as a distinct,
 localized recoverable failure.
-
-### S-010 slice packet
-
-#### Outcome
-
-- **Feature ID:** F-001
-- **Slice ID:** S-010
-- **User outcome:** A person can review and correct an otherwise valid estimate
-  even when Gemini reports an unfamiliar portion unit, and can tell that a
-  request timed out rather than that their device is offline.
-- **Specification sections:** F-001 Analysis contract, Edge cases, Acceptance
-  criteria, and Verification; `technical.md` Error and privacy boundaries; and
-  `ui-ux.md` Analyze and State and recovery matrix.
-- **Acceptance criteria in scope:** Unknown/noncanonical item amount units are
-  non-fatal, editable descriptive amounts; provider-response timeouts are
-  localized, recoverable, and distinct from offline failures.
-
-#### Boundaries
-
-- **Included work or expected files:** Extend the provider response schema and
-  amount parser so a finite amount with an unknown or noncanonical unit is kept
-  as descriptive text with a warning and no inferred mass. Add the sealed
-  `AnalysisTimedOut` failure, map transport deadlines (including the wait for
-  response headers) to it, and add localized text/retry presentation in both
-  English and German. Cover adapter mapping and affected controller/widget
-  states with sanitized fixtures.
-- **Interfaces that may change:** The provider-neutral sealed analysis-failure
-  contract and provider adapter validation behavior.
-- **Interfaces that must not change:** Canonical energy and nutrient units;
-  provider credentials, logging/redaction boundaries, persistence schema, and
-  reviewed-meal editing and save flow.
-- **Non-goals:** Converting household units to grams without food-specific
-  evidence; accepting unsupported nutrient units; changing the configured model,
-  response deadline, request schema beyond what supports this behavior, or
-  adding automatic retries.
-
-#### Evidence and handoff
-
-- **Tests:** Provider contract tests for `cup` and other unknown amount units,
-  malformed nutrient-unit rejection, and response-header timeout mapping;
-  controller and localized widget tests for timeout recovery; then formatting,
-  analysis, unit/widget tests, and the applicable deterministic Android journey.
-- **Locales, accessibility, and failure states:** Keep German and English keys
-  synchronized; expose a distinct timeout message and retry action without
-  implying that the device is offline.
-- **Sensitive data or credentials:** Fixtures remain sanitized; no meal input,
-  raw response, or credential is logged while mapping either behavior.
-- **Code generation:** Not expected unless localization generation is required by
-  changed ARB inputs.
-- **Environment-only verification:** A real Gemini smoke call is optional and
-  uses only the repository's fixed synthetic description with a configured
-  credential; it is not required for CI.
-- **Publication:** Follow `AGENTS.md` and `docs/branching.md`.
 
 ## New-feature checklist
 
@@ -303,37 +258,26 @@ localized recoverable failure.
   edge cases, acceptance criteria, and verification.
 - Assign the next unused `S-###` ID, add one slice for that feature here, and add
   its status row.
-- Keep the same IDs in task packets, branches, pull requests, tests, and status
+- Keep the same IDs in implementation tasks, branches, pull requests, tests, and status
   updates. IDs never change or get reused.
 
-## Slice packet
+## Slice entry format
 
-Use this packet when assigning a slice. Fill it from accepted specifications, not
-implementation guesses.
+Keep new feature slices as navigation metadata. The accepted feature specification
+is the complete definition; do not repeat its scope, behavior, boundaries,
+acceptance criteria, non-goals, or verification details here.
 
-### Outcome
+```markdown
+### S-### — Slice name
 
-- **Feature ID:**
-- **Slice ID:**
-- **User outcome:**
-- **Specification sections:**
-- **Acceptance criteria in scope:**
+**Feature specification:** [F-### — Feature name](../specs/features/feature-name.md)
 
-### Boundaries
+**Outcome:** One sentence describing the user-visible result.
+```
 
-- **Included work or expected files:**
-- **Interfaces that may change:**
-- **Interfaces that must not change:**
-- **Non-goals:**
-
-### Evidence and handoff
-
-- **Tests:** unit/contract, widget/golden, and Android journey as applicable
-- **Locales, accessibility, and failure states:**
-- **Sensitive data or credentials:**
-- **Code generation:**
-- **Environment-only verification:**
-- **Publication:** follow `AGENTS.md` and `docs/branching.md`.
+The detailed S-008 packet remains as a historical MVP exception because that
+hardening slice spans older feature specifications. Do not add detailed packets
+for one-feature/one-slice work that has its own specification.
 
 Keep unrelated worktree changes intact. Report a spec/code mismatch before
 widening the change.

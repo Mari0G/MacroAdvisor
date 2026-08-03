@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
@@ -15,6 +16,7 @@ void main() {
     overrides: [
       clockProvider.overrideWithValue(clock),
       mealRepositoryProvider.overrideWithValue(_EmptyMealRepository()),
+      mealPhotoSourceProvider.overrideWithValue(_NoopPhotoSource()),
     ],
     child: MacroAdvisorApp(locale: locale),
   );
@@ -58,26 +60,34 @@ void main() {
     );
   });
 
-  testWidgets('both Today record actions open the meal description page', (
-    tester,
-  ) async {
-    await tester.pumpWidget(buildApp(const Locale('en')));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'both Today record actions open source selection before description',
+    (tester) async {
+      await tester.pumpWidget(buildApp(const Locale('en')));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('describe-meal-source')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('describe-meal-source')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
 
-    await tester.ensureVisible(
-      find.widgetWithText(FilledButton, 'Record meal'),
-    );
-    await tester.tap(find.widgetWithText(FilledButton, 'Record meal'));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
-  });
+      await tester.ensureVisible(
+        find.widgetWithText(FilledButton, 'Record meal'),
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Record meal'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('describe-meal-source')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
+    },
+  );
 
   testWidgets('uses a compact layout below the expanded breakpoint', (
     tester,
@@ -119,6 +129,15 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Mahlzeit erfassen'), findsNWidgets(2));
   });
+}
+
+class _NoopPhotoSource implements MealPhotoSource {
+  @override
+  Future<MealPhotoAcquisition> acquire(MealPhotoSourceType source) async =>
+      const CancelledMealPhotoAcquisition();
+
+  @override
+  Future<MealPhotoAcquisition?> recoverLostData() async => null;
 }
 
 class _EmptyMealRepository implements MealRepository {

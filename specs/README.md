@@ -18,6 +18,7 @@ These files are the repository's product and behavior source of truth.
 | --- | --- | --- |
 | F-001 | Meal capture and analysis | [features/meal-capture-and-analysis.md](features/meal-capture-and-analysis.md) |
 | F-002 | Nutrition dashboard | [features/nutrition-dashboard.md](features/nutrition-dashboard.md) |
+| F-003 | Photo meal capture | [features/photo-meal-capture.md](features/photo-meal-capture.md) |
 
 ## Status vocabulary
 

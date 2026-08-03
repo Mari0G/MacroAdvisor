@@ -25,7 +25,7 @@ class TodayPage extends ConsumerWidget {
       onSelectDay: ref.read(dashboardControllerProvider.notifier).selectDay,
       onOpenSettings: () => Navigator.of(context).pushNamed(AppRoutes.settings),
       onRecordMeal: () =>
-          Navigator.of(context).pushNamed(AppRoutes.describeMeal),
+          Navigator.of(context).pushNamed(AppRoutes.chooseMealSource),
       onOpenMealDetail: (id) =>
           Navigator.of(context).pushNamed(AppRoutes.mealDetail, arguments: id),
       onRetry: () => ref.invalidate(dashboardDisplayProvider(selectedDay)),
