@@ -1,0 +1,14 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"confidence\":\"medium\",\"items\":[{\"name\":\"Tomato soup\",\"amount\":{\"value\":1,\"unit\":\"cup\"},\"nutrients\":{\"energy\":{\"value\":250,\"unit\":\"kcal\"},\"protein\":{\"value\":5,\"unit\":\"g\"},\"carbohydrates\":{\"value\":30,\"unit\":\"g\"},\"fat\":{\"value\":8,\"unit\":\"g\"},\"fibre\":{\"value\":4,\"unit\":\"g\"},\"sugars\":{\"value\":10,\"unit\":\"g\"},\"salt\":{\"value\":1,\"unit\":\"g\"}}}],\"assumptions\":[],\"warnings\":[]}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ]
+}

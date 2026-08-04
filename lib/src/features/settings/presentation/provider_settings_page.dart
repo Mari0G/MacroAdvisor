@@ -42,7 +42,12 @@ class _ProviderSettingsPageState extends ConsumerState<ProviderSettingsPage> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              Text(_configurationText(localizations, state.configuration)),
+              Text(
+                _configurationText(localizations, state.configuration),
+                key: Key(
+                  'provider-credential-status-${state.configuration.name}',
+                ),
+              ),
               const SizedBox(height: 24),
               Form(
                 key: _formKey,

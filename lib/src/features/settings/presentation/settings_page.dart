@@ -21,6 +21,7 @@ class SettingsPage extends StatelessWidget {
               children: [
                 Card(
                   child: ListTile(
+                    key: const Key('provider-settings-entry'),
                     title: Text(localizations.providerSettingsSectionTitle),
                     subtitle: Text(localizations.providerSettingsSectionBody),
                     trailing: const Icon(Icons.chevron_right),

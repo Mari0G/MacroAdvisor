@@ -11,10 +11,12 @@ import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
+import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
 void main() {
   testWidgets('English user can review, edit, and save a text estimate', (
@@ -55,6 +57,88 @@ void main() {
 
     expect(repository.created, hasLength(1));
     expect(find.text('Today').first, findsOneWidget);
+  });
+
+  testWidgets('English provider timeout keeps input and offers retry', (
+    tester,
+  ) async {
+    final provider = _TimeoutThenSuccessProvider();
+    await tester.pumpWidget(
+      _app(const Locale('en'), _Repository(), provider: provider),
+    );
+
+    await tester.tap(find.text('Record meal').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('describe-meal-source')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('meal-description-field')),
+      'Tomato soup',
+    );
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('analyze-meal-button')));
+    await tester.tap(find.byKey(const Key('analyze-meal-button')));
+    await tester.pumpAndSettle();
+    expect(provider.calls, 1);
+
+    expect(
+      find.text('The provider took too long to respond. Try again.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'No connection is available. Check your network and try again.',
+      ),
+      findsNothing,
+    );
+    expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('meal-description-field')))
+          .controller
+          ?.text,
+      'Tomato soup',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Retry'));
+    await tester.pumpAndSettle();
+    expect(find.text('Review estimate'), findsOneWidget);
+  });
+
+  testWidgets('German provider timeout uses localized recovery copy', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        const Locale('de'),
+        _Repository(),
+        provider: _TimeoutThenSuccessProvider(),
+      ),
+    );
+
+    await tester.tap(find.text('Mahlzeit erfassen').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('describe-meal-source')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('meal-description-field')),
+      'Tomatensuppe',
+    );
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('analyze-meal-button')));
+    await tester.tap(find.byKey(const Key('analyze-meal-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Der Anbieter hat zu lange für eine Antwort gebraucht. Versuche es erneut.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(FilledButton, 'Erneut versuchen'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -119,7 +203,12 @@ void main() {
   });
 }
 
-Widget _app(Locale locale, _Repository repository, {_PhotoSource? source}) {
+Widget _app(
+  Locale locale,
+  _Repository repository, {
+  _PhotoSource? source,
+  NutritionAnalysisProvider? provider,
+}) {
   final clock = _Clock(DateTime(2026, 7, 18, 12));
   final ids = _Ids();
   return ProviderScope(
@@ -128,12 +217,55 @@ Widget _app(Locale locale, _Repository repository, {_PhotoSource? source}) {
       idGeneratorProvider.overrideWithValue(ids),
       mealRepositoryProvider.overrideWithValue(repository),
       nutritionAnalysisProvider.overrideWithValue(
-        DeterministicNutritionAnalysisProvider(clock, ids),
+        provider ?? DeterministicNutritionAnalysisProvider(clock, ids),
       ),
       mealPhotoSourceProvider.overrideWithValue(source ?? _PhotoSource()),
       mealPhotoNormalizerProvider.overrideWithValue(_PhotoNormalizer()),
     ],
     child: MacroAdvisorApp(locale: locale),
+  );
+}
+
+class _TimeoutThenSuccessProvider implements NutritionAnalysisProvider {
+  var _calls = 0;
+
+  int get calls => _calls;
+
+  @override
+  Future<NutritionAnalysis> analyzeText(
+    NutritionAnalysisRequest request,
+  ) async {
+    _calls++;
+    if (_calls == 1) {
+      throw const AnalysisTimedOut();
+    }
+    return NutritionAnalysis(
+      provenance: MealProvenance(
+        providerId: 'fake',
+        modelId: 'fixture',
+        analyzedAtUtc: DateTime.utc(2026, 7, 18),
+        detectedLocale: request.localeTag,
+      ),
+      confidence: MealConfidence.medium,
+      items: [
+        MealItem(
+          id: 'timeout-item',
+          name: 'Tomato soup',
+          nutrition: NutritionFacts(const {}),
+          confidence: MealConfidence.medium,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<NutritionAnalysis> analyzeImage(
+    NutritionImageAnalysisRequest request,
+  ) => analyzeText(
+    NutritionAnalysisRequest(
+      description: 'Photo meal',
+      localeTag: request.localeTag,
+    ),
   );
 }
 

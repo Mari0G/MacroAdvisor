@@ -234,13 +234,14 @@ Future<void> _waitFor(
   Finder finder, {
   Duration timeout = const Duration(seconds: 5),
 }) async {
-  final endTime = tester.binding.clock.fromNowBy(timeout);
+  final endTime = DateTime.now().add(timeout);
 
-  while (tester.binding.clock.now().isBefore(endTime)) {
+  while (DateTime.now().isBefore(endTime)) {
     await tester.pump(const Duration(milliseconds: 100));
     if (finder.evaluate().isNotEmpty) {
       return;
     }
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   }
 
   expect(finder, findsOneWidget);

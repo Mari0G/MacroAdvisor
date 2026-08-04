@@ -31,7 +31,7 @@ features. New rows use one feature ID and one slice ID.
 | S-007 | F-001, F-002 | Merged | — | `test/src/features/meals/application/meal_detail_controller_test.dart` and `test/src/features/meals/presentation/meal_detail_page_test.dart` | Merged as `86508a1`; saved-meal transparency, local edits without re-analysis, soft-delete confirmation, and recoverable delete failure are on `develop`. |
 | S-008 | F-001, F-002 | Merged | `codex/slice8-hardening` | — | Deterministic Android save/edit/day-move/restart hardening passes locally on an Android emulator; accessibility evidence remains explicitly deferred. |
 | S-009 | F-003 | Merged | `feat/s-009-photo-capture` | — | Full local gate and deterministic Android library/camera journeys pass; draft PR pending. |
-| S-010 | F-001 | Merged | `codex/slice10-analysis-resilience` | — | Permits unknown/noncanonical item amount units as descriptive, non-fatal values; adds a distinct `AnalysisTimedOut` provider failure and localized recovery. |
+| S-010 | F-001 | In review | `fix/emulator-meal-analysis` | — | Permits unknown/noncanonical item amount units as descriptive, non-fatal values; adds a distinct `AnalysisTimedOut` provider failure and localized recovery. |
 | S-011 | F-004 | Planned | — | — | Consolidates the unmerged S-006 goal scope with accessible Today progress and local charted history. |
 | S-012 | Planned feature | Planned | — | — | Reserved for opt-out local retention of a small, low-resolution food image. It requires an accepted revision to F-003's current no-image-persistence requirement before implementation. |
 | S-013 | — | Planned | — | — | Reserved maintenance slice for compact, expandable warning and information UI and visual-spacing fixes. Detailed slice plan is pending. |
