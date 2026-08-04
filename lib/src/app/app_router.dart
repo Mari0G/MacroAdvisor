@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dart';
+import 'package:macro_advisor/src/features/goals/presentation/goal_settings_page.dart';
+import 'package:macro_advisor/src/features/history/presentation/history_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/describe_meal_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/edit_item_page.dart';
 import 'package:macro_advisor/src/features/meal_capture/presentation/meal_source_chooser_page.dart';
@@ -20,6 +22,8 @@ abstract final class AppRoutes {
   static const editMealItem = '/capture/item';
   static const mealDetail = '/meals/detail';
   static const mealEdit = '/meals/edit';
+  static const goals = '/settings/goals';
+  static const history = '/history';
 }
 
 abstract final class AppRouter {
@@ -32,6 +36,15 @@ abstract final class AppRouter {
       AppRoutes.providerSettings => MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => const ProviderSettingsPage(),
+      ),
+      AppRoutes.goals => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const GoalSettingsPage(),
+      ),
+      AppRoutes.history => MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) =>
+            HistoryPage(initialAnchor: settings.arguments as DateTime?),
       ),
       AppRoutes.describeMeal => MaterialPageRoute<void>(
         settings: settings,
