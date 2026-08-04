@@ -390,8 +390,9 @@ must not connect to Neon using privileged database credentials.
 ## Error behavior
 
 Provider failures are mapped to provider-neutral categories: missing credential,
-invalid credential, rate limited, offline, invalid response, content rejected,
-and unknown failure. User-facing messages are localized and offer a recovery path.
+invalid credential, rate limited, offline, provider-response timeout, invalid
+response, content rejected, and unknown failure. User-facing messages are
+localized and offer a recovery path.
 
 Saving a confirmed entry never depends on provider availability. Draft analysis
 can be retried without duplicating confirmed entries.

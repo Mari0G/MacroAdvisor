@@ -92,6 +92,7 @@ class TodayView extends StatelessWidget {
             onPressed: onOpenHistory,
           ),
           IconButton(
+            key: const Key('today-settings-button'),
             icon: const Icon(Icons.settings_outlined),
             tooltip: l10n.settingsTooltip,
             onPressed: onOpenSettings,
@@ -100,6 +101,7 @@ class TodayView extends StatelessWidget {
       ),
       floatingActionButton: showRecordAction
           ? FloatingActionButton.extended(
+              key: const Key('today-record-meal-button'),
               onPressed: onRecordMeal,
               icon: const Icon(Icons.add),
               label: Text(l10n.recordMealAction),
@@ -591,6 +593,7 @@ class _EmptyDay extends StatelessWidget {
             Text(l10n.todayEmptyBody, textAlign: TextAlign.center),
             const SizedBox(height: 20),
             FilledButton.icon(
+              key: const Key('empty-record-meal-button'),
               onPressed: onRecordMeal,
               icon: const Icon(Icons.add),
               label: Text(l10n.recordMealAction),
