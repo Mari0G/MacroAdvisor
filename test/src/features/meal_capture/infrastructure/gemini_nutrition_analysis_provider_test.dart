@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/gemini_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
@@ -51,6 +53,7 @@ void main() {
         expect(transport.body, contains('80 g Haferflocken'));
         expect(transport.body, contains('de-DE'));
         expect(transport.body, contains('thinkingLevel'));
+        expect(transport.timeout, const Duration(seconds: 60));
 
         final request = jsonDecode(transport.body) as Map<String, dynamic>;
         final schema =
@@ -60,6 +63,37 @@ void main() {
         final properties = schema['properties'] as Map<String, dynamic>;
         final items = properties['items'] as Map<String, dynamic>;
         final itemSchema = items['items'] as Map<String, dynamic>;
+        final itemProperties = itemSchema['properties'] as Map<String, dynamic>;
+        final itemNutrients =
+            (itemProperties['nutrients'] as Map<String, dynamic>)['properties']
+                as Map<String, dynamic>;
+        final totals = properties['totals'] as Map<String, dynamic>;
+        final totalsProperties = totals['properties'] as Map<String, dynamic>;
+        for (final nutrient in <String>[
+          'energy',
+          'protein',
+          'carbohydrates',
+          'fat',
+          'fibre',
+          'sugars',
+          'salt',
+        ]) {
+          expect(
+            (itemNutrients[nutrient] as Map<String, dynamic>)['required'],
+            contains('unit'),
+            reason: 'item nutrient $nutrient must require a unit',
+          );
+          expect(
+            (totalsProperties[nutrient] as Map<String, dynamic>)['required'],
+            contains('unit'),
+            reason: 'total nutrient $nutrient must require a unit',
+          );
+        }
+        expect(
+          (itemProperties['amount'] as Map<String, dynamic>)['required'],
+          isNull,
+          reason: 'meal amount units remain optional',
+        );
         expect(
           (itemSchema['properties'] as Map<String, dynamic>)['assumptions'],
           isA<Map<String, dynamic>>(),
@@ -74,6 +108,62 @@ void main() {
         );
       },
     );
+
+    test('sends a normalized image only as inline JPEG data', () async {
+      final transport = _FakeTransport(
+        response: GeminiHttpResponse(
+          statusCode: 200,
+          body: _fixture('success.json'),
+        ),
+      );
+      final provider = _provider(transport);
+
+      await provider.analyzeImage(
+        NutritionImageAnalysisRequest(
+          localeTag: 'en',
+          photo: MealPhoto(
+            jpegBytes: Uint8List.fromList([1, 2, 3]),
+            width: 1,
+            height: 1,
+          ),
+        ),
+      );
+
+      final request = jsonDecode(transport.body) as Map<String, dynamic>;
+      final parts =
+          ((request['contents'] as List).single
+                  as Map<String, dynamic>)['parts']
+              as List<dynamic>;
+      final inlineData =
+          (parts.single as Map<String, dynamic>)['inlineData']
+              as Map<String, dynamic>;
+      expect(inlineData['mimeType'], MealPhoto.mimeType);
+      expect(inlineData['data'], base64Encode([1, 2, 3]));
+      expect(transport.timeout, const Duration(seconds: 60));
+      expect(transport.body, isNot(contains('filename')));
+      expect(transport.body, isNot(contains('fileUri')));
+    });
+
+    test('maps missing nutrient units to invalid response', () async {
+      final provider = _provider(
+        _FakeTransport(
+          response: GeminiHttpResponse(
+            statusCode: 200,
+            body: _fixture('missing_nutrient_unit.json'),
+          ),
+        ),
+      );
+
+      await expectLater(
+        provider.analyzeText(
+          const NutritionAnalysisRequest(
+            description: 'oatmeal with banana and yogurt',
+            localeTag: 'en',
+          ),
+        ),
+        throwsA(isA<InvalidAnalysisResponse>()),
+      );
+    });
 
     test('preserves partial and unknown values as editable data', () async {
       final provider = _provider(
@@ -108,6 +198,35 @@ void main() {
         contains('unknown-carbohydrates'),
       );
     });
+
+    test(
+      'preserves finite amounts with unknown units as descriptive editable data',
+      () async {
+        final provider = _provider(
+          _FakeTransport(
+            response: GeminiHttpResponse(
+              statusCode: 200,
+              body: _fixture('unknown_amount_unit.json'),
+            ),
+          ),
+        );
+
+        final result = await provider.analyzeText(
+          const NutritionAnalysisRequest(
+            description: 'a cup of tomato soup',
+            localeTag: 'en',
+          ),
+        );
+
+        final item = result.items.single;
+        expect(item.amountDescription, '1 cup');
+        expect(item.normalizedGramsMilli, isNull);
+        expect(
+          result.warnings.map((warning) => warning.code),
+          contains('unknown-amount-unit'),
+        );
+      },
+    );
 
     test(
       'maps malformed JSON, schema, and unsupported units to invalid response',
@@ -194,9 +313,9 @@ void main() {
       );
     });
 
-    test('maps transport timeouts to an offline failure', () async {
+    test('maps provider-response timeouts to a distinct failure', () async {
       final provider = _provider(
-        _FakeTransport(error: TimeoutException('secret meal')),
+        _FakeTransport(error: TimeoutException('response headers')),
       );
 
       await expectLater(
@@ -206,7 +325,7 @@ void main() {
             localeTag: 'en',
           ),
         ),
-        throwsA(isA<AnalysisOffline>()),
+        throwsA(isA<AnalysisTimedOut>()),
       );
     });
 

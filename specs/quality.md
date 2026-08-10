@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-04
 
 ## Quality gates
 
@@ -23,8 +23,9 @@ pull requests from forks.
 
 ### Unit tests
 
-Cover domain calculations, validation, goal progress, repository contracts,
-provider response mapping, error mapping, and sync metadata transitions.
+Cover domain calculations, target validation and progress, local-history range
+aggregation, repository contracts, provider response mapping, error mapping, and
+sync metadata transitions.
 
 ### Contract tests
 
@@ -35,7 +36,9 @@ hand-reviewed fixtures; live provider calls are opt-in and never required in CI.
 ### Widget and golden tests
 
 Cover empty, loading, populated, validation, offline, and error states in German
-and English. Golden tests pin fonts, locale, device size, and animation state.
+and English. Goal and history coverage includes non-color semantic alternatives
+for target and chart data. Golden tests pin fonts, locale, device size, and
+animation state.
 
 ### Integration tests
 
@@ -49,6 +52,15 @@ a deterministic fake AI provider. Initial critical journey:
 5. confirm and save
 6. observe updated daily progress
 7. restart and verify persistence
+
+The F-003 photo journey adds two deterministic Android variants: one synthetic
+system-library selection and one test-controlled camera result. Each proceeds
+through the same review/edit/save flow. F-005/S-012 proves that restart
+persistence contains reviewed nutrition values and, with the default setting,
+only the bounded metadata-free derived local image; it also proves that opt-out,
+individual removal, and meal deletion leave no retained image. Source photos,
+paths, filenames, provider payloads, and metadata are never persisted.
+Real personal meal photos and physical camera hardware are never CI inputs.
 
 ### Live smoke tests
 

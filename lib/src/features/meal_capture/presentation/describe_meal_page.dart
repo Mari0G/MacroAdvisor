@@ -111,7 +111,11 @@ class _DescribeMealPageState extends ConsumerState<DescribeMealPage> {
                           }
                         }
                       : null,
-                  child: Text(l10n.analyzeEstimateAction),
+                  child: Text(
+                    state.phase == DescriptionPhase.failure
+                        ? l10n.retryAction
+                        : l10n.analyzeEstimateAction,
+                  ),
                 ),
               ],
             ),
@@ -155,6 +159,7 @@ class _FailureCard extends ConsumerWidget {
     final text = switch (failure) {
       MissingAnalysisCredential() ||
       InvalidAnalysisCredential() => l10n.connectionInvalidCredential,
+      AnalysisTimedOut() => l10n.analysisTimedOut,
       AnalysisOffline() => l10n.analysisOffline,
       AnalysisRateLimited() => l10n.analysisRateLimited,
       InvalidAnalysisResponse() => l10n.analysisInvalidResponse,
@@ -167,7 +172,7 @@ class _FailureCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(text),
+            Semantics(liveRegion: true, child: Text(text)),
             if (failure is MissingAnalysisCredential ||
                 failure is InvalidAnalysisCredential)
               TextButton(

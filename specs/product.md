@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-04
 
 ## Vision
 
@@ -37,7 +37,11 @@ The MVP enables a user to:
 6. View daily totals and progress toward selected goals.
 7. Use the app in German or English.
 
-Photo input is part of the product scope but follows the proven text-entry slice.
+Photo input is part of the product scope and is planned as F-003 after the proven
+text-entry slices. It reuses the mandatory review-and-correct step. It never
+retains the source photo; F-005/S-012 may retain a separately derived,
+low-resolution local food image for a confirmed photo meal by default, with a
+Settings opt-out that removes retained images.
 
 ## Nutrient scope
 
@@ -55,12 +59,16 @@ Protein, carbohydrates, and fat form the initial macronutrient group. The model
 must allow later nutrients without requiring changes to every persistence and UI
 boundary. Salt and sodium must not be treated as interchangeable values.
 
-## Goals
+## Goals and history
 
 Initial goals are daily target ranges for individual nutrients. Presets may offer
 high-protein or high-fibre defaults, but users can inspect and modify the numeric
 targets. Optional body characteristics may inform suggestions in a later feature;
 they are not required to use the app.
+
+F-004 defines the planned local goal configuration, contextual daily progress,
+and nutrition history. Historical views compare past days against the currently
+configured targets; goal-version history is not part of the initial feature.
 
 ## Trust and safety
 
@@ -75,12 +83,16 @@ they are not required to use the app.
 
 All confirmed entries, goals, preferences, and optional profile values are stored
 locally. Account creation and cloud synchronization are not part of the MVP. AI
-analysis is the only operation that requires network access.
+analysis is the only operation that requires network access. A retained food
+image is local-only, derived rather than source media, and remains under the
+user's Settings control.
+
+## Planned post-MVP scope
+
+- F-003 meal and drink photo analysis from camera or device image library
 
 ## Future scope
 
-- Meal and drink photo analysis
-- Week and month trends
 - Optional body characteristics
 - Additional nutrients
 - Optional account and Neon-backed synchronization

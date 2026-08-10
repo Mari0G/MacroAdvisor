@@ -2,18 +2,20 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-04
 
 ## Purpose
 
 This specification turns the product outcomes into an implementable mobile UI for
-the text-entry MVP. It defines information architecture, screen responsibilities,
-layout, interaction states, accessibility, and responsive behavior. It does not
-change the behavior or acceptance criteria in the feature specifications.
+the text-entry MVP and its planned photo-capture extension. It defines information
+architecture, screen responsibilities, layout, interaction states, accessibility,
+and responsive behavior. It does not change the behavior or acceptance criteria
+in the feature specifications.
 
-Photo capture, week and month trends, account features, and cloud synchronization
-remain future scope. Entry points for those features are not shown until the
-corresponding behavior is implemented.
+F-004 plans daily goals and local week/month/custom-range history. Account
+features and cloud synchronization remain future scope. Photo entry points are
+introduced only with F-003/S-009; until then the implemented text-only behavior
+remains unchanged.
 
 ## Experience principles
 
@@ -40,16 +42,19 @@ not used for only one meaningful destination. The root scaffold contains:
 - the day's confirmed entries
 - a floating primary action to record a meal or drink
 
-Settings, goal configuration, capture, review, and meal detail are pushed routes.
-This leaves room for a future History or Trends destination without exposing an
-empty tab in the MVP.
+Settings, goal configuration, History, capture, review, and meal detail are
+pushed routes. F-004 adds History from Today's app bar, retaining Today as the
+only root destination and avoiding an empty navigation tab.
 
 ```text
 App start
   |-- Today
-  |     |-- Record meal -> Describe -> Analyze -> Review -> Saved -> Today
+  |     |-- Record meal -> Choose input
+  |     |                    |-- Describe -> Analyze --|
+  |     |                    `-- Photo -> Analyze -----|-> Review -> Saved -> Today
   |     |-- Meal detail -> Edit or delete -> Today
   |     |-- Goal summary -> Goal settings -> Today
+  |     |-- History -> Select nutrient and period -> Today
   |     `-- Settings -> Provider / Language
   `-- Bootstrap failure -> Recoverable full-screen state
 ```
@@ -95,6 +100,8 @@ used for localized text. Cards wrap or grow vertically instead of clipping.
 - `AppAsyncView`: consistent loading, error, empty, and data rendering
 - `NutrientValueText`: localized value, unknown marker, and unit
 - `NutrientProgressCard`: target wording, current value, and accessible progress
+- `NutritionHistoryChart`: visual daily values with an equivalent accessible text
+  summary and day-by-day list
 - `MealEntryCard`: time, description or item summary, energy, and data warnings
 - `EstimateNotice`: visible estimate disclaimer and optional confidence summary
 - `InlineRecovery`: error explanation with retry or settings action
@@ -190,7 +197,50 @@ Submitted text is trimmed but otherwise preserved exactly for retry.
 - while analyzing, the text remains visible and selectable; leaving asks whether
   to cancel the request and keep the local draft
 
-Photo controls are absent in the text MVP. A disabled camera button is not shown.
+Before F-003 is implemented, photo controls remain absent and no disabled camera
+button is shown. With F-003, source selection happens before this screen; Describe
+meal remains focused on text input.
+
+### 3a. Photo meal
+
+**Purpose:** acquire and preview one meal photo while making provider disclosure
+and local-retention control clear before analysis.
+
+Selecting Record meal opens a short source chooser with Describe meal, Take photo,
+and Choose photo. The chooser uses text and icons, restores focus to Record meal
+when dismissed, and does not request permissions before a source is selected.
+
+After a photo is returned, Photo meal contains:
+
+- app bar with Back and “Photo meal or drink”
+- a bounded, aspect-preserving preview with a semantic description that does not
+  attempt to identify the food
+- guidance for a clear, well-lit image and a disclosure that the normalized photo
+  is sent to the configured AI provider; state that a small local image will be
+  retained only after confirmation when the Settings control is enabled
+- Replace and Remove actions
+- occurrence date/time defaulting to now
+- full-width Analyze estimate action above the safe-area inset
+
+**Interactions and states:**
+
+- cancelling the system camera/library returns to the chooser without an error
+- local preparation shows progress and prevents repeated source or analyze actions
+- unreadable, unsupported, or oversized images show localized inline recovery and
+  keep the occurrence time
+- missing credentials opens provider settings and restores the in-memory preview
+  on return while the process remains alive
+- camera/library denial explains the affected source; permanent denial offers
+  Open settings while the alternate photo source and Describe meal remain usable
+- while analyzing, preview and guidance remain visible, controls become read-only,
+  and supported cancellation returns to the preview
+- provider failures and no-meal detection preserve the preview for retry or
+  replacement
+- Back with a selected photo asks whether to discard it; discarding releases
+  app-owned temporary media
+- success replaces Photo meal with Review estimate, which does not display the
+  source photo; a bounded in-memory retention candidate is released on discard
+  or after confirmation
 
 ### 4. Analysis in progress
 
@@ -269,7 +319,10 @@ confirmed; structurally invalid values cannot be saved.
 
 The read view shows occurrence time, user description when present, item cards,
 totals, estimate notice, provider/model provenance without credentials, edited
-status, assumptions, and incomplete-data warnings.
+status, assumptions, and incomplete-data warnings. A photo meal with a retained
+image also shows its bounded local image and an explicit Remove saved image action.
+Removal has a short destructive confirmation and does not alter the meal's
+nutrition, provenance, or totals.
 
 “Edit meal” enters an editable copy using the same item editor and totals behavior
 as Review. Saving increments the local revision and refreshes Today. “Delete meal”
@@ -290,7 +343,26 @@ Validation requires finite, non-negative values and range minimum less than or
 equal to maximum. Save applies the set atomically and returns to Today. Leaving
 with changes asks for confirmation.
 
-### 9. Settings
+### 9. History
+
+**Purpose:** reveal local nutrition patterns without presenting estimates as
+medical advice.
+
+**Layout:** app bar with back navigation; a nutrient selector; period controls
+for rolling seven days, the selected calendar month, and a custom inclusive date
+range; a chart; a text summary; and a day-by-day accessible list. The chart is
+never the only representation of a value or target comparison.
+
+**States:**
+
+- empty: state that no meals were recorded for the period
+- populated: show localized daily values and any current-goal reference
+- incomplete: distinguish known subtotals from complete daily values and explain
+  that a precise comparison is unavailable
+- invalid range: keep entered dates visible with localized field-level guidance
+- failure: show a recoverable local-data error and Retry; never call a provider
+
+### 10. Settings
 
 **Purpose:** hold infrequent app and provider configuration.
 
@@ -298,6 +370,10 @@ Sections:
 
 - AI provider: provider name, configuration status, configure/remove action, and
   connection check
+- Saved meal images: a switch that defaults on and explains that confirmed photo
+  meals retain a small local image. Turning it off requires confirmation because
+  it immediately removes every retained meal image; it does not delete meals or
+  their nutrition data.
 - Goals: summary and route to Goal settings
 - Language: System default, English, or German
 - About: version, privacy summary, open-source licenses, and estimate disclaimer
@@ -305,7 +381,7 @@ Sections:
 Settings never displays a stored credential or includes it in screenshots or
 copyable diagnostics.
 
-### 10. Provider settings
+### 11. Provider settings
 
 **Purpose:** securely add, validate, replace, or remove a user-owned provider key.
 
@@ -343,7 +419,8 @@ objects, credentials, image bytes, or provider DTOs.
 | Dashboard | incomplete | known subtotal plus incomplete label | inspect contributors |
 | Analyze | missing credential | description preserved | open provider settings |
 | Analyze | invalid credential | localized explanation | replace/test credential |
-| Analyze | offline/timeout | description preserved | retry |
+| Analyze | offline | description preserved | retry |
+| Analyze | provider-response timeout | description preserved; timeout is distinct from offline | retry |
 | Analyze | rate limited | description preserved; wait guidance | retry later |
 | Analyze | invalid response | no unvalidated draft shown | retry or edit description |
 | Review | non-fatal warning | editable warning plus affected item | edit or confirm if valid |
@@ -382,6 +459,13 @@ must not cover the active field or primary action.
 
 - Meal descriptions are never placed in logs, analytics, crash breadcrumbs, or
   route names.
+- Source meal photos, paths, filenames, metadata, decoded objects, and inline
+  provider payloads are never placed in persistence, logs, analytics, crash
+  breadcrumbs, route state, fixtures, or screenshots. F-005/S-012 permits only
+  its bounded metadata-free derived JPEG in the dedicated local-media record;
+  it is never logged, routed, exported, sent to a provider, or captured in a
+  fixture or screenshot. The preview explains provider transmission and whether
+  that local retention setting is enabled before analysis.
 - Credentials never appear in SQLite, ordinary preferences, logs, fixtures,
   screenshots, clipboard actions, or error details.
 - Provider/model identifiers may be shown as provenance; credentials and raw
@@ -403,14 +487,15 @@ must not cover the active field or primary action.
 | Cancellation does not change totals | controller/repository integration test |
 | Recoverable provider failures | Describe meal state-matrix widget tests |
 | Daily goal progress is accessible | semantic widget tests and goldens |
+| Local nutrition history is accessible | History widget, golden, and semantic tests |
 | German text does not clip | localized golden tests at target sizes |
+| Photo capture is private and recoverable | source/preview widget tests, adapter contract tests, privacy audit, and Android journeys |
+| Local retained image is controlled and bounded | Settings/detail widget tests, persistence and migration tests, privacy audit, and Android journey |
 
 ## Deferred decisions
 
-These choices do not block the text-entry vertical slice:
+These choices do not block the text-entry delivery slice:
 
 - brand illustration, custom typography, and final marketing color palette
-- week/month navigation and whether it introduces a second root destination
-- photo source chooser and camera permission education
 - nutrient contribution drill-down beyond basic meal filtering
 - iPad/tablet-specific navigation beyond the responsive layout rules above

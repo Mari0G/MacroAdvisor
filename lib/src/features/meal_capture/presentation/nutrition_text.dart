@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:macro_advisor/l10n/generated/app_localizations.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
@@ -32,6 +33,12 @@ String confidenceText(AppLocalizations l10n, MealConfidence confidence) =>
       MealConfidence.low => l10n.confidenceLow,
       MealConfidence.medium => l10n.confidenceMedium,
       MealConfidence.high => l10n.confidenceHigh,
+    };
+
+String analysisWarningText(AppLocalizations l10n, AnalysisWarning warning) =>
+    switch (warning.code) {
+      'unknown-amount-unit' => l10n.unknownAmountUnitWarning,
+      _ => warning.description,
     };
 
 /// Converts localized decimal text to the domain's integer thousandths.

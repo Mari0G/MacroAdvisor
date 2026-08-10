@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-07-22
+Last updated: 2026-08-04
 
 ## Application stack
 
@@ -26,11 +26,21 @@ Last updated: 2026-07-22
   interface. Provider adapters, request/response DTOs, SDK types, model names,
   and credentials remain in infrastructure code and cannot leak into domain or
   presentation APIs.
+- Photo acquisition implements a provider-neutral `MealPhotoSource` interface.
+  Platform picker types, paths, filenames, and image-processing objects remain in
+  infrastructure and cannot leak into application, domain, route, or persistence
+  APIs.
 
 The initial dependency lines are `flutter_riverpod` 3.x, `drift` 2.x,
-`drift_flutter` 0.3.x, and `flutter_secure_storage` 10.x. Exact resolved versions
-are recorded in `pubspec.lock`; upgrades outside these compatible lines require a
-technical-specification update. All selected packages use permissive licenses.
+`drift_flutter` 0.3.x, and `flutter_secure_storage` 10.x. Photo capture adds
+`image_picker` 1.x for the system image library and camera surfaces and `image`
+4.x for deterministic decode, resize, orientation normalization, JPEG encoding,
+and metadata removal. Exact resolved versions are recorded in `pubspec.lock`;
+upgrades outside these compatible lines require a technical-specification update.
+All selected packages use permissive licenses.
+
+F-004 chart presentation uses Flutter/Material drawing primitives. It does not
+add a charting production dependency.
 
 ## Layer boundaries
 
@@ -47,8 +57,16 @@ Required boundaries include:
 - `MealRepository` for meal persistence and observation
 - `GoalRepository` for goal persistence and observation
 - `NutritionAnalysisProvider` for text and image analysis
+- `MealPhotoSource` for camera/library acquisition and temporary-file ownership
+- `MealPhotoNormalizer` for bounded, metadata-free provider input
+- `MealImageRetentionSettings` for observing and changing the local retention
+  preference, including deletion of retained images when disabled
 - `CredentialStore` for provider secrets
 - `Clock` and ID generation abstractions for deterministic tests
+
+`MealRepository` exposes bounded local-date observations needed by dashboard and
+history use cases. Chart aggregation stays in domain/application code and does
+not expose Drift query or data-class types to presentation.
 
 ### Project structure
 
@@ -82,6 +100,10 @@ lib/
     features/
       dashboard/
         application/
+        presentation/
+      history/
+        application/
+        domain/
         presentation/
       meals/
         domain/
@@ -228,10 +250,10 @@ defined in [ui-ux.md](ui-ux.md).
 ### Navigation
 
 The text MVP uses Flutter's Router/Navigator APIs without an additional navigation
-dependency. The app has one root Today route and pushed routes for capture, review,
-item edit, meal detail, goals, and settings. Route definitions and redirect/back
-policy are centralized in `app_router.dart`; leaf widgets emit navigation intents
-instead of constructing provider or persistence objects.
+dependency. The app has one root Today route and pushed routes for History,
+capture, review, item edit, meal detail, goals, and settings. Route definitions
+and redirect/back policy are centralized in `app_router.dart`; leaf widgets emit
+navigation intents instead of constructing provider or persistence objects.
 
 Routes carry stable IDs and small serializable arguments only. Domain entities are
 loaded through application interfaces so process recreation and deep links do not
@@ -250,6 +272,10 @@ stable IDs, UTC timestamps plus the recorded occurrence offset where required,
 revisions, and tombstone metadata described by the domain model.
 
 Saving or updating a meal and all of its items/nutrients is one database
+transaction. A confirmed photo meal with retention enabled writes its bounded
+derived image in that same transaction; otherwise no image row is written.
+Disabling retention atomically removes all retained-image rows and records the
+disabled setting. Soft-deleting a meal removes its retained image in the same
 transaction. Goal-set updates are atomic. Observation streams emit domain objects
 and surface categorized failures; they do not leak Drift exceptions.
 
@@ -298,6 +324,44 @@ Provider output is untrusted. Validate JSON shape, finite and non-negative value
 units, plausible upper bounds, and item-total consistency before showing results.
 Semantic validation warnings do not silently discard user data.
 
+### Photo input boundary
+
+Photo capture is a separate input path into the existing analysis and review
+pipeline. `MealPhotoSource` owns `image_picker` calls, source cancellation,
+permission/platform failures, Android lost-data recovery, and cleanup of
+app-owned camera cache files. It returns an opaque acquisition handle only to the
+photo-capture application workflow; widgets and routes never receive an `XFile`
+or filesystem path.
+
+`MealPhotoNormalizer` validates one JPEG, PNG, or WebP source, corrects decoded
+orientation, limits the longest edge to 2048 pixels, strips source metadata by
+re-encoding, and returns a provider-neutral `MealPhoto` containing at most 6 MiB
+of JPEG bytes plus dimensions and `image/jpeg`. Decode, resize, and encode work
+must not block the UI isolate. Empty, unreadable, unsupported, and oversized
+inputs are local categorized failures and never reach the AI adapter.
+
+`NutritionAnalysisProvider` exposes distinct `analyzeText` and `analyzeImage`
+methods. The image request contains only `MealPhoto` and the locale tag. The
+Gemini adapter sends the normalized image as inline data in the existing TLS
+request and does not use public URLs or the provider Files API. Both methods
+return the same validated `NutritionAnalysis`. A recognizable-food failure is
+provider-neutral and distinct from malformed provider output.
+
+Normalized bytes live only in capture workflow memory. For F-005/S-012, a second
+metadata-free JPEG may be derived from normalized bytes solely as a retention
+candidate: it is limited to 512 pixels on its longest edge and 256 KiB, stays in
+memory until review confirmation, and is never a provider input or route value.
+When the local retention setting is enabled at confirmation, the candidate is
+stored in a dedicated `MealRetainedImages` row keyed to the meal; it contains only
+the derived JPEG bytes, dimensions, and safe MIME type. The schema has a separate
+single-row local retention setting whose default is enabled. Existing meals are
+not backfilled. The gallery original is read-only. App-owned camera cache and
+temporary normalized data are released on successful analysis or discard and
+cleaned up best-effort after interruption. Retries may retain the in-memory
+normalized bytes while the process lives, but photo drafts and unconfirmed
+retention candidates are not restored after ordinary process death. The additive
+schema migration and every upgrade path require migration coverage.
+
 ## Domain model
 
 ### MealEntry
@@ -339,8 +403,9 @@ must not connect to Neon using privileged database credentials.
 ## Error behavior
 
 Provider failures are mapped to provider-neutral categories: missing credential,
-invalid credential, rate limited, offline, invalid response, content rejected,
-and unknown failure. User-facing messages are localized and offer a recovery path.
+invalid credential, rate limited, offline, provider-response timeout, invalid
+response, content rejected, and unknown failure. User-facing messages are
+localized and offer a recovery path.
 
 Saving a confirmed entry never depends on provider availability. Draft analysis
 can be retried without duplicating confirmed entries.
@@ -350,3 +415,6 @@ can be retried without duplicating confirmed entries.
 Structured logs may contain operation names, timings, anonymous error categories,
 and provider/model identifiers. They must not contain descriptions, images,
 nutrition entries, profile values, or credentials. Analytics are out of MVP scope.
+The locally retained JPEG is an explicit exception only for its dedicated SQLite
+media row; it must never be exposed through logs, analytics, diagnostics, route
+state, fixtures, screenshots, or provider requests.

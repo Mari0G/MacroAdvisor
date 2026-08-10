@@ -17,7 +17,8 @@ is eligible for an Android preview build and GitHub Pre-Release.
 
 ## Working branches
 
-Create short-lived branches from `develop` using one of these prefixes:
+Create short-lived branches from `develop` for implementation work using one of
+these prefixes:
 
 - `feat/` for product features
 - `fix/` for non-urgent defects
@@ -26,11 +27,22 @@ Create short-lived branches from `develop` using one of these prefixes:
 - `test/` for test infrastructure or coverage
 - `codex/` for coding-agent work when a more specific prefix is not appropriate
 
-Use a concise kebab-case suffix, for example `feat/text-meal-entry`.
+Use a concise kebab-case suffix. Feature branches include the delivery slice ID,
+for example `feat/s-009-photo-capture`; maintenance branches do not need one.
 
 Delete working branches after their pull requests are merged.
 
-## Normal development flow
+## Documentation-only updates
+
+Documentation-only changes may be made directly on `develop`. They must not
+modify application source, tests, generated files, dependencies, build or
+release configuration, or committed evidence. A documentation change that
+defines product behavior must still follow the specification rules in
+`specs/README.md`.
+
+## Normal implementation flow
+
+For implementation work:
 
 1. Create a working branch from the latest `develop`.
 2. Open a pull request targeting `develop`.
@@ -90,13 +102,14 @@ The back-merge is mandatory so the next normal release retains the hotfix.
 
 ## Protection policy
 
-Both `main` and `develop` should:
+`main` should reject all direct pushes, require pull requests and successful
+status checks, require resolved review conversations, reject force pushes and
+branch deletion, and apply the rules to administrators when practical.
 
-- reject direct pushes
-- require pull requests and successful status checks
-- require resolved review conversations
-- reject force pushes and branch deletion
-- apply the rules to administrators when practical
+`develop` should reject direct pushes other than the documented
+documentation-only exception. Implementation changes require pull requests,
+successful status checks, resolved review conversations, and the same
+force-push and branch-deletion protections.
 
 Do not require linear history because release and hotfix synchronization use merge
 commits. Human approval requirements may be tightened when the project has enough
@@ -104,15 +117,17 @@ maintainers; CI remains required even for a single-maintainer repository.
 
 GitHub branch protection is not currently available for this private repository
 on its selected plan. Until server-side rules can be enabled, contributors and
-automation must enforce the same policy locally: always branch from `develop`,
-open a pull request to the required target, and never push or merge directly to
-`develop` or `main`. The absence of a hosted guard does not relax these rules.
+automation must enforce the same policy locally: use a branch and pull request
+for implementation work, allow only the documented exception for
+documentation-only changes on `develop`, and never push or merge directly to
+`main`. The absence of a hosted guard does not relax these rules.
 
 ## Merge methods
 
 | Pull request | Target | Method |
 | --- | --- | --- |
-| Feature, fix, chore, docs, test | `develop` | Squash merge |
+| Feature, fix, chore, test | `develop` | Squash merge |
+| Documentation-only | `develop` | Direct update permitted |
 | Release | `main` | Merge commit |
 | Hotfix | `main` | Squash merge |
 | Hotfix synchronization | `develop` | Merge commit |

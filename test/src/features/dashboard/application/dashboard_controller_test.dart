@@ -74,6 +74,10 @@ class _StreamingRepository implements MealRepository {
   Stream<List<MealEntry>> observeDay(DateTime localDay) => _stream;
 
   @override
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end) =>
+      throw UnimplementedError();
+
+  @override
   Future<MealEntry> create(MealEntryDraft draft) => throw UnimplementedError();
 
   @override

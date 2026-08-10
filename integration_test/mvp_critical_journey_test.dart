@@ -1,16 +1,25 @@
+import 'dart:typed_data';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as image;
 import 'package:integration_test/integration_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/infrastructure/drift_goal_repository.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
+import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
 import 'package:macro_advisor/src/features/settings/application/provider_settings_controller.dart';
 import 'package:macro_advisor/src/features/settings/domain/credential_store.dart';
@@ -25,13 +34,30 @@ import 'package:macro_advisor/src/features/settings/infrastructure/deterministic
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('tests a provider and creates a reviewed meal locally', (
+  testWidgets('saves, edits, moves, and restores a reviewed meal', (
     tester,
   ) async {
     final harness = _TestHarness();
     addTearDown(harness.dispose);
 
     await tester.pumpWidget(harness.app);
+    await _advance(tester);
+
+    await tester.tap(find.byTooltip('Open settings'));
+    await _advance(tester);
+    await tester.tap(find.text('Nutrition goals'));
+    await _advance(tester);
+    await tester.tap(find.text('Minimum').first);
+    await _advance(tester);
+    await tester.enterText(find.byType(TextFormField).first, '1800');
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('save-goals-button')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('save-goals-button')));
+    await _advance(tester);
+    await tester.pageBack();
     await _advance(tester);
 
     await tester.tap(find.byTooltip('Open settings'));
@@ -55,7 +81,9 @@ void main() {
     await tester.pageBack();
     await _advance(tester);
 
-    await tester.tap(find.text('Record meal').first);
+    await tester.tap(find.byType(FloatingActionButton));
+    await _waitFor(tester, find.byKey(const Key('describe-meal-source')));
+    await tester.tap(find.byKey(const Key('describe-meal-source')));
     await _advance(tester);
     await tester.enterText(
       find.byKey(const Key('meal-description-field')),
@@ -79,14 +107,157 @@ void main() {
         .observeDay(DateTime(2026, 7, 20))
         .first;
     expect(savedEntries, hasLength(1));
+    final savedEntry = savedEntries.single;
+    expect(savedEntry.description, 'Greek yogurt with banana and almonds');
     expect(
-      savedEntries.single.description,
+      savedEntry.items.single.name,
       'Greek yogurt with banana and almonds',
     );
-    expect(
-      savedEntries.single.items.single.name,
-      'Greek yogurt with banana and almonds',
+    expect(harness.provider.calls, 1);
+    expect(find.text('Meals and drinks (1)'), findsOneWidget);
+    expect(find.text('450 kcal'), findsWidgets);
+    expect(find.text('Progress toward goals'), findsOneWidget);
+    expect(find.text('Below minimum'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Open nutrition history'));
+    await _advance(tester);
+    expect(find.text('Nutrition history'), findsOneWidget);
+    expect(find.text('Daily values'), findsOneWidget);
+    await tester.pageBack();
+    await _advance(tester);
+
+    final savedMealFinder = find
+        .text('Greek yogurt with banana and almonds')
+        .first;
+    await tester.ensureVisible(savedMealFinder);
+    await tester.tap(savedMealFinder);
+    await _advance(tester);
+    expect(find.text('Saved meal'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('edit-meal-button')));
+    await _advance(tester);
+    expect(find.text('Edit saved meal'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(Key('edit-meal-item-${savedEntry.items.single.id}')),
     );
+    await _advance(tester);
+    final energyField = find.byKey(const Key('item-nutrient-energy'));
+    await tester.ensureVisible(energyField);
+    await tester.enterText(energyField, '900');
+    await tester.tap(find.byKey(const Key('save-item-button')));
+    await _advance(tester);
+
+    await tester.tap(find.byKey(const Key('meal-occurrence-button')));
+    await _advance(tester);
+    await tester.tap(find.text('19').last);
+    await _advance(tester);
+    await tester.tap(find.text('OK').last);
+    await _advance(tester);
+    await tester.tap(find.text('OK').last);
+    await _advance(tester);
+
+    await tester.tap(find.byKey(const Key('save-meal-button')));
+    await _advance(tester);
+
+    final revisedEntry = await harness.repository.findById(savedEntry.id);
+    expect(revisedEntry, isNotNull);
+    expect(revisedEntry!.revision, 1);
+    expect(revisedEntry.userEdited, isTrue);
+    expect(
+      revisedEntry.items.single.nutrition[NutrientId.energy],
+      isA<KnownNutritionValue>(),
+    );
+    expect(
+      (revisedEntry.items.single.nutrition[NutrientId.energy]
+              as KnownNutritionValue)
+          .milliUnits,
+      900000,
+    );
+    expect(revisedEntry.occursOnLocalDay(DateTime(2026, 7, 19)), isTrue);
+    expect(revisedEntry.occursOnLocalDay(DateTime(2026, 7, 20)), isFalse);
+    expect(harness.provider.calls, 1);
+
+    await tester.pageBack();
+    await _waitFor(tester, find.text('Meals and drinks (0)'));
+    expect(find.text('No meals or drinks recorded'), findsOneWidget);
+
+    final previousDayFinder = find.byTooltip('Previous day');
+    await tester.ensureVisible(previousDayFinder);
+    await tester.tap(previousDayFinder);
+    await _waitFor(tester, find.text('Meals and drinks (1)'));
+    expect(find.text('900 kcal'), findsWidgets);
+
+    // Recreate the app with the same database to prove the revised entry is
+    // persisted, rather than only reflected by the in-memory edit state.
+    await tester.pumpWidget(harness.app);
+    await _advance(tester);
+    expect(find.text('Meals and drinks (0)'), findsOneWidget);
+    expect(find.text('Progress toward goals'), findsOneWidget);
+    await tester.tap(find.byTooltip('Previous day'));
+    await _waitFor(tester, find.text('Meals and drinks (1)'));
+    expect(find.text('900 kcal'), findsWidgets);
+
+    await tester.tap(find.text('Greek yogurt with banana and almonds').first);
+    await _waitFor(tester, find.text('Saved meal'));
+    await _waitFor(tester, find.textContaining('Revision 1'));
+    expect(find.text('Edited'), findsOneWidget);
+    expect(harness.provider.calls, 1);
+  });
+
+  testWidgets('library and camera photo meals save nutrition without media', (
+    tester,
+  ) async {
+    final harness = _TestHarness();
+    addTearDown(harness.dispose);
+
+    await tester.pumpWidget(harness.app);
+    await _advance(tester);
+
+    final sources = <Finder>[
+      find.byKey(const Key('choose-photo-source')),
+      find.byKey(const Key('take-photo-source')),
+    ];
+    for (var index = 0; index < sources.length; index++) {
+      final source = sources[index];
+      await tester.tap(find.text('Record meal').first);
+      await _advance(tester);
+      await tester.tap(source);
+      await _waitFor(tester, find.text('Photo meal or drink'));
+      final analyzeButton = find.byKey(const Key('analyze-photo-button')).last;
+      await tester.scrollUntilVisible(
+        analyzeButton,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(analyzeButton);
+      await _waitFor(tester, find.text('Review estimate'));
+      await tester.tap(find.byKey(const Key('confirm-save-button')));
+      await _advance(tester);
+      if (index < sources.length - 1) {
+        await tester.pumpWidget(harness.app);
+        await _advance(tester);
+      }
+    }
+
+    final saved = await harness.repository
+        .observeDay(DateTime(2026, 7, 20))
+        .first;
+    expect(saved, hasLength(2));
+    expect(saved.map((entry) => entry.description), everyElement(isNull));
+    expect(harness.photoSource.sources, [
+      MealPhotoSourceType.library,
+      MealPhotoSourceType.camera,
+    ]);
+    expect(harness.provider.calls, 2);
+
+    await tester.pumpWidget(harness.app);
+    await _advance(tester);
+    final restored = await harness.repository
+        .observeDay(DateTime(2026, 7, 20))
+        .first;
+    expect(restored, hasLength(2));
+    expect(restored.map((entry) => entry.description), everyElement(isNull));
   });
 }
 
@@ -98,13 +269,14 @@ Future<void> _waitFor(
   Finder finder, {
   Duration timeout = const Duration(seconds: 5),
 }) async {
-  final endTime = tester.binding.clock.fromNowBy(timeout);
+  final endTime = DateTime.now().add(timeout);
 
-  while (tester.binding.clock.now().isBefore(endTime)) {
+  while (DateTime.now().isBefore(endTime)) {
     await tester.pump(const Duration(milliseconds: 100));
     if (finder.evaluate().isNotEmpty) {
       return;
     }
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   }
 
   expect(finder, findsOneWidget);
@@ -117,31 +289,81 @@ class _TestHarness {
       database = AppDatabase.forTesting(NativeDatabase.memory()),
       credentials = _InMemoryCredentialStore() {
     repository = DriftMealRepository(database, clock, ids);
+    provider = _CountingNutritionAnalysisProvider(
+      DeterministicNutritionAnalysisProvider(clock, ids),
+    );
   }
 
   final _FixedClock clock;
   final _SequenceIdGenerator ids;
   final AppDatabase database;
   final _InMemoryCredentialStore credentials;
+  late final _CountingNutritionAnalysisProvider provider;
   late final DriftMealRepository repository;
+  final photoSource = _TestPhotoSource();
+  var _appVersion = 0;
 
   Widget get app => ProviderScope(
+    key: ValueKey('test-app-${++_appVersion}'),
     overrides: [
       clockProvider.overrideWithValue(clock),
       idGeneratorProvider.overrideWithValue(ids),
       mealRepositoryProvider.overrideWithValue(repository),
+      goalRepositoryProvider.overrideWithValue(DriftGoalRepository(database)),
       credentialStoreProvider.overrideWithValue(credentials),
       providerConnectionCheckerProvider.overrideWithValue(
         const DeterministicConnectionChecker(),
       ),
-      nutritionAnalysisProvider.overrideWithValue(
-        DeterministicNutritionAnalysisProvider(clock, ids),
-      ),
+      nutritionAnalysisProvider.overrideWithValue(provider),
+      mealPhotoSourceProvider.overrideWithValue(photoSource),
+      mealPhotoNormalizerProvider.overrideWithValue(_TestPhotoNormalizer()),
     ],
     child: const MacroAdvisorApp(locale: Locale('en')),
   );
 
   Future<void> dispose() => database.close();
+}
+
+class _CountingNutritionAnalysisProvider implements NutritionAnalysisProvider {
+  _CountingNutritionAnalysisProvider(this._delegate);
+
+  final NutritionAnalysisProvider _delegate;
+  var calls = 0;
+
+  @override
+  Future<NutritionAnalysis> analyzeText(NutritionAnalysisRequest request) {
+    calls++;
+    return _delegate.analyzeText(request);
+  }
+
+  @override
+  Future<NutritionAnalysis> analyzeImage(
+    NutritionImageAnalysisRequest request,
+  ) {
+    calls++;
+    return _delegate.analyzeImage(request);
+  }
+}
+
+class _TestPhotoSource implements MealPhotoSource {
+  final sources = <MealPhotoSourceType>[];
+
+  @override
+  Future<MealPhotoAcquisition> acquire(MealPhotoSourceType source) async {
+    sources.add(source);
+    final picture = image.Image(width: 1, height: 1)
+      ..clear(image.ColorRgb8(0, 0, 0));
+    return AcquiredMealPhoto(Uint8List.fromList(image.encodeJpg(picture)));
+  }
+
+  @override
+  Future<MealPhotoAcquisition?> recoverLostData() async => null;
+}
+
+class _TestPhotoNormalizer implements MealPhotoNormalizer {
+  @override
+  Future<MealPhoto> normalize(Uint8List sourceBytes) async =>
+      MealPhoto(jpegBytes: sourceBytes, width: 1, height: 1);
 }
 
 class _FixedClock implements Clock {

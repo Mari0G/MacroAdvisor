@@ -6,15 +6,37 @@ acceptance criteria pass.
 
 ## Workflow
 
-1. Select one small, end-to-end user outcome.
-2. Add or update its specification and acceptance criteria.
-3. Add failing tests that represent the acceptance criteria.
-4. Implement the smallest change that satisfies them.
-5. Run formatting, static analysis, unit, widget, and relevant integration tests.
-6. Update user-facing documentation in both supported languages when needed.
+1. For a new feature, assign the next `F-###` ID and add an accepted feature
+   specification.
+2. Add exactly one `S-###` delivery slice for that feature in
+   `docs/implementation-plan.md`, then add its row to the status tracker.
+3. Add tests for the acceptance criteria and implement the smallest complete
+   behavior.
+4. Run the required checks and update user-facing documentation in both supported
+   languages when needed.
 
-Pull requests should link the relevant specification, state what is deliberately
-out of scope, and list the verification commands that were run.
+One slice may use several focused pull requests, but each uses the same IDs. Pull
+requests should link the feature and slice IDs, state what is out of scope, and
+list the checks that ran.
+
+## Device verification and troubleshooting
+
+For every feature that changes a user journey, add or update a deterministic
+Android journey in `integration_test/` and run it on an emulator or connected
+device before considering the feature verified. This is the default evidence for
+confirming that a feature works in the compiled application, not only in a
+widget-test environment.
+
+Use deterministic provider, credential, clock, and ID seams in these journeys;
+they must never require a real credential, send a real meal description, or make
+a network request. Use the real local persistence implementation when the
+journey saves data.
+
+When troubleshooting a reported behavior, first reproduce it in the smallest
+faithful automated test. If it depends on navigation, platform behavior, or
+persistence, add the reproduction to an Android integration journey and run it
+through native Android instrumentation. The exact commands are maintained in
+[`integration_test/README.md`](integration_test/README.md).
 
 ## Device verification and troubleshooting
 

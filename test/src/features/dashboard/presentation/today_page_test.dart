@@ -5,6 +5,7 @@ import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/features/dashboard/application/dashboard_controller.dart';
 import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
 import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
@@ -72,6 +73,28 @@ void main() {
     expect(openedId, 'meal-1');
   });
 
+  testWidgets(
+    'renders localized goal progress with accessible target semantics',
+    (tester) async {
+      final entry = _entry(
+        id: 'meal-1',
+        description: 'Lunch',
+        items: [_item(energyMilli: 500000)],
+      );
+      await tester.pumpWidget(
+        _app(
+          _model([entry]),
+          const Locale('en'),
+          goals: GoalSet({NutrientId.energy: const MinimumGoalTarget(800000)}),
+        ),
+      );
+
+      expect(find.text('Progress toward goals'), findsOneWidget);
+      expect(find.text('Below minimum'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('Energy: current')), findsOneWidget);
+    },
+  );
+
   testWidgets('preserves compact and expanded layout semantics', (
     tester,
   ) async {
@@ -84,21 +107,23 @@ void main() {
   });
 }
 
-Widget _app(DashboardDisplayModel model, Locale locale) => MaterialApp(
-  locale: locale,
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: TodayView(
-    day: model.day,
-    currentDay: model.day,
-    dashboard: AsyncValue.data(model),
-    onSelectDay: (_) {},
-    onOpenSettings: () {},
-    onRecordMeal: () {},
-    onOpenMealDetail: (_) {},
-    onRetry: () {},
-  ),
-);
+Widget _app(DashboardDisplayModel model, Locale locale, {GoalSet? goals}) =>
+    MaterialApp(
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: TodayView(
+        day: model.day,
+        currentDay: model.day,
+        dashboard: AsyncValue.data(model),
+        goals: AsyncValue.data(goals ?? GoalSet.empty()),
+        onSelectDay: (_) {},
+        onOpenSettings: () {},
+        onRecordMeal: () {},
+        onOpenMealDetail: (_) {},
+        onRetry: () {},
+      ),
+    );
 
 DashboardDisplayModel _model(List<MealEntry> entries) =>
     DashboardDisplayModel.fromEntries(LocalDay(2026, 7, 20), entries);

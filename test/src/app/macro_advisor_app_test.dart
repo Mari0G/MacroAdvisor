@@ -4,6 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
 import 'package:macro_advisor/src/core/domain/clock.dart';
+import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal.dart';
+import 'package:macro_advisor/src/features/goals/domain/goal_repository.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
@@ -15,6 +19,8 @@ void main() {
     overrides: [
       clockProvider.overrideWithValue(clock),
       mealRepositoryProvider.overrideWithValue(_EmptyMealRepository()),
+      goalRepositoryProvider.overrideWithValue(_EmptyGoalRepository()),
+      mealPhotoSourceProvider.overrideWithValue(_NoopPhotoSource()),
     ],
     child: MacroAdvisorApp(locale: locale),
   );
@@ -58,26 +64,34 @@ void main() {
     );
   });
 
-  testWidgets('both Today record actions open the meal description page', (
-    tester,
-  ) async {
-    await tester.pumpWidget(buildApp(const Locale('en')));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'both Today record actions open source selection before description',
+    (tester) async {
+      await tester.pumpWidget(buildApp(const Locale('en')));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('describe-meal-source')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('describe-meal-source')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
 
-    await tester.ensureVisible(
-      find.widgetWithText(FilledButton, 'Record meal'),
-    );
-    await tester.tap(find.widgetWithText(FilledButton, 'Record meal'));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
-  });
+      await tester.ensureVisible(
+        find.widgetWithText(FilledButton, 'Record meal'),
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Record meal'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('describe-meal-source')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meal-description-field')), findsOneWidget);
+    },
+  );
 
   testWidgets('uses a compact layout below the expanded breakpoint', (
     tester,
@@ -121,6 +135,15 @@ void main() {
   });
 }
 
+class _NoopPhotoSource implements MealPhotoSource {
+  @override
+  Future<MealPhotoAcquisition> acquire(MealPhotoSourceType source) async =>
+      const CancelledMealPhotoAcquisition();
+
+  @override
+  Future<MealPhotoAcquisition?> recoverLostData() async => null;
+}
+
 class _EmptyMealRepository implements MealRepository {
   @override
   Future<MealEntry> create(MealEntryDraft draft) => throw UnimplementedError();
@@ -131,6 +154,10 @@ class _EmptyMealRepository implements MealRepository {
 
   @override
   Stream<List<MealEntry>> observeDay(DateTime localDay) =>
+      Stream.value(const <MealEntry>[]);
+
+  @override
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end) =>
       Stream.value(const <MealEntry>[]);
 
   @override
@@ -147,6 +174,17 @@ class _EmptyMealRepository implements MealRepository {
     required String id,
     required int expectedRevision,
   }) => throw UnimplementedError();
+}
+
+class _EmptyGoalRepository implements GoalRepository {
+  @override
+  Future<GoalSet> read() async => GoalSet.empty();
+
+  @override
+  Stream<GoalSet> observe() => Stream.value(GoalSet.empty());
+
+  @override
+  Future<GoalSet> replace(GoalSet goals) async => goals;
 }
 
 class _FixedClock implements Clock {

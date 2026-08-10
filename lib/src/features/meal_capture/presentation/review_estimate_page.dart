@@ -40,7 +40,12 @@ class ReviewEstimatePage extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(l10n.reviewEstimateTitle)),
+        appBar: AppBar(
+          title: Text(
+            l10n.reviewEstimateTitle,
+            key: const Key('review-estimate-title'),
+          ),
+        ),
         body: SafeArea(
           child: ResponsiveContent(
             child: Column(
@@ -97,7 +102,8 @@ class ReviewEstimatePage extends ConsumerWidget {
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 ...state.analysis!.warnings.map(
-                                  (warning) => Text(warning.description),
+                                  (warning) =>
+                                      Text(analysisWarningText(l10n, warning)),
                                 ),
                               ],
                             ),
@@ -109,6 +115,38 @@ class ReviewEstimatePage extends ConsumerWidget {
                           MaterialLocalizations.of(
                             context,
                           ).formatFullDate(state.occurredAt!),
+                        ),
+                      ),
+                      Card(
+                        child: ExpansionTile(
+                          key: const Key('review-provenance'),
+                          title: Text(l10n.provenanceTitle),
+                          childrenPadding: const EdgeInsets.fromLTRB(
+                            16,
+                            0,
+                            16,
+                            12,
+                          ),
+                          children: [
+                            ListTile(
+                              title: Text(l10n.providerLabel),
+                              trailing: Text(
+                                state.analysis!.provenance.providerId,
+                              ),
+                            ),
+                            ListTile(
+                              title: Text(l10n.modelLabel),
+                              trailing: Text(
+                                state.analysis!.provenance.modelId,
+                              ),
+                            ),
+                            ListTile(
+                              title: Text(l10n.detectedLocaleLabel),
+                              trailing: Text(
+                                state.analysis!.provenance.detectedLocale,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       ...state.items.map(

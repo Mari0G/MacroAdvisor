@@ -99,6 +99,10 @@ class _FakeMealRepository implements MealRepository {
       Stream.value(<MealEntry>[entry]);
 
   @override
+  Stream<List<MealEntry>> observeRange(DateTime start, DateTime end) =>
+      Stream.value(<MealEntry>[entry]);
+
+  @override
   Future<MealEntry> update(MealEntry value) async {
     updated = value;
     return value;

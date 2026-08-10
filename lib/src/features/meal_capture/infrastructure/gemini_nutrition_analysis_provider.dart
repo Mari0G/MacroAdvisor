@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
+import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
@@ -53,7 +54,7 @@ final class GeminiNutritionAnalysisProvider
     required this._clock,
     required this._idGenerator,
     GeminiHttpTransport? transport,
-    this.timeout = const Duration(seconds: 20),
+    this.timeout = const Duration(seconds: 60),
     this.connectionCheckTimeout = const Duration(seconds: 45),
   }) : _transport = transport ?? _IoGeminiHttpTransport(HttpClient());
 
@@ -71,9 +72,38 @@ final class GeminiNutritionAnalysisProvider
     final credential = await _readCredential();
     final response = await _send(
       credential: credential,
-      body: _requestBody(
+      body: _textRequestBody(
         localeTag: request.localeTag,
         description: request.description,
+      ),
+      timeoutFailure: const AnalysisTimedOut(),
+    );
+    _throwForHttpResponse(response);
+
+    try {
+      final wireResult = _GeminiWireResponse.fromJson(
+        _decodeJson(response.body),
+      );
+      return _toDomain(wireResult, request.localeTag);
+    } on _InvalidGeminiPayload {
+      throw const InvalidAnalysisResponse();
+    } on NutritionAnalysisFailure {
+      rethrow;
+    } catch (_) {
+      throw const UnknownAnalysisFailure();
+    }
+  }
+
+  @override
+  Future<NutritionAnalysis> analyzeImage(
+    NutritionImageAnalysisRequest request,
+  ) async {
+    final credential = await _readCredential();
+    final response = await _send(
+      credential: credential,
+      body: _imageRequestBody(
+        localeTag: request.localeTag,
+        photo: request.photo,
       ),
     );
     _throwForHttpResponse(response);
@@ -82,7 +112,7 @@ final class GeminiNutritionAnalysisProvider
       final wireResult = _GeminiWireResponse.fromJson(
         _decodeJson(response.body),
       );
-      return _toDomain(wireResult, request);
+      return _toDomain(wireResult, request.localeTag);
     } on _InvalidGeminiPayload {
       throw const InvalidAnalysisResponse();
     } on NutritionAnalysisFailure {
@@ -139,6 +169,7 @@ final class GeminiNutritionAnalysisProvider
     required String credential,
     required String body,
     Duration? timeout,
+    NutritionAnalysisFailure? timeoutFailure,
   }) async {
     try {
       return await _transport.post(
@@ -153,6 +184,9 @@ final class GeminiNutritionAnalysisProvider
     } on SocketException {
       throw const AnalysisOffline();
     } on TimeoutException {
+      if (timeoutFailure != null) {
+        throw timeoutFailure;
+      }
       throw const AnalysisOffline();
     } on HandshakeException {
       throw const AnalysisOffline();
@@ -175,7 +209,7 @@ final class GeminiNutritionAnalysisProvider
     }
   }
 
-  static String _requestBody({
+  static String _textRequestBody({
     required String localeTag,
     required String description,
   }) {
@@ -185,7 +219,9 @@ final class GeminiNutritionAnalysisProvider
         'Return only JSON matching the supplied response schema. '
         'Use unknown nutrient values when the description does not support '
         'a defensible estimate; do not invent precision. '
-        'Nutrient units must be kcal for energy and g for all other nutrients. ',
+        'Nutrient units must be kcal for energy and g for all other nutrients. '
+        'Keep finite amounts with unfamiliar units as descriptive amounts; '
+        'do not infer a mass conversion. ',
       );
     return jsonEncode(<String, Object?>{
       'system_instruction': <String, Object?>{
@@ -198,6 +234,47 @@ final class GeminiNutritionAnalysisProvider
           'role': 'user',
           'parts': <Object?>[
             <String, String>{'text': description},
+          ],
+        },
+      ],
+      'generationConfig': <String, Object?>{
+        'responseMimeType': 'application/json',
+        'responseSchema': _responseSchema,
+        'temperature': 0,
+        'thinkingConfig': <String, String>{'thinkingLevel': 'minimal'},
+      },
+    });
+  }
+
+  static String _imageRequestBody({
+    required String localeTag,
+    required MealPhoto photo,
+  }) {
+    final instruction = StringBuffer()
+      ..write('Analyze the meal photo for locale $localeTag. ')
+      ..write(
+        'If no meal or drink is recognizable, return an empty items array. '
+        'Return only JSON matching the supplied response schema. '
+        'Use unknown nutrient values when the image does not support a '
+        'defensible estimate; do not invent precision. '
+        'Nutrient units must be kcal for energy and g for all other nutrients. ',
+      );
+    return jsonEncode(<String, Object?>{
+      'system_instruction': <String, Object?>{
+        'parts': <Object?>[
+          <String, String>{'text': instruction.toString()},
+        ],
+      },
+      'contents': <Object?>[
+        <String, Object?>{
+          'role': 'user',
+          'parts': <Object?>[
+            <String, Object?>{
+              'inlineData': <String, String>{
+                'mimeType': MealPhoto.mimeType,
+                'data': base64Encode(photo.jpegBytes),
+              },
+            },
           ],
         },
       ],
@@ -250,7 +327,12 @@ final class GeminiNutritionAnalysisProvider
               'type': 'OBJECT',
               'properties': <String, Object?>{
                 'value': <String, Object?>{'type': 'NUMBER'},
-                'unit': <String, Object?>{'type': 'STRING'},
+                'unit': <String, Object?>{
+                  'type': 'STRING',
+                  'description':
+                      'Canonical or descriptive portion unit; unfamiliar '
+                      'units remain editable and are not converted to mass.',
+                },
                 'unknown': <String, Object?>{'type': 'BOOLEAN'},
                 'description': <String, Object?>{'type': 'STRING'},
               },
@@ -274,6 +356,7 @@ final class GeminiNutritionAnalysisProvider
                       'unit': <String, Object?>{'type': 'STRING'},
                       'unknown': <String, Object?>{'type': 'BOOLEAN'},
                     },
+                    'required': <String>['unit'],
                   },
               },
             },
@@ -327,6 +410,7 @@ final class GeminiNutritionAnalysisProvider
                 'unit': <String, Object?>{'type': 'STRING'},
                 'unknown': <String, Object?>{'type': 'BOOLEAN'},
               },
+              'required': <String>['unit'],
             },
         },
       },
@@ -356,10 +440,7 @@ final class GeminiNutritionAnalysisProvider
     'required': <String>['items', 'confidence'],
   };
 
-  NutritionAnalysis _toDomain(
-    _GeminiWireResponse response,
-    NutritionAnalysisRequest request,
-  ) {
+  NutritionAnalysis _toDomain(_GeminiWireResponse response, String localeTag) {
     final warnings = <AnalysisWarning>[
       ...response.warnings,
       const AnalysisWarning(
@@ -379,7 +460,7 @@ final class GeminiNutritionAnalysisProvider
         providerId: _geminiProviderId,
         modelId: _geminiModelId,
         analyzedAtUtc: _utc(_clock.now()),
-        detectedLocale: response.detectedLocale ?? request.localeTag,
+        detectedLocale: response.detectedLocale ?? localeTag,
       ),
       items: items,
       confidence: response.confidence,
@@ -519,8 +600,7 @@ final class GeminiNutritionAnalysisProvider
       'servings',
     };
     if (rawValue == null || raw['unknown'] == true) {
-      if (unit != null &&
-          (unit is! String || !supported.contains(unit.toLowerCase()))) {
+      if (unit != null && unit is! String) {
         throw const _InvalidGeminiPayload();
       }
       warnings.add(
@@ -531,15 +611,28 @@ final class GeminiNutritionAnalysisProvider
       );
       return _ParsedAmount(description: _optionalString(raw, 'description'));
     }
-    if (rawValue is! num ||
-        !rawValue.isFinite ||
-        rawValue < 0 ||
-        unit is! String) {
+    if (rawValue is! num || !rawValue.isFinite || rawValue < 0) {
       throw const _InvalidGeminiPayload();
     }
-    final normalizedUnit = unit.toLowerCase();
-    if (!supported.contains(normalizedUnit) || rawValue > 1000000) {
+    if (rawValue > 1000000 || unit != null && unit is! String) {
       throw const _InvalidGeminiPayload();
+    }
+    final unitText = unit is String && unit.trim().isNotEmpty
+        ? unit.trim()
+        : null;
+    final normalizedUnit = unitText?.toLowerCase();
+    final description =
+        _optionalString(raw, 'description') ??
+        '${rawValue.toString()}${unitText == null ? '' : ' $unitText'}';
+    if (normalizedUnit == null || !supported.contains(normalizedUnit)) {
+      warnings.add(
+        const AnalysisWarning(
+          code: 'unknown-amount-unit',
+          description:
+              'The item amount uses an unfamiliar unit and remains editable.',
+        ),
+      );
+      return _ParsedAmount(description: description);
     }
     final normalizedGramsMilli = switch (normalizedUnit) {
       'g' || 'gram' || 'grams' => (rawValue * 1000).round(),
@@ -547,9 +640,7 @@ final class GeminiNutritionAnalysisProvider
       _ => null,
     };
     return _ParsedAmount(
-      description: raw['description'] is String
-          ? raw['description'] as String
-          : '${rawValue.toString()} $unit',
+      description: description,
       normalizedGramsMilli: normalizedGramsMilli,
     );
   }
@@ -781,7 +872,10 @@ final class _GeminiWireResponse {
       throw const _InvalidGeminiPayload();
     }
     final rawItems = decoded['items'] as List;
-    if (rawItems.isEmpty || rawItems.any((item) => item is! Map)) {
+    if (rawItems.isEmpty) {
+      throw const NoMealDetected();
+    }
+    if (rawItems.any((item) => item is! Map)) {
       throw const _InvalidGeminiPayload();
     }
     final confidence = GeminiNutritionAnalysisProvider._confidence(
