@@ -38,6 +38,25 @@ persistence, add the reproduction to an Android integration journey and run it
 through native Android instrumentation. The exact commands are maintained in
 [`integration_test/README.md`](integration_test/README.md).
 
+## Device verification and troubleshooting
+
+For every feature that changes a user journey, add or update a deterministic
+Android journey in `integration_test/` and run it on an emulator or connected
+device before considering the feature verified. This is the default evidence for
+confirming that a feature works in the compiled application, not only in a
+widget-test environment.
+
+Use deterministic provider, credential, clock, and ID seams in these journeys;
+they must never require a real credential, send a real meal description, or make
+a network request. Use the real local persistence implementation when the
+journey saves data.
+
+When troubleshooting a reported behavior, first reproduce it in the smallest
+faithful automated test. If it depends on navigation, platform behavior, or
+persistence, add the reproduction to an Android integration journey and run it
+through native Android instrumentation. The exact commands are maintained in
+[`integration_test/README.md`](integration_test/README.md).
+
 ## Branches and releases
 
 Create feature work from `develop` and submit it back to `develop` through a pull
