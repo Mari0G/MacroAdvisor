@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 ## Purpose
 
@@ -204,7 +204,7 @@ meal remains focused on text input.
 ### 3a. Photo meal
 
 **Purpose:** acquire and preview one meal photo while making provider disclosure
-and non-retention clear before analysis.
+and local-retention control clear before analysis.
 
 Selecting Record meal opens a short source chooser with Describe meal, Take photo,
 and Choose photo. The chooser uses text and icons, restores focus to Record meal
@@ -216,7 +216,8 @@ After a photo is returned, Photo meal contains:
 - a bounded, aspect-preserving preview with a semantic description that does not
   attempt to identify the food
 - guidance for a clear, well-lit image and a disclosure that the normalized photo
-  is sent to the configured AI provider but not attached to the saved meal
+  is sent to the configured AI provider; state that a small local image will be
+  retained only after confirmation when the Settings control is enabled
 - Replace and Remove actions
 - occurrence date/time defaulting to now
 - full-width Analyze estimate action above the safe-area inset
@@ -237,8 +238,9 @@ After a photo is returned, Photo meal contains:
   replacement
 - Back with a selected photo asks whether to discard it; discarding releases
   app-owned temporary media
-- success replaces Photo meal with Review estimate, which does not display or
-  retain the photo
+- success replaces Photo meal with Review estimate, which does not display the
+  source photo; a bounded in-memory retention candidate is released on discard
+  or after confirmation
 
 ### 4. Analysis in progress
 
@@ -317,7 +319,10 @@ confirmed; structurally invalid values cannot be saved.
 
 The read view shows occurrence time, user description when present, item cards,
 totals, estimate notice, provider/model provenance without credentials, edited
-status, assumptions, and incomplete-data warnings.
+status, assumptions, and incomplete-data warnings. A photo meal with a retained
+image also shows its bounded local image and an explicit Remove saved image action.
+Removal has a short destructive confirmation and does not alter the meal's
+nutrition, provenance, or totals.
 
 “Edit meal” enters an editable copy using the same item editor and totals behavior
 as Review. Saving increments the local revision and refreshes Today. “Delete meal”
@@ -365,6 +370,10 @@ Sections:
 
 - AI provider: provider name, configuration status, configure/remove action, and
   connection check
+- Saved meal images: a switch that defaults on and explains that confirmed photo
+  meals retain a small local image. Turning it off requires confirmation because
+  it immediately removes every retained meal image; it does not delete meals or
+  their nutrition data.
 - Goals: summary and route to Goal settings
 - Language: System default, English, or German
 - About: version, privacy summary, open-source licenses, and estimate disclaimer
@@ -450,10 +459,13 @@ must not cover the active field or primary action.
 
 - Meal descriptions are never placed in logs, analytics, crash breadcrumbs, or
   route names.
-- Meal photos, thumbnails, paths, filenames, metadata, decoded objects, and inline
+- Source meal photos, paths, filenames, metadata, decoded objects, and inline
   provider payloads are never placed in persistence, logs, analytics, crash
-  breadcrumbs, route state, fixtures, or screenshots. The preview explains
-  provider transmission and photo non-retention before analysis.
+  breadcrumbs, route state, fixtures, or screenshots. F-005/S-012 permits only
+  its bounded metadata-free derived JPEG in the dedicated local-media record;
+  it is never logged, routed, exported, sent to a provider, or captured in a
+  fixture or screenshot. The preview explains provider transmission and whether
+  that local retention setting is enabled before analysis.
 - Credentials never appear in SQLite, ordinary preferences, logs, fixtures,
   screenshots, clipboard actions, or error details.
 - Provider/model identifiers may be shown as provenance; credentials and raw
@@ -478,6 +490,7 @@ must not cover the active field or primary action.
 | Local nutrition history is accessible | History widget, golden, and semantic tests |
 | German text does not clip | localized golden tests at target sizes |
 | Photo capture is private and recoverable | source/preview widget tests, adapter contract tests, privacy audit, and Android journeys |
+| Local retained image is controlled and bounded | Settings/detail widget tests, persistence and migration tests, privacy audit, and Android journey |
 
 ## Deferred decisions
 

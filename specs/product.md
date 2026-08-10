@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 ## Vision
 
@@ -38,8 +38,10 @@ The MVP enables a user to:
 7. Use the app in German or English.
 
 Photo input is part of the product scope and is planned as F-003 after the proven
-text-entry slices. It reuses the mandatory review-and-correct step and does not
-retain the source photo with the saved meal.
+text-entry slices. It reuses the mandatory review-and-correct step. It never
+retains the source photo; F-005/S-012 may retain a separately derived,
+low-resolution local food image for a confirmed photo meal by default, with a
+Settings opt-out that removes retained images.
 
 ## Nutrient scope
 
@@ -81,7 +83,9 @@ configured targets; goal-version history is not part of the initial feature.
 
 All confirmed entries, goals, preferences, and optional profile values are stored
 locally. Account creation and cloud synchronization are not part of the MVP. AI
-analysis is the only operation that requires network access.
+analysis is the only operation that requires network access. A retained food
+image is local-only, derived rather than source media, and remains under the
+user's Settings control.
 
 ## Planned post-MVP scope
 

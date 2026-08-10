@@ -1,16 +1,19 @@
 # Photo meal capture
 
-Status: Accepted v0.1
+Status: Accepted v0.2
 
 Feature ID: F-003
 
-Last updated: 2026-08-02
+Last updated: 2026-08-04
 
 ## User outcome
 
 A user can take a photo of a meal or choose one from the device, receive an
-itemized nutrition estimate, correct it, and save the reviewed values without the
-app retaining the photo.
+itemized nutrition estimate, correct it, and save the reviewed values without
+the app retaining the source photo.
+
+F-003/S-009 governs photo acquisition and analysis. The separately planned
+F-005/S-012 feature governs any later local display-image retention.
 
 ## Scope
 
@@ -28,7 +31,8 @@ app retaining the photo.
 - combining a photo with a typed description or follow-up prompt
 - crop, markup, filters, barcode scanning, OCR-only label capture, or food-history
   matching
-- retaining a thumbnail or original photo with the saved meal
+- retaining a thumbnail or original photo with the saved meal in S-009; F-005
+  alone may introduce a bounded derivative
 - background uploads, provider file storage, or resumable analysis after process
   death
 - changing the supported nutrient set or claiming measurement-level accuracy
@@ -73,8 +77,9 @@ provenance remain shared.
 8. Recoverable provider failures keep the preview available for retry. Removing
    the photo or leaving the capture flow discards the in-memory payload.
 9. Confirming persists only the reviewed nutrition values and standard analysis
-   provenance. It never persists image bytes, a thumbnail, source path, filename,
-   or image metadata.
+   provenance. F-005 may add an optional bounded derivative in its own atomic
+   persistence path; this feature never persists a source photo, source path,
+   filename, source metadata, or provider payload.
 10. If Android recreates the activity while the system picker is open, the app
     recovers the pending picker result. Ordinary process death after selection
     clears the photo draft instead of persisting sensitive media.
@@ -91,11 +96,11 @@ provenance remain shared.
 - Gallery originals are read-only and never modified or deleted. App-owned camera
   cache files and normalized temporary data are removed on success or discard and
   cleaned up best-effort after interrupted flows.
-- Photos, paths, filenames, byte counts tied to a user image, request bodies, and
-  decoded image objects never enter logs, analytics, crash breadcrumbs, route
-  state, screenshots, fixtures, or SQLite.
+- Source photos, paths, filenames, byte counts tied to a user image, request
+  bodies, and decoded image objects never enter logs, analytics, crash
+  breadcrumbs, route state, screenshots, fixtures, or SQLite.
 - The preview states plainly that the photo will be sent to the configured AI
-  provider for analysis and will not be attached to the saved meal.
+  provider for analysis. F-005 may add a separate local-retention disclosure.
 
 ## Edge cases
 
@@ -132,8 +137,9 @@ provenance remain shared.
   idempotent save path.
 - Discarding, cancelling, failing, or confirming never changes daily totals unless
   the user confirms a reviewed estimate.
-- After success or discard, no photo bytes, thumbnail, source path, filename, or
-  image metadata exist in meal persistence, routes, logs, or committed fixtures.
+- After success or discard, no source photo, source path, filename, source
+  metadata, or unconfirmed image exists in meal persistence, routes, logs, or
+  committed fixtures. F-005 defines the only allowed persisted derivative.
 - Camera/photo actions, preview, replace/remove controls, progress, failures, and
   completion have localized accessible names and a logical focus order at 200%
   text scale.
@@ -148,6 +154,8 @@ provenance remain shared.
   permission denial, local validation, provider recovery, and accessibility
 - Android integration journeys for both a synthetic library photo and a
   test-controlled camera result through review, edit, save, Today refresh, and
-  restart persistence of nutrition values only
-- a privacy audit asserting that photos, paths, filenames, and inline request data
-  are absent from logs, routes, database rows, screenshots, and committed output
+  restart persistence of nutrition values only for S-009; F-005 adds separate
+  retained-image coverage
+- a privacy audit asserting that source photos, paths, filenames, and inline
+  request data are absent from logs, routes, database rows, screenshots, and
+  committed output

@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 ## Quality gates
 
@@ -55,8 +55,11 @@ a deterministic fake AI provider. Initial critical journey:
 
 The F-003 photo journey adds two deterministic Android variants: one synthetic
 system-library selection and one test-controlled camera result. Each proceeds
-through the same review/edit/save flow and proves that restart persistence
-contains reviewed nutrition values but no photo, path, filename, or metadata.
+through the same review/edit/save flow. F-005/S-012 proves that restart
+persistence contains reviewed nutrition values and, with the default setting,
+only the bounded metadata-free derived local image; it also proves that opt-out,
+individual removal, and meal deletion leave no retained image. Source photos,
+paths, filenames, provider payloads, and metadata are never persisted.
 Real personal meal photos and physical camera hardware are never CI inputs.
 
 ### Live smoke tests

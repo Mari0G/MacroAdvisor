@@ -2,7 +2,7 @@
 
 Status: Accepted v0.1
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 ## Application stack
 
@@ -59,6 +59,8 @@ Required boundaries include:
 - `NutritionAnalysisProvider` for text and image analysis
 - `MealPhotoSource` for camera/library acquisition and temporary-file ownership
 - `MealPhotoNormalizer` for bounded, metadata-free provider input
+- `MealImageRetentionSettings` for observing and changing the local retention
+  preference, including deletion of retained images when disabled
 - `CredentialStore` for provider secrets
 - `Clock` and ID generation abstractions for deterministic tests
 
@@ -270,6 +272,10 @@ stable IDs, UTC timestamps plus the recorded occurrence offset where required,
 revisions, and tombstone metadata described by the domain model.
 
 Saving or updating a meal and all of its items/nutrients is one database
+transaction. A confirmed photo meal with retention enabled writes its bounded
+derived image in that same transaction; otherwise no image row is written.
+Disabling retention atomically removes all retained-image rows and records the
+disabled setting. Soft-deleting a meal removes its retained image in the same
 transaction. Goal-set updates are atomic. Observation streams emit domain objects
 and surface categorized failures; they do not leak Drift exceptions.
 
@@ -341,13 +347,20 @@ request and does not use public URLs or the provider Files API. Both methods
 return the same validated `NutritionAnalysis`. A recognizable-food failure is
 provider-neutral and distinct from malformed provider output.
 
-Normalized bytes live only in capture workflow memory. The gallery original is
-read-only. App-owned camera cache and temporary normalized data are released on
-successful analysis or discard and cleaned up best-effort after interruption.
-Retries may retain the in-memory normalized bytes while the process lives, but
-photo drafts are not restored after ordinary process death. No schema migration
-is required because meals store only reviewed nutrition data and standard
-provenance, never media or media identifiers.
+Normalized bytes live only in capture workflow memory. For F-005/S-012, a second
+metadata-free JPEG may be derived from normalized bytes solely as a retention
+candidate: it is limited to 512 pixels on its longest edge and 256 KiB, stays in
+memory until review confirmation, and is never a provider input or route value.
+When the local retention setting is enabled at confirmation, the candidate is
+stored in a dedicated `MealRetainedImages` row keyed to the meal; it contains only
+the derived JPEG bytes, dimensions, and safe MIME type. The schema has a separate
+single-row local retention setting whose default is enabled. Existing meals are
+not backfilled. The gallery original is read-only. App-owned camera cache and
+temporary normalized data are released on successful analysis or discard and
+cleaned up best-effort after interruption. Retries may retain the in-memory
+normalized bytes while the process lives, but photo drafts and unconfirmed
+retention candidates are not restored after ordinary process death. The additive
+schema migration and every upgrade path require migration coverage.
 
 ## Domain model
 
@@ -402,3 +415,6 @@ can be retried without duplicating confirmed entries.
 Structured logs may contain operation names, timings, anonymous error categories,
 and provider/model identifiers. They must not contain descriptions, images,
 nutrition entries, profile values, or credentials. Analytics are out of MVP scope.
+The locally retained JPEG is an explicit exception only for its dedicated SQLite
+media row; it must never be exposed through logs, analytics, diagnostics, route
+state, fixtures, screenshots, or provider requests.

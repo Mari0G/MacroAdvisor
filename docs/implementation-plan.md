@@ -1,6 +1,6 @@
 # Delivery plan
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 This plan turns accepted specifications into reviewable delivery slices. It does
 not replace feature acceptance criteria. Progress and merged evidence live in
@@ -264,19 +264,19 @@ localized recoverable failure.
 accessible progress on Today, and explore local nutrition history by week,
 month, or custom date range.
 
+### S-012 — Local food-image retention
+
+**Feature specification:** [F-005 — Local food-image retention](../specs/features/local-food-image-retention.md)
+
+**Outcome:** By default, the app retains a small, low-resolution local food
+image for a saved photo meal, and the user can remove an image or disable that
+retention in Settings.
+
 ## Reserved future slices
 
 The following slice IDs reserve the agreed delivery order. They are planning
 placeholders only: each must receive its feature specification and complete
 slice plan in its dedicated planning task before implementation starts.
-
-### S-012 — Local food-image retention
-
-**Feature specification:** To be created (requires a revision to F-003's
-privacy and persistence requirements before implementation).
-
-**Outcome:** By default, the app retains a small, low-resolution local food
-image for a saved meal, and the user can disable that retention in Settings.
 
 ### S-013 — UI cleanup
 

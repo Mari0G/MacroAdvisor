@@ -20,6 +20,7 @@ These files are the repository's product and behavior source of truth.
 | F-002 | Nutrition dashboard | [features/nutrition-dashboard.md](features/nutrition-dashboard.md) |
 | F-003 | Photo meal capture | [features/photo-meal-capture.md](features/photo-meal-capture.md) |
 | F-004 | Nutrition goals and history | [features/nutrition-goals-and-history.md](features/nutrition-goals-and-history.md) |
+| F-005 | Local food-image retention | [features/local-food-image-retention.md](features/local-food-image-retention.md) |
 
 ## Status vocabulary
 
