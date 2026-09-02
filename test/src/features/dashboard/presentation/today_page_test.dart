@@ -95,6 +95,36 @@ void main() {
     },
   );
 
+  testWidgets(
+    'keeps incomplete goal progress cards within a Pixel-width layout',
+    (tester) async {
+      tester.view.physicalSize = const Size(432, 969);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final entry = _entry(
+        id: 'meal-1',
+        description: 'Lunch',
+        items: [_item(energyMilli: 500000)],
+      );
+      await tester.pumpWidget(
+        _app(
+          _model([entry]),
+          const Locale('de'),
+          goals: GoalSet({
+            NutrientId.fibre: const MinimumGoalTarget(25000),
+            NutrientId.sugars: const MaximumGoalTarget(30000),
+          }),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Ballaststoffe'), findsOneWidget);
+      expect(find.text('Zucker'), findsOneWidget);
+      expect(find.text('Unvollständige Daten'), findsWidgets);
+    },
+  );
+
   testWidgets('preserves compact and expanded layout semantics', (
     tester,
   ) async {
