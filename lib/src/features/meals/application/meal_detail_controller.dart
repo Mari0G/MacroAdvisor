@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:macro_advisor/src/features/meals/application/meal_image_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_image.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
@@ -12,20 +14,32 @@ final mealDetailProvider = FutureProvider.autoDispose.family<MealEntry, String>(
   },
 );
 
+final mealRetainedImageProvider = FutureProvider.autoDispose
+    .family<RetainedMealImage?, String>((ref, id) {
+      return ref.watch(mealImageRepositoryProvider).findByMealId(id);
+    });
+
 /// Application-facing mutations used by detail and edit screens.
 class MealMutations {
-  const MealMutations(this._repository);
+  const MealMutations(this._repository, this._imageRepository);
 
   final MealRepository _repository;
+  final MealImageRepository _imageRepository;
 
   Future<MealEntry> update(MealEntry entry) => _repository.update(entry);
 
   Future<MealEntry> softDelete(MealEntry entry) =>
       _repository.softDelete(id: entry.id, expectedRevision: entry.revision);
+
+  Future<void> removeSavedImage(String mealId) =>
+      _imageRepository.removeForMeal(mealId);
 }
 
 final mealMutationsProvider = Provider<MealMutations>(
-  (ref) => MealMutations(ref.watch(mealRepositoryProvider)),
+  (ref) => MealMutations(
+    ref.watch(mealRepositoryProvider),
+    ref.watch(mealImageRepositoryProvider),
+  ),
 );
 
 /// In-memory reviewed values used by the saved-meal editor. It never calls an

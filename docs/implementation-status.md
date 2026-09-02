@@ -1,6 +1,6 @@
 # Implementation status
 
-Last updated: 2026-08-04
+Last updated: 2026-09-02
 
 This tracker records durable delivery progress for the slices in
 [implementation-plan.md](implementation-plan.md). It does not replace feature
@@ -33,7 +33,7 @@ features. New rows use one feature ID and one slice ID.
 | S-009 | F-003 | Merged | `feat/s-009-photo-capture` | — | Full local gate and deterministic Android library/camera journeys pass; draft PR pending. |
 | S-010 | F-001 | Merged | `codex/slice10-analysis-resilience` | — | Permits unknown/noncanonical item amount units as descriptive, non-fatal values; adds a distinct `AnalysisTimedOut` provider failure and localized recovery. |
 | S-011 | F-004 | In review | `codex/slice11-goals-history` | `test/src/features/goals/`, `test/src/features/history/`, `test/src/features/dashboard/presentation/today_page_test.dart`, and `integration_test/mvp_critical_journey_test.dart` | Full local verification and the deterministic Android goals/history/meal journey pass. |
-| S-012 | F-005 | Planned | — | — | F-005 defines default-on bounded local food-image retention, individual removal, and a Settings opt-out that deletes retained images. |
+| S-012 | F-005 | In review | `feat/s-012-image-retention` | — | Full local verification passes; targeted Android run is blocked by the connected Pixel device's sleep/runner state. Implements default-on bounded local food-image retention, individual removal, restart persistence, and the Settings opt-out. |
 | S-013 | — | Planned | — | — | Reserved maintenance slice for compact, expandable warning and information UI and visual-spacing fixes. Detailed slice plan is pending. |
 
 ## Update rules

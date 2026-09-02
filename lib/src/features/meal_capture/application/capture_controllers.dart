@@ -8,6 +8,7 @@ import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_image.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
 enum DescriptionPhase { editing, analyzing, failure, readyForReview }
@@ -188,6 +189,8 @@ class PhotoState {
 
 class PhotoController extends Notifier<PhotoState> {
   var _requestVersion = 0;
+  var _candidateVersion = 0;
+  Future<MealPhotoRetentionCandidate?>? _retentionCandidateFuture;
 
   @override
   PhotoState build() => PhotoState(occurredAt: ref.read(clockProvider).now());
@@ -244,8 +247,10 @@ class PhotoController extends Notifier<PhotoState> {
             clearFailure: true,
             clearAnalysis: true,
           );
+          _startRetentionCandidate(photo);
         } on MealPhotoFailure catch (failure) {
           if (version != _requestVersion) return;
+          releaseRetentionCandidate();
           state = state.copyWith(
             phase: PhotoPhase.failure,
             failure: failure,
@@ -253,6 +258,7 @@ class PhotoController extends Notifier<PhotoState> {
           );
         } catch (_) {
           if (version != _requestVersion) return;
+          releaseRetentionCandidate();
           state = state.copyWith(
             phase: PhotoPhase.failure,
             failure: const UnreadableMealPhoto(),
@@ -308,7 +314,41 @@ class PhotoController extends Notifier<PhotoState> {
 
   void discard() {
     _requestVersion++;
+    releaseRetentionCandidate();
     state = PhotoState(occurredAt: ref.read(clockProvider).now());
+  }
+
+  Future<MealPhotoRetentionCandidate?> readRetentionCandidate() {
+    final future = _retentionCandidateFuture;
+    return future ?? Future<MealPhotoRetentionCandidate?>.value();
+  }
+
+  void releaseRetentionCandidate() {
+    _candidateVersion++;
+    _retentionCandidateFuture = null;
+  }
+
+  void _startRetentionCandidate(MealPhoto photo) {
+    final version = ++_candidateVersion;
+    final future = _deriveRetentionCandidate(photo);
+    _retentionCandidateFuture = future;
+    unawaited(
+      future.then((_) {
+        if (version != _candidateVersion || state.photo != photo) return;
+      }),
+    );
+  }
+
+  Future<MealPhotoRetentionCandidate?> _deriveRetentionCandidate(
+    MealPhoto photo,
+  ) async {
+    try {
+      return await ref
+          .read(mealPhotoRetentionCandidateDeriverProvider)
+          .deriveRetentionCandidate(photo);
+    } catch (_) {
+      return null;
+    }
   }
 }
 
@@ -326,6 +366,7 @@ class ReviewState {
     this.analysis,
     this.items = const [],
     this.userEdited = false,
+    this.isPhotoMeal = false,
   });
 
   final ReviewPhase phase;
@@ -334,6 +375,7 @@ class ReviewState {
   final NutritionAnalysis? analysis;
   final List<MealItem> items;
   final bool userEdited;
+  final bool isPhotoMeal;
 
   bool get canSave => phase == ReviewPhase.reviewing && items.isNotEmpty;
   NutritionFacts get totals =>
@@ -344,6 +386,7 @@ class ReviewState {
     DateTime? occurredAt,
     List<MealItem>? items,
     bool? userEdited,
+    bool? isPhotoMeal,
   }) => ReviewState(
     phase: phase ?? this.phase,
     description: description,
@@ -351,6 +394,7 @@ class ReviewState {
     analysis: analysis,
     items: List.unmodifiable(items ?? this.items),
     userEdited: userEdited ?? this.userEdited,
+    isPhotoMeal: isPhotoMeal ?? this.isPhotoMeal,
   );
 }
 
@@ -397,6 +441,7 @@ class ReviewController extends Notifier<ReviewState> {
       occurredAt: occurredAt,
       analysis: analysis,
       items: List.unmodifiable(analysis.items),
+      isPhotoMeal: description == null,
     );
   }
 
@@ -439,22 +484,38 @@ class ReviewController extends Notifier<ReviewState> {
     final analysis = state.analysis!;
     _confirmationId ??= ref.read(idGeneratorProvider).newId();
     state = state.copyWith(phase: ReviewPhase.saving);
-    try {
-      await ref
-          .read(mealRepositoryProvider)
-          .create(
-            MealEntryDraft(
-              confirmationId: _confirmationId,
-              occurredAtUtc: state.occurredAt!.toUtc(),
-              occurredOffsetMinutes: state.occurredAt!.timeZoneOffset.inMinutes,
-              description: state.description,
-              items: state.items,
-              provenance: analysis.provenance,
-              confidence: analysis.confidence,
-              assumptions: analysis.assumptions,
-              userEdited: state.userEdited,
-            ),
+    final candidate = state.isPhotoMeal
+        ? await ref
+              .read(photoControllerProvider.notifier)
+              .readRetentionCandidate()
+        : null;
+    final retainedImage = candidate == null
+        ? null
+        : RetainedMealImage(
+            mealId: _confirmationId!,
+            jpegBytes: candidate.jpegBytes,
+            width: candidate.width,
+            height: candidate.height,
+            mimeType: MealPhotoRetentionCandidate.mimeType,
           );
+    try {
+      final draft = MealEntryDraft(
+        confirmationId: _confirmationId,
+        occurredAtUtc: state.occurredAt!.toUtc(),
+        occurredOffsetMinutes: state.occurredAt!.timeZoneOffset.inMinutes,
+        description: state.description,
+        items: state.items,
+        provenance: analysis.provenance,
+        confidence: analysis.confidence,
+        assumptions: analysis.assumptions,
+        userEdited: state.userEdited,
+      );
+      final repository = ref.read(mealRepositoryProvider);
+      if (repository case final MealImageAwareMealRepository imageRepository) {
+        await imageRepository.createWithRetainedImage(draft, retainedImage);
+      } else {
+        await repository.create(draft);
+      }
       state = state.copyWith(phase: ReviewPhase.saved);
       _confirmationId = null;
       _activeAnalysis = null;

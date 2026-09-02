@@ -23,6 +23,36 @@ class MealPhoto {
   final int height;
 }
 
+/// A second, bounded image representation used only for local retention.
+///
+/// This type is intentionally distinct from [MealPhoto], which is the provider
+/// input. It contains no source path, filename, picker object, or metadata.
+class MealPhotoRetentionCandidate {
+  MealPhotoRetentionCandidate({
+    required Uint8List jpegBytes,
+    required this.width,
+    required this.height,
+  }) : assert(jpegBytes.isNotEmpty),
+       assert(width > 0),
+       assert(height > 0),
+       assert(width <= maximumEdge),
+       assert(height <= maximumEdge),
+       assert(jpegBytes.length <= maximumBytes),
+       jpegBytes = Uint8List.fromList(jpegBytes);
+
+  static const mimeType = 'image/jpeg';
+  static const maximumEdge = 512;
+  static const maximumBytes = 256 * 1024;
+
+  final Uint8List jpegBytes;
+  final int width;
+  final int height;
+}
+
+final class MealPhotoRetentionFailure extends MealPhotoFailure {
+  const MealPhotoRetentionFailure();
+}
+
 sealed class MealPhotoFailure implements Exception {
   const MealPhotoFailure();
 }

@@ -22,6 +22,7 @@ class ReviewEstimatePage extends ConsumerWidget {
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.mealSaved)));
         ref.read(descriptionControllerProvider.notifier).reset();
+        ref.read(photoControllerProvider.notifier).discard();
         Navigator.of(
           context,
         ).pushNamedAndRemoveUntil(AppRoutes.today, (_) => false);

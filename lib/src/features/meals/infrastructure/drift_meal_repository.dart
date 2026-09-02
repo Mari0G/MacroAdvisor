@@ -6,10 +6,13 @@ import 'package:macro_advisor/src/core/domain/clock.dart';
 import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_image.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
+import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_image_repository.dart';
 
-class DriftMealRepository implements MealRepository {
+class DriftMealRepository
+    implements MealRepository, MealImageAwareMealRepository {
   DriftMealRepository(this._database, this._clock, this._idGenerator);
 
   final AppDatabase _database;
@@ -17,10 +20,20 @@ class DriftMealRepository implements MealRepository {
   final IdGenerator _idGenerator;
 
   @override
-  Future<MealEntry> create(MealEntryDraft draft) async {
+  Future<MealEntry> create(MealEntryDraft draft) =>
+      createWithRetainedImage(draft, null);
+
+  @override
+  Future<MealEntry> createWithRetainedImage(
+    MealEntryDraft draft,
+    RetainedMealImage? retainedImage,
+  ) => _database.transaction(() async {
     if (draft.confirmationId != null) {
-      final existing = await findById(draft.confirmationId!);
-      if (existing != null) return existing;
+      final existing =
+          await (_database.select(_database.mealEntries)
+                ..where((entry) => entry.id.equals(draft.confirmationId!)))
+              .getSingleOrNull();
+      if (existing != null) return _readEntry(existing);
     }
     final now = _utc(_clock.now());
     final entry = MealEntry(
@@ -37,9 +50,26 @@ class DriftMealRepository implements MealRepository {
       confidence: draft.confidence,
       assumptions: draft.assumptions,
     );
-    await _database.transaction(() async => _insertEntry(entry));
+    await _insertEntry(entry);
+    if (retainedImage != null && await _retentionEnabled()) {
+      if (retainedImage.mealId != entry.id) {
+        throw const MealImagePersistenceFailure();
+      }
+      DriftMealImageRepository.validateCandidate(retainedImage);
+      await _database
+          .into(_database.mealRetainedImages)
+          .insert(
+            MealRetainedImagesCompanion.insert(
+              mealEntryId: retainedImage.mealId,
+              jpegBytes: retainedImage.jpegBytes,
+              width: retainedImage.width,
+              height: retainedImage.height,
+              mimeType: retainedImage.mimeType,
+            ),
+          );
+    }
     return entry;
-  }
+  });
 
   @override
   Future<MealEntry?> findById(String id, {bool includeDeleted = false}) async {
@@ -176,8 +206,20 @@ class DriftMealRepository implements MealRepository {
       if (changed != 1) {
         throw const MealRevisionConflict();
       }
+      if (deleted) {
+        await (_database.delete(
+          _database.mealRetainedImages,
+        )..where((image) => image.mealEntryId.equals(id))).go();
+      }
       return (await findById(id, includeDeleted: true))!;
     });
+  }
+
+  Future<bool> _retentionEnabled() async {
+    final setting = await (_database.select(
+      _database.mealImageRetentionSettings,
+    )..where((row) => row.id.equals(1))).getSingleOrNull();
+    return setting?.enabled ?? true;
   }
 
   Future<MealEntryRow> _entryOrThrow(String id) async {

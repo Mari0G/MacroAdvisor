@@ -18,9 +18,12 @@ import 'package:macro_advisor/src/features/meal_capture/application/nutrition_an
 import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/deterministic_nutrition_analysis_provider.dart';
+import 'package:macro_advisor/src/features/meals/application/meal_image_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
+import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_image_repository.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
+import 'package:macro_advisor/src/features/settings/application/meal_image_retention_provider.dart';
 import 'package:macro_advisor/src/features/settings/application/provider_settings_controller.dart';
 import 'package:macro_advisor/src/features/settings/domain/credential_store.dart';
 import 'package:macro_advisor/src/features/settings/infrastructure/deterministic_connection_checker.dart';
@@ -205,7 +208,7 @@ void main() {
     expect(harness.provider.calls, 1);
   });
 
-  testWidgets('library and camera photo meals save nutrition without media', (
+  testWidgets('library and camera photo meals retain bounded media', (
     tester,
   ) async {
     final harness = _TestHarness();
@@ -245,6 +248,14 @@ void main() {
         .first;
     expect(saved, hasLength(2));
     expect(saved.map((entry) => entry.description), everyElement(isNull));
+    for (final entry in saved) {
+      final retained = await harness.images.findByMealId(entry.id);
+      expect(retained, isNotNull);
+      expect(retained!.mimeType, 'image/jpeg');
+      expect(retained.width, lessThanOrEqualTo(512));
+      expect(retained.height, lessThanOrEqualTo(512));
+      expect(retained.jpegBytes.length, lessThanOrEqualTo(256 * 1024));
+    }
     expect(harness.photoSource.sources, [
       MealPhotoSourceType.library,
       MealPhotoSourceType.camera,
@@ -258,6 +269,9 @@ void main() {
         .first;
     expect(restored, hasLength(2));
     expect(restored.map((entry) => entry.description), everyElement(isNull));
+    for (final entry in restored) {
+      expect(await harness.images.findByMealId(entry.id), isNotNull);
+    }
   });
 }
 
@@ -289,6 +303,7 @@ class _TestHarness {
       database = AppDatabase.forTesting(NativeDatabase.memory()),
       credentials = _InMemoryCredentialStore() {
     repository = DriftMealRepository(database, clock, ids);
+    images = DriftMealImageRepository(database);
     provider = _CountingNutritionAnalysisProvider(
       DeterministicNutritionAnalysisProvider(clock, ids),
     );
@@ -300,6 +315,7 @@ class _TestHarness {
   final _InMemoryCredentialStore credentials;
   late final _CountingNutritionAnalysisProvider provider;
   late final DriftMealRepository repository;
+  late final DriftMealImageRepository images;
   final photoSource = _TestPhotoSource();
   var _appVersion = 0;
 
@@ -309,6 +325,8 @@ class _TestHarness {
       clockProvider.overrideWithValue(clock),
       idGeneratorProvider.overrideWithValue(ids),
       mealRepositoryProvider.overrideWithValue(repository),
+      mealImageRepositoryProvider.overrideWithValue(images),
+      mealImageRetentionSettingsProvider.overrideWithValue(images),
       goalRepositoryProvider.overrideWithValue(DriftGoalRepository(database)),
       credentialStoreProvider.overrideWithValue(credentials),
       providerConnectionCheckerProvider.overrideWithValue(
@@ -360,10 +378,20 @@ class _TestPhotoSource implements MealPhotoSource {
   Future<MealPhotoAcquisition?> recoverLostData() async => null;
 }
 
-class _TestPhotoNormalizer implements MealPhotoNormalizer {
+class _TestPhotoNormalizer
+    implements MealPhotoNormalizer, MealPhotoRetentionCandidateDeriver {
   @override
   Future<MealPhoto> normalize(Uint8List sourceBytes) async =>
       MealPhoto(jpegBytes: sourceBytes, width: 1, height: 1);
+
+  @override
+  Future<MealPhotoRetentionCandidate> deriveRetentionCandidate(
+    MealPhoto photo,
+  ) async => MealPhotoRetentionCandidate(
+    jpegBytes: photo.jpegBytes,
+    width: photo.width,
+    height: photo.height,
+  );
 }
 
 class _FixedClock implements Clock {
