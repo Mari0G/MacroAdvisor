@@ -448,7 +448,7 @@ class _GoalProgressCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(child: Text(nutrient)),
-                  Text(status),
+                  if (!progress.progress.isIncomplete) Text(status),
                 ],
               ),
               const SizedBox(height: 4),
@@ -460,7 +460,7 @@ class _GoalProgressCard extends StatelessWidget {
               if (progress.progress.isIncomplete)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text(l10n.incompleteDataTitle),
+                  child: Text(status),
                 ),
             ],
           ),
