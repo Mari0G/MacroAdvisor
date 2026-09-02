@@ -6,7 +6,6 @@
   behavior.
 - Treat acceptance criteria as requirements, not suggestions.
 - If code and a spec disagree, stop and surface the mismatch before broad changes.
-- Do not create or commit Architecture Decision Records.
 
 ## Working method
 
@@ -50,3 +49,17 @@
 Use `tools/verify.ps1` for the repository verification ladder. At minimum,
 changes must eventually pass formatting, `flutter analyze`, unit/widget tests,
 and the relevant Android integration tests.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specifications are managed in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Standard labels are `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repository: use root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
