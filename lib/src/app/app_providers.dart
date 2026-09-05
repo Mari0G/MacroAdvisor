@@ -11,8 +11,11 @@ import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysi
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/gemini_nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/image_meal_photo_normalizer.dart';
 import 'package:macro_advisor/src/features/meal_capture/infrastructure/image_picker_meal_photo_source.dart';
+import 'package:macro_advisor/src/features/meals/application/meal_image_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
+import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_image_repository.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
+import 'package:macro_advisor/src/features/settings/application/meal_image_retention_provider.dart';
 import 'package:macro_advisor/src/features/settings/application/provider_settings_controller.dart';
 import 'package:macro_advisor/src/features/settings/domain/provider_connection_checker.dart';
 import 'package:macro_advisor/src/features/settings/infrastructure/secure_credential_store.dart';
@@ -37,6 +40,12 @@ final appMealRepositoryProvider = Provider<DriftMealRepository>((ref) {
 
 final appGoalRepositoryProvider = Provider<DriftGoalRepository>((ref) {
   return DriftGoalRepository(ref.watch(appDatabaseProvider));
+});
+
+final appMealImageRepositoryProvider = Provider<DriftMealImageRepository>((
+  ref,
+) {
+  return DriftMealImageRepository(ref.watch(appDatabaseProvider));
 });
 
 /// Production bindings for secure provider configuration.
@@ -73,6 +82,12 @@ final appMealPhotoNormalizerProvider = Provider<MealPhotoNormalizer>(
 List<Object?> productionOverrides() => [
   mealRepositoryProvider.overrideWith(
     (ref) => ref.watch(appMealRepositoryProvider),
+  ),
+  mealImageRepositoryProvider.overrideWith(
+    (ref) => ref.watch(appMealImageRepositoryProvider),
+  ),
+  mealImageRetentionSettingsProvider.overrideWith(
+    (ref) => ref.watch(appMealImageRepositoryProvider),
   ),
   goalRepositoryProvider.overrideWith(
     (ref) => ref.watch(appGoalRepositoryProvider),

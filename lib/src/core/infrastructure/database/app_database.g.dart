@@ -2230,6 +2230,598 @@ class GoalTargetsCompanion extends UpdateCompanion<GoalTargetRow> {
   }
 }
 
+class $MealRetainedImagesTable extends MealRetainedImages
+    with TableInfo<$MealRetainedImagesTable, MealRetainedImageRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MealRetainedImagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _mealEntryIdMeta = const VerificationMeta(
+    'mealEntryId',
+  );
+  @override
+  late final GeneratedColumn<String> mealEntryId = GeneratedColumn<String>(
+    'meal_entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES meal_entries (id)',
+    ),
+  );
+  static const VerificationMeta _jpegBytesMeta = const VerificationMeta(
+    'jpegBytes',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> jpegBytes = GeneratedColumn<Uint8List>(
+    'jpeg_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _widthMeta = const VerificationMeta('width');
+  @override
+  late final GeneratedColumn<int> width = GeneratedColumn<int>(
+    'width',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _heightMeta = const VerificationMeta('height');
+  @override
+  late final GeneratedColumn<int> height = GeneratedColumn<int>(
+    'height',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    mealEntryId,
+    jpegBytes,
+    width,
+    height,
+    mimeType,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meal_retained_images';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MealRetainedImageRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('meal_entry_id')) {
+      context.handle(
+        _mealEntryIdMeta,
+        mealEntryId.isAcceptableOrUnknown(
+          data['meal_entry_id']!,
+          _mealEntryIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mealEntryIdMeta);
+    }
+    if (data.containsKey('jpeg_bytes')) {
+      context.handle(
+        _jpegBytesMeta,
+        jpegBytes.isAcceptableOrUnknown(data['jpeg_bytes']!, _jpegBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jpegBytesMeta);
+    }
+    if (data.containsKey('width')) {
+      context.handle(
+        _widthMeta,
+        width.isAcceptableOrUnknown(data['width']!, _widthMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_widthMeta);
+    }
+    if (data.containsKey('height')) {
+      context.handle(
+        _heightMeta,
+        height.isAcceptableOrUnknown(data['height']!, _heightMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_heightMeta);
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mimeTypeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {mealEntryId};
+  @override
+  MealRetainedImageRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MealRetainedImageRow(
+      mealEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meal_entry_id'],
+      )!,
+      jpegBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}jpeg_bytes'],
+      )!,
+      width: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}width'],
+      )!,
+      height: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}height'],
+      )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      )!,
+    );
+  }
+
+  @override
+  $MealRetainedImagesTable createAlias(String alias) {
+    return $MealRetainedImagesTable(attachedDatabase, alias);
+  }
+}
+
+class MealRetainedImageRow extends DataClass
+    implements Insertable<MealRetainedImageRow> {
+  final String mealEntryId;
+  final Uint8List jpegBytes;
+  final int width;
+  final int height;
+  final String mimeType;
+  const MealRetainedImageRow({
+    required this.mealEntryId,
+    required this.jpegBytes,
+    required this.width,
+    required this.height,
+    required this.mimeType,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['meal_entry_id'] = Variable<String>(mealEntryId);
+    map['jpeg_bytes'] = Variable<Uint8List>(jpegBytes);
+    map['width'] = Variable<int>(width);
+    map['height'] = Variable<int>(height);
+    map['mime_type'] = Variable<String>(mimeType);
+    return map;
+  }
+
+  MealRetainedImagesCompanion toCompanion(bool nullToAbsent) {
+    return MealRetainedImagesCompanion(
+      mealEntryId: Value(mealEntryId),
+      jpegBytes: Value(jpegBytes),
+      width: Value(width),
+      height: Value(height),
+      mimeType: Value(mimeType),
+    );
+  }
+
+  factory MealRetainedImageRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MealRetainedImageRow(
+      mealEntryId: serializer.fromJson<String>(json['mealEntryId']),
+      jpegBytes: serializer.fromJson<Uint8List>(json['jpegBytes']),
+      width: serializer.fromJson<int>(json['width']),
+      height: serializer.fromJson<int>(json['height']),
+      mimeType: serializer.fromJson<String>(json['mimeType']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'mealEntryId': serializer.toJson<String>(mealEntryId),
+      'jpegBytes': serializer.toJson<Uint8List>(jpegBytes),
+      'width': serializer.toJson<int>(width),
+      'height': serializer.toJson<int>(height),
+      'mimeType': serializer.toJson<String>(mimeType),
+    };
+  }
+
+  MealRetainedImageRow copyWith({
+    String? mealEntryId,
+    Uint8List? jpegBytes,
+    int? width,
+    int? height,
+    String? mimeType,
+  }) => MealRetainedImageRow(
+    mealEntryId: mealEntryId ?? this.mealEntryId,
+    jpegBytes: jpegBytes ?? this.jpegBytes,
+    width: width ?? this.width,
+    height: height ?? this.height,
+    mimeType: mimeType ?? this.mimeType,
+  );
+  MealRetainedImageRow copyWithCompanion(MealRetainedImagesCompanion data) {
+    return MealRetainedImageRow(
+      mealEntryId: data.mealEntryId.present
+          ? data.mealEntryId.value
+          : this.mealEntryId,
+      jpegBytes: data.jpegBytes.present ? data.jpegBytes.value : this.jpegBytes,
+      width: data.width.present ? data.width.value : this.width,
+      height: data.height.present ? data.height.value : this.height,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealRetainedImageRow(')
+          ..write('mealEntryId: $mealEntryId, ')
+          ..write('jpegBytes: $jpegBytes, ')
+          ..write('width: $width, ')
+          ..write('height: $height, ')
+          ..write('mimeType: $mimeType')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    mealEntryId,
+    $driftBlobEquality.hash(jpegBytes),
+    width,
+    height,
+    mimeType,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MealRetainedImageRow &&
+          other.mealEntryId == this.mealEntryId &&
+          $driftBlobEquality.equals(other.jpegBytes, this.jpegBytes) &&
+          other.width == this.width &&
+          other.height == this.height &&
+          other.mimeType == this.mimeType);
+}
+
+class MealRetainedImagesCompanion
+    extends UpdateCompanion<MealRetainedImageRow> {
+  final Value<String> mealEntryId;
+  final Value<Uint8List> jpegBytes;
+  final Value<int> width;
+  final Value<int> height;
+  final Value<String> mimeType;
+  final Value<int> rowid;
+  const MealRetainedImagesCompanion({
+    this.mealEntryId = const Value.absent(),
+    this.jpegBytes = const Value.absent(),
+    this.width = const Value.absent(),
+    this.height = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MealRetainedImagesCompanion.insert({
+    required String mealEntryId,
+    required Uint8List jpegBytes,
+    required int width,
+    required int height,
+    required String mimeType,
+    this.rowid = const Value.absent(),
+  }) : mealEntryId = Value(mealEntryId),
+       jpegBytes = Value(jpegBytes),
+       width = Value(width),
+       height = Value(height),
+       mimeType = Value(mimeType);
+  static Insertable<MealRetainedImageRow> custom({
+    Expression<String>? mealEntryId,
+    Expression<Uint8List>? jpegBytes,
+    Expression<int>? width,
+    Expression<int>? height,
+    Expression<String>? mimeType,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (mealEntryId != null) 'meal_entry_id': mealEntryId,
+      if (jpegBytes != null) 'jpeg_bytes': jpegBytes,
+      if (width != null) 'width': width,
+      if (height != null) 'height': height,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MealRetainedImagesCompanion copyWith({
+    Value<String>? mealEntryId,
+    Value<Uint8List>? jpegBytes,
+    Value<int>? width,
+    Value<int>? height,
+    Value<String>? mimeType,
+    Value<int>? rowid,
+  }) {
+    return MealRetainedImagesCompanion(
+      mealEntryId: mealEntryId ?? this.mealEntryId,
+      jpegBytes: jpegBytes ?? this.jpegBytes,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      mimeType: mimeType ?? this.mimeType,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (mealEntryId.present) {
+      map['meal_entry_id'] = Variable<String>(mealEntryId.value);
+    }
+    if (jpegBytes.present) {
+      map['jpeg_bytes'] = Variable<Uint8List>(jpegBytes.value);
+    }
+    if (width.present) {
+      map['width'] = Variable<int>(width.value);
+    }
+    if (height.present) {
+      map['height'] = Variable<int>(height.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealRetainedImagesCompanion(')
+          ..write('mealEntryId: $mealEntryId, ')
+          ..write('jpegBytes: $jpegBytes, ')
+          ..write('width: $width, ')
+          ..write('height: $height, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MealImageRetentionSettingsTable extends MealImageRetentionSettings
+    with
+        TableInfo<
+          $MealImageRetentionSettingsTable,
+          MealImageRetentionSettingRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MealImageRetentionSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, enabled];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'meal_image_retention_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MealImageRetentionSettingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MealImageRetentionSettingRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MealImageRetentionSettingRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+    );
+  }
+
+  @override
+  $MealImageRetentionSettingsTable createAlias(String alias) {
+    return $MealImageRetentionSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class MealImageRetentionSettingRow extends DataClass
+    implements Insertable<MealImageRetentionSettingRow> {
+  final int id;
+  final bool enabled;
+  const MealImageRetentionSettingRow({required this.id, required this.enabled});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['enabled'] = Variable<bool>(enabled);
+    return map;
+  }
+
+  MealImageRetentionSettingsCompanion toCompanion(bool nullToAbsent) {
+    return MealImageRetentionSettingsCompanion(
+      id: Value(id),
+      enabled: Value(enabled),
+    );
+  }
+
+  factory MealImageRetentionSettingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MealImageRetentionSettingRow(
+      id: serializer.fromJson<int>(json['id']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'enabled': serializer.toJson<bool>(enabled),
+    };
+  }
+
+  MealImageRetentionSettingRow copyWith({int? id, bool? enabled}) =>
+      MealImageRetentionSettingRow(
+        id: id ?? this.id,
+        enabled: enabled ?? this.enabled,
+      );
+  MealImageRetentionSettingRow copyWithCompanion(
+    MealImageRetentionSettingsCompanion data,
+  ) {
+    return MealImageRetentionSettingRow(
+      id: data.id.present ? data.id.value : this.id,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealImageRetentionSettingRow(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, enabled);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MealImageRetentionSettingRow &&
+          other.id == this.id &&
+          other.enabled == this.enabled);
+}
+
+class MealImageRetentionSettingsCompanion
+    extends UpdateCompanion<MealImageRetentionSettingRow> {
+  final Value<int> id;
+  final Value<bool> enabled;
+  const MealImageRetentionSettingsCompanion({
+    this.id = const Value.absent(),
+    this.enabled = const Value.absent(),
+  });
+  MealImageRetentionSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    required bool enabled,
+  }) : enabled = Value(enabled);
+  static Insertable<MealImageRetentionSettingRow> custom({
+    Expression<int>? id,
+    Expression<bool>? enabled,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (enabled != null) 'enabled': enabled,
+    });
+  }
+
+  MealImageRetentionSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<bool>? enabled,
+  }) {
+    return MealImageRetentionSettingsCompanion(
+      id: id ?? this.id,
+      enabled: enabled ?? this.enabled,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MealImageRetentionSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('enabled: $enabled')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2238,6 +2830,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MealNutrientValuesTable mealNutrientValues =
       $MealNutrientValuesTable(this);
   late final $GoalTargetsTable goalTargets = $GoalTargetsTable(this);
+  late final $MealRetainedImagesTable mealRetainedImages =
+      $MealRetainedImagesTable(this);
+  late final $MealImageRetentionSettingsTable mealImageRetentionSettings =
+      $MealImageRetentionSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2247,6 +2843,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     mealItems,
     mealNutrientValues,
     goalTargets,
+    mealRetainedImages,
+    mealImageRetentionSettings,
   ];
 }
 
@@ -2306,6 +2904,30 @@ final class $$MealEntriesTableReferences
     ).filter((f) => f.mealEntryId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_mealItemsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $MealRetainedImagesTable,
+    List<MealRetainedImageRow>
+  >
+  _mealRetainedImagesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.mealRetainedImages,
+        aliasName: 'meal_entries__id__meal_retained_images__meal_entry_id',
+      );
+
+  $$MealRetainedImagesTableProcessedTableManager get mealRetainedImagesRefs {
+    final manager = $$MealRetainedImagesTableTableManager(
+      $_db,
+      $_db.mealRetainedImages,
+    ).filter((f) => f.mealEntryId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _mealRetainedImagesRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2412,6 +3034,31 @@ class $$MealEntriesTableFilterComposer
           }) => $$MealItemsTableFilterComposer(
             $db: $db,
             $table: $db.mealItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> mealRetainedImagesRefs(
+    Expression<bool> Function($$MealRetainedImagesTableFilterComposer f) f,
+  ) {
+    final $$MealRetainedImagesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.mealRetainedImages,
+      getReferencedColumn: (t) => t.mealEntryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MealRetainedImagesTableFilterComposer(
+            $db: $db,
+            $table: $db.mealRetainedImages,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2609,6 +3256,32 @@ class $$MealEntriesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> mealRetainedImagesRefs<T extends Object>(
+    Expression<T> Function($$MealRetainedImagesTableAnnotationComposer a) f,
+  ) {
+    final $$MealRetainedImagesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.mealRetainedImages,
+          getReferencedColumn: (t) => t.mealEntryId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$MealRetainedImagesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.mealRetainedImages,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$MealEntriesTableTableManager
@@ -2624,7 +3297,10 @@ class $$MealEntriesTableTableManager
           $$MealEntriesTableUpdateCompanionBuilder,
           (MealEntryRow, $$MealEntriesTableReferences),
           MealEntryRow,
-          PrefetchHooks Function({bool mealItemsRefs})
+          PrefetchHooks Function({
+            bool mealItemsRefs,
+            bool mealRetainedImagesRefs,
+          })
         > {
   $$MealEntriesTableTableManager(_$AppDatabase db, $MealEntriesTable table)
     : super(
@@ -2717,38 +3393,63 @@ class $$MealEntriesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({mealItemsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (mealItemsRefs) db.mealItems],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (mealItemsRefs)
-                    await $_getPrefetchedData<
-                      MealEntryRow,
-                      $MealEntriesTable,
-                      MealItemRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$MealEntriesTableReferences
-                          ._mealItemsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$MealEntriesTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).mealItemsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where(
-                            (e) => e.mealEntryId == item.id,
-                          ),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({mealItemsRefs = false, mealRetainedImagesRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (mealItemsRefs) db.mealItems,
+                    if (mealRetainedImagesRefs) db.mealRetainedImages,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (mealItemsRefs)
+                        await $_getPrefetchedData<
+                          MealEntryRow,
+                          $MealEntriesTable,
+                          MealItemRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MealEntriesTableReferences
+                              ._mealItemsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MealEntriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).mealItemsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mealEntryId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (mealRetainedImagesRefs)
+                        await $_getPrefetchedData<
+                          MealEntryRow,
+                          $MealEntriesTable,
+                          MealRetainedImageRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MealEntriesTableReferences
+                              ._mealRetainedImagesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MealEntriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).mealRetainedImagesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mealEntryId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -2765,7 +3466,7 @@ typedef $$MealEntriesTableProcessedTableManager =
       $$MealEntriesTableUpdateCompanionBuilder,
       (MealEntryRow, $$MealEntriesTableReferences),
       MealEntryRow,
-      PrefetchHooks Function({bool mealItemsRefs})
+      PrefetchHooks Function({bool mealItemsRefs, bool mealRetainedImagesRefs})
     >;
 typedef $$MealItemsTableCreateCompanionBuilder =
     MealItemsCompanion Function({
@@ -3797,6 +4498,491 @@ typedef $$GoalTargetsTableProcessedTableManager =
       GoalTargetRow,
       PrefetchHooks Function()
     >;
+typedef $$MealRetainedImagesTableCreateCompanionBuilder =
+    MealRetainedImagesCompanion Function({
+      required String mealEntryId,
+      required Uint8List jpegBytes,
+      required int width,
+      required int height,
+      required String mimeType,
+      Value<int> rowid,
+    });
+typedef $$MealRetainedImagesTableUpdateCompanionBuilder =
+    MealRetainedImagesCompanion Function({
+      Value<String> mealEntryId,
+      Value<Uint8List> jpegBytes,
+      Value<int> width,
+      Value<int> height,
+      Value<String> mimeType,
+      Value<int> rowid,
+    });
+
+final class $$MealRetainedImagesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $MealRetainedImagesTable,
+          MealRetainedImageRow
+        > {
+  $$MealRetainedImagesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $MealEntriesTable _mealEntryIdTable(_$AppDatabase db) => db.mealEntries
+      .createAlias('meal_retained_images__meal_entry_id__meal_entries__id');
+
+  $$MealEntriesTableProcessedTableManager get mealEntryId {
+    final $_column = $_itemColumn<String>('meal_entry_id')!;
+
+    final manager = $$MealEntriesTableTableManager(
+      $_db,
+      $_db.mealEntries,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mealEntryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$MealRetainedImagesTableFilterComposer
+    extends Composer<_$AppDatabase, $MealRetainedImagesTable> {
+  $$MealRetainedImagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<Uint8List> get jpegBytes => $composableBuilder(
+    column: $table.jpegBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get width => $composableBuilder(
+    column: $table.width,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get height => $composableBuilder(
+    column: $table.height,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$MealEntriesTableFilterComposer get mealEntryId {
+    final $$MealEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mealEntryId,
+      referencedTable: $db.mealEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MealEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.mealEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MealRetainedImagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MealRetainedImagesTable> {
+  $$MealRetainedImagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<Uint8List> get jpegBytes => $composableBuilder(
+    column: $table.jpegBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get width => $composableBuilder(
+    column: $table.width,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get height => $composableBuilder(
+    column: $table.height,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$MealEntriesTableOrderingComposer get mealEntryId {
+    final $$MealEntriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mealEntryId,
+      referencedTable: $db.mealEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MealEntriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.mealEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MealRetainedImagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MealRetainedImagesTable> {
+  $$MealRetainedImagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<Uint8List> get jpegBytes =>
+      $composableBuilder(column: $table.jpegBytes, builder: (column) => column);
+
+  GeneratedColumn<int> get width =>
+      $composableBuilder(column: $table.width, builder: (column) => column);
+
+  GeneratedColumn<int> get height =>
+      $composableBuilder(column: $table.height, builder: (column) => column);
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  $$MealEntriesTableAnnotationComposer get mealEntryId {
+    final $$MealEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mealEntryId,
+      referencedTable: $db.mealEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MealEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.mealEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$MealRetainedImagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MealRetainedImagesTable,
+          MealRetainedImageRow,
+          $$MealRetainedImagesTableFilterComposer,
+          $$MealRetainedImagesTableOrderingComposer,
+          $$MealRetainedImagesTableAnnotationComposer,
+          $$MealRetainedImagesTableCreateCompanionBuilder,
+          $$MealRetainedImagesTableUpdateCompanionBuilder,
+          (MealRetainedImageRow, $$MealRetainedImagesTableReferences),
+          MealRetainedImageRow,
+          PrefetchHooks Function({bool mealEntryId})
+        > {
+  $$MealRetainedImagesTableTableManager(
+    _$AppDatabase db,
+    $MealRetainedImagesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MealRetainedImagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MealRetainedImagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MealRetainedImagesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> mealEntryId = const Value.absent(),
+                Value<Uint8List> jpegBytes = const Value.absent(),
+                Value<int> width = const Value.absent(),
+                Value<int> height = const Value.absent(),
+                Value<String> mimeType = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MealRetainedImagesCompanion(
+                mealEntryId: mealEntryId,
+                jpegBytes: jpegBytes,
+                width: width,
+                height: height,
+                mimeType: mimeType,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String mealEntryId,
+                required Uint8List jpegBytes,
+                required int width,
+                required int height,
+                required String mimeType,
+                Value<int> rowid = const Value.absent(),
+              }) => MealRetainedImagesCompanion.insert(
+                mealEntryId: mealEntryId,
+                jpegBytes: jpegBytes,
+                width: width,
+                height: height,
+                mimeType: mimeType,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$MealRetainedImagesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({mealEntryId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (mealEntryId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.mealEntryId,
+                                referencedTable:
+                                    $$MealRetainedImagesTableReferences
+                                        ._mealEntryIdTable(db),
+                                referencedColumn:
+                                    $$MealRetainedImagesTableReferences
+                                        ._mealEntryIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$MealRetainedImagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MealRetainedImagesTable,
+      MealRetainedImageRow,
+      $$MealRetainedImagesTableFilterComposer,
+      $$MealRetainedImagesTableOrderingComposer,
+      $$MealRetainedImagesTableAnnotationComposer,
+      $$MealRetainedImagesTableCreateCompanionBuilder,
+      $$MealRetainedImagesTableUpdateCompanionBuilder,
+      (MealRetainedImageRow, $$MealRetainedImagesTableReferences),
+      MealRetainedImageRow,
+      PrefetchHooks Function({bool mealEntryId})
+    >;
+typedef $$MealImageRetentionSettingsTableCreateCompanionBuilder =
+    MealImageRetentionSettingsCompanion Function({
+      Value<int> id,
+      required bool enabled,
+    });
+typedef $$MealImageRetentionSettingsTableUpdateCompanionBuilder =
+    MealImageRetentionSettingsCompanion Function({
+      Value<int> id,
+      Value<bool> enabled,
+    });
+
+class $$MealImageRetentionSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $MealImageRetentionSettingsTable> {
+  $$MealImageRetentionSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MealImageRetentionSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MealImageRetentionSettingsTable> {
+  $$MealImageRetentionSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MealImageRetentionSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MealImageRetentionSettingsTable> {
+  $$MealImageRetentionSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+}
+
+class $$MealImageRetentionSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MealImageRetentionSettingsTable,
+          MealImageRetentionSettingRow,
+          $$MealImageRetentionSettingsTableFilterComposer,
+          $$MealImageRetentionSettingsTableOrderingComposer,
+          $$MealImageRetentionSettingsTableAnnotationComposer,
+          $$MealImageRetentionSettingsTableCreateCompanionBuilder,
+          $$MealImageRetentionSettingsTableUpdateCompanionBuilder,
+          (
+            MealImageRetentionSettingRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MealImageRetentionSettingsTable,
+              MealImageRetentionSettingRow
+            >,
+          ),
+          MealImageRetentionSettingRow,
+          PrefetchHooks Function()
+        > {
+  $$MealImageRetentionSettingsTableTableManager(
+    _$AppDatabase db,
+    $MealImageRetentionSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MealImageRetentionSettingsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$MealImageRetentionSettingsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MealImageRetentionSettingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+              }) =>
+                  MealImageRetentionSettingsCompanion(id: id, enabled: enabled),
+          createCompanionCallback:
+              ({Value<int> id = const Value.absent(), required bool enabled}) =>
+                  MealImageRetentionSettingsCompanion.insert(
+                    id: id,
+                    enabled: enabled,
+                  ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MealImageRetentionSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MealImageRetentionSettingsTable,
+      MealImageRetentionSettingRow,
+      $$MealImageRetentionSettingsTableFilterComposer,
+      $$MealImageRetentionSettingsTableOrderingComposer,
+      $$MealImageRetentionSettingsTableAnnotationComposer,
+      $$MealImageRetentionSettingsTableCreateCompanionBuilder,
+      $$MealImageRetentionSettingsTableUpdateCompanionBuilder,
+      (
+        MealImageRetentionSettingRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MealImageRetentionSettingsTable,
+          MealImageRetentionSettingRow
+        >,
+      ),
+      MealImageRetentionSettingRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3809,4 +4995,12 @@ class $AppDatabaseManager {
       $$MealNutrientValuesTableTableManager(_db, _db.mealNutrientValues);
   $$GoalTargetsTableTableManager get goalTargets =>
       $$GoalTargetsTableTableManager(_db, _db.goalTargets);
+  $$MealRetainedImagesTableTableManager get mealRetainedImages =>
+      $$MealRetainedImagesTableTableManager(_db, _db.mealRetainedImages);
+  $$MealImageRetentionSettingsTableTableManager
+  get mealImageRetentionSettings =>
+      $$MealImageRetentionSettingsTableTableManager(
+        _db,
+        _db.mealImageRetentionSettings,
+      );
 }

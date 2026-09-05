@@ -60,3 +60,24 @@ class GoalTargets extends Table {
   @override
   Set<Column<Object>> get primaryKey => {nutrientId};
 }
+
+@DataClassName('MealRetainedImageRow')
+class MealRetainedImages extends Table {
+  TextColumn get mealEntryId => text().references(MealEntries, #id)();
+  BlobColumn get jpegBytes => blob()();
+  IntColumn get width => integer()();
+  IntColumn get height => integer()();
+  TextColumn get mimeType => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {mealEntryId};
+}
+
+@DataClassName('MealImageRetentionSettingRow')
+class MealImageRetentionSettings extends Table {
+  IntColumn get id => integer()();
+  BoolColumn get enabled => boolean()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

@@ -7,6 +7,7 @@ import 'package:macro_advisor/src/features/meal_capture/presentation/edit_item_p
 import 'package:macro_advisor/src/features/meal_capture/presentation/nutrition_text.dart';
 import 'package:macro_advisor/src/features/meals/application/meal_detail_controller.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_image.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
 class MealDetailPage extends ConsumerStatefulWidget {
@@ -21,11 +22,14 @@ class MealDetailPage extends ConsumerStatefulWidget {
 class _MealDetailPageState extends ConsumerState<MealDetailPage> {
   bool _deleting = false;
   Object? _deleteError;
+  bool _removingImage = false;
+  Object? _removeImageError;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final meal = ref.watch(mealDetailProvider(widget.mealId));
+    final retainedImage = ref.watch(mealRetainedImageProvider(widget.mealId));
     return meal.when(
       loading: () => Scaffold(
         appBar: AppBar(title: Text(l10n.mealDetailTitle)),
@@ -42,13 +46,20 @@ class _MealDetailPageState extends ConsumerState<MealDetailPage> {
       ),
       data: (entry) => _MealDetailView(
         entry: entry,
+        retainedImage: retainedImage,
         deleting: _deleting,
         deleteError: _deleteError,
+        removingImage: _removingImage,
+        removeImageError: _removeImageError,
         onEdit: () => Navigator.of(
           context,
         ).pushNamed(AppRoutes.mealEdit, arguments: entry.id),
         onDelete: () => _delete(entry),
         onRetryDelete: () => _delete(entry),
+        onRemoveImage: () => _removeImage(entry),
+        onRetryRemoveImage: () => _removeImage(entry, confirm: false),
+        onRetryImageLoad: () =>
+            ref.invalidate(mealRetainedImageProvider(entry.id)),
       ),
     );
   }
@@ -89,24 +100,77 @@ class _MealDetailPageState extends ConsumerState<MealDetailPage> {
       });
     }
   }
+
+  Future<void> _removeImage(MealEntry entry, {bool confirm = true}) async {
+    if (_removingImage) return;
+    final l10n = AppLocalizations.of(context);
+    if (confirm) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.removeSavedImageTitle),
+          content: Text(l10n.removeSavedImageBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancelAction),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.removeSavedImageAction),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    setState(() {
+      _removingImage = true;
+      _removeImageError = null;
+    });
+    try {
+      await ref.read(mealMutationsProvider).removeSavedImage(entry.id);
+      if (!mounted) return;
+      ref.invalidate(mealRetainedImageProvider(entry.id));
+      setState(() => _removingImage = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _removingImage = false;
+        _removeImageError = Object();
+      });
+    }
+  }
 }
 
 class _MealDetailView extends StatelessWidget {
   const _MealDetailView({
     required this.entry,
+    required this.retainedImage,
     required this.deleting,
     required this.deleteError,
+    required this.removingImage,
+    required this.removeImageError,
     required this.onEdit,
     required this.onDelete,
     required this.onRetryDelete,
+    required this.onRemoveImage,
+    required this.onRetryRemoveImage,
+    required this.onRetryImageLoad,
   });
 
   final MealEntry entry;
+  final AsyncValue<RetainedMealImage?> retainedImage;
   final bool deleting;
   final Object? deleteError;
+  final bool removingImage;
+  final Object? removeImageError;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onRetryDelete;
+  final VoidCallback onRemoveImage;
+  final VoidCallback onRetryRemoveImage;
+  final VoidCallback onRetryImageLoad;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +228,14 @@ class _MealDetailView extends StatelessWidget {
                 label: Text(l10n.editedState),
               ),
             ),
+          _RetainedImageSection(
+            image: retainedImage,
+            removing: removingImage,
+            removeError: removeImageError,
+            onRemove: onRemoveImage,
+            onRetryLoad: onRetryImageLoad,
+            onRetryRemove: onRetryRemoveImage,
+          ),
           if (incomplete) ...[
             const SizedBox(height: 12),
             Card(
@@ -253,6 +325,108 @@ class _MealDetailView extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _RetainedImageSection extends StatelessWidget {
+  const _RetainedImageSection({
+    required this.image,
+    required this.removing,
+    required this.removeError,
+    required this.onRemove,
+    required this.onRetryLoad,
+    required this.onRetryRemove,
+  });
+
+  final AsyncValue<RetainedMealImage?> image;
+  final bool removing;
+  final Object? removeError;
+  final VoidCallback onRemove;
+  final VoidCallback onRetryLoad;
+  final VoidCallback onRetryRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return image.when(
+      loading: () => Card(
+        child: ListTile(
+          title: Text(l10n.savedMealImageLoading),
+          trailing: const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, _) => Card(
+        child: ListTile(
+          leading: const Icon(Icons.error_outline),
+          title: Text(l10n.savedMealImageLoadFailed),
+          trailing: TextButton(
+            key: const Key('retry-saved-image-button'),
+            onPressed: onRetryLoad,
+            child: Text(l10n.retryAction),
+          ),
+        ),
+      ),
+      data: (retained) {
+        if (retained == null) return const SizedBox.shrink();
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Semantics(
+                  label: l10n.savedMealImageLabel,
+                  image: true,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      retained.jpegBytes,
+                      fit: BoxFit.contain,
+                      height: 220,
+                      excludeFromSemantics: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key('remove-saved-image-button'),
+                    onPressed: removing ? null : onRemove,
+                    icon: removing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.delete_outline),
+                    label: Text(l10n.removeSavedImageAction),
+                  ),
+                ),
+                if (removeError != null)
+                  Semantics(
+                    liveRegion: true,
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(l10n.removeSavedImageFailed)),
+                        TextButton(
+                          key: const Key('retry-remove-saved-image-button'),
+                          onPressed: onRetryRemove,
+                          child: Text(l10n.retryAction),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

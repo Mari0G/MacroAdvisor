@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:macro_advisor/src/core/domain/id_generator.dart';
 import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
 import 'package:macro_advisor/src/features/goals/domain/goal.dart';
 import 'package:macro_advisor/src/features/goals/domain/goal_repository.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/capture_controllers.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/nutrition_analysis_provider.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
@@ -22,6 +24,88 @@ import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
 void main() {
+  testWidgets('back cannot discard while confirmation awaits candidate', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    final deriver = _CandidateDeriver();
+    await tester.pumpWidget(
+      _app(
+        const Locale('en'),
+        repository,
+        source: _PhotoSource(acquirePhoto: true),
+        deriver: deriver,
+      ),
+    );
+    await tester.tap(find.text('Record meal').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('choose-photo-source')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('analyze-photo-button')),
+      300,
+    );
+    await tester.tap(find.byKey(const Key('analyze-photo-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-save-button')));
+    await tester.pump();
+    await tester.pageBack();
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Review estimate'), findsOneWidget);
+    deriver.complete();
+    await tester.pumpAndSettle();
+    expect(repository.created, hasLength(1));
+    expect(find.text('Today').first, findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  for (final pending in [false, true]) {
+    testWidgets('discard review releases candidate (pending: $pending)', (
+      tester,
+    ) async {
+      final repository = _Repository();
+      final deriver = _CandidateDeriver();
+      if (!pending) deriver.complete();
+      await tester.pumpWidget(
+        _app(
+          const Locale('en'),
+          repository,
+          source: _PhotoSource(acquirePhoto: true),
+          deriver: deriver,
+        ),
+      );
+      await tester.tap(find.text('Record meal').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('choose-photo-source')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('analyze-photo-button')),
+        300,
+      );
+      await tester.tap(find.byKey(const Key('analyze-photo-button')));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('Review estimate')),
+      );
+      final controller = container.read(photoControllerProvider.notifier);
+      final before = controller.readRetentionCandidate();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel').last);
+      await tester.pumpAndSettle();
+      expect(identical(before, controller.readRetentionCandidate()), isTrue);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Discard').last);
+      await tester.pumpAndSettle();
+      if (pending) deriver.complete();
+      await tester.pumpAndSettle();
+      expect(await controller.readRetentionCandidate(), isNull);
+      expect(container.read(photoControllerProvider).photo, isNull);
+      expect(repository.created, isEmpty);
+      expect(find.text('Today').first, findsOneWidget);
+    });
+  }
   testWidgets('English user can review, edit, and save a text estimate', (
     tester,
   ) async {
@@ -211,6 +295,7 @@ Widget _app(
   _Repository repository, {
   _PhotoSource? source,
   NutritionAnalysisProvider? provider,
+  MealPhotoRetentionCandidateDeriver? deriver,
 }) {
   final clock = _Clock(DateTime(2026, 7, 18, 12));
   final ids = _Ids();
@@ -225,6 +310,8 @@ Widget _app(
       ),
       mealPhotoSourceProvider.overrideWithValue(source ?? _PhotoSource()),
       mealPhotoNormalizerProvider.overrideWithValue(_PhotoNormalizer()),
+      if (deriver != null)
+        mealPhotoRetentionCandidateDeriverProvider.overrideWithValue(deriver),
     ],
     child: MacroAdvisorApp(locale: locale),
   );
@@ -357,4 +444,23 @@ class _Ids implements IdGenerator {
   int _next = 0;
   @override
   String newId() => 'id-${++_next}';
+}
+
+class _CandidateDeriver implements MealPhotoRetentionCandidateDeriver {
+  final completer = Completer<MealPhotoRetentionCandidate>();
+  void complete() {
+    final picture = image.Image(width: 2, height: 2);
+    completer.complete(
+      MealPhotoRetentionCandidate(
+        jpegBytes: Uint8List.fromList(image.encodeJpg(picture)),
+        width: 2,
+        height: 2,
+      ),
+    );
+  }
+
+  @override
+  Future<MealPhotoRetentionCandidate> deriveRetentionCandidate(
+    MealPhoto photo,
+  ) => completer.future;
 }

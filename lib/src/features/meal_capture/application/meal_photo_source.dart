@@ -41,6 +41,11 @@ abstract interface class MealPhotoNormalizer {
   Future<MealPhoto> normalize(Uint8List sourceBytes);
 }
 
+/// Derives the independent, memory-only image used for local retention.
+abstract interface class MealPhotoRetentionCandidateDeriver {
+  Future<MealPhotoRetentionCandidate> deriveRetentionCandidate(MealPhoto photo);
+}
+
 final mealPhotoSourceProvider = Provider<MealPhotoSource>((ref) {
   throw UnimplementedError('MealPhotoSource must be provided by the app.');
 });
@@ -48,3 +53,24 @@ final mealPhotoSourceProvider = Provider<MealPhotoSource>((ref) {
 final mealPhotoNormalizerProvider = Provider<MealPhotoNormalizer>((ref) {
   throw UnimplementedError('MealPhotoNormalizer must be provided by the app.');
 });
+
+final mealPhotoRetentionCandidateDeriverProvider =
+    Provider<MealPhotoRetentionCandidateDeriver>((ref) {
+      final normalizer = ref.watch(mealPhotoNormalizerProvider);
+      if (normalizer case final MealPhotoRetentionCandidateDeriver deriver) {
+        return deriver;
+      }
+      return const _UnavailableMealPhotoRetentionCandidateDeriver();
+    });
+
+final class _UnavailableMealPhotoRetentionCandidateDeriver
+    implements MealPhotoRetentionCandidateDeriver {
+  const _UnavailableMealPhotoRetentionCandidateDeriver();
+
+  @override
+  Future<MealPhotoRetentionCandidate> deriveRetentionCandidate(
+    MealPhoto photo,
+  ) => Future<MealPhotoRetentionCandidate>.error(
+    const MealPhotoRetentionFailure(),
+  );
+}

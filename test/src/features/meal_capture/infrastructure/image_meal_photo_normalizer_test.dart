@@ -38,4 +38,23 @@ void main() {
       throwsA(isA<UnsupportedMealPhoto>()),
     );
   });
+
+  test('derives an independent bounded retention JPEG at quality 70', () async {
+    final source = image.Image(width: 1800, height: 1200)
+      ..clear(image.ColorRgb8(90, 80, 70));
+    final normalized = await normalizer.normalize(
+      Uint8List.fromList(image.encodeJpg(source)),
+    );
+
+    final candidate = await normalizer.deriveRetentionCandidate(normalized);
+    final decoded = image.decodeJpg(candidate.jpegBytes);
+
+    expect(MealPhotoRetentionCandidate.mimeType, 'image/jpeg');
+    expect(candidate.width, lessThanOrEqualTo(512));
+    expect(candidate.height, lessThanOrEqualTo(512));
+    expect(candidate.jpegBytes.length, lessThanOrEqualTo(256 * 1024));
+    expect(decoded, isNotNull);
+    expect(decoded!.exif.isEmpty, isTrue);
+    expect(identical(candidate.jpegBytes, normalized.jpegBytes), isFalse);
+  });
 }

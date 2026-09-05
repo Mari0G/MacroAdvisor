@@ -7,6 +7,7 @@ import 'package:macro_advisor/src/features/meal_capture/application/capture_cont
 import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/nutrition_analysis.dart';
+import 'package:macro_advisor/src/features/settings/application/meal_image_retention_provider.dart';
 
 class PhotoMealPage extends ConsumerWidget {
   const PhotoMealPage({super.key});
@@ -16,6 +17,7 @@ class PhotoMealPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(photoControllerProvider);
     final controller = ref.read(photoControllerProvider.notifier);
+    final retention = ref.watch(mealImageRetentionEnabledProvider);
     final photo = state.photo;
     if (photo == null) return const SizedBox.shrink();
     final isBusy =
@@ -51,6 +53,16 @@ class PhotoMealPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(l10n.photoPrivacyHint),
+                const SizedBox(height: 8),
+                Text(
+                  retention.when(
+                    loading: () => l10n.photoRetentionLoading,
+                    error: (_, _) => l10n.photoRetentionUnavailable,
+                    data: (enabled) => enabled
+                        ? l10n.photoRetentionEnabled
+                        : l10n.photoRetentionDisabled,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(l10n.photoGuidanceHint),
                 const SizedBox(height: 16),

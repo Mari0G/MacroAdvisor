@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:macro_advisor/src/features/meals/domain/meal_image_policy.dart';
+
 /// The only image representation allowed across the analysis-provider boundary.
 ///
 /// It contains normalized JPEG data only. Source paths, names, picker objects,
@@ -21,6 +23,38 @@ class MealPhoto {
   final Uint8List jpegBytes;
   final int width;
   final int height;
+}
+
+/// A second, bounded image representation used only for local retention.
+///
+/// This type is intentionally distinct from [MealPhoto], which is the provider
+/// input. It contains no source path, filename, picker object, or metadata.
+class MealPhotoRetentionCandidate {
+  MealPhotoRetentionCandidate({
+    required Uint8List jpegBytes,
+    required this.width,
+    required this.height,
+  }) : assert(
+         MealImagePolicy.accepts(
+           bytes: jpegBytes,
+           width: width,
+           height: height,
+           mime: mimeType,
+         ),
+       ),
+       jpegBytes = Uint8List.fromList(jpegBytes);
+
+  static const mimeType = MealImagePolicy.mimeType;
+  static const maximumEdge = MealImagePolicy.maximumEdge;
+  static const maximumBytes = MealImagePolicy.maximumBytes;
+
+  final Uint8List jpegBytes;
+  final int width;
+  final int height;
+}
+
+final class MealPhotoRetentionFailure extends MealPhotoFailure {
+  const MealPhotoRetentionFailure();
 }
 
 sealed class MealPhotoFailure implements Exception {
