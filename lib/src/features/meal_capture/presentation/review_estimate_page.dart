@@ -34,9 +34,11 @@ class ReviewEstimatePage extends ConsumerWidget {
     return PopScope(
       canPop: state.phase == ReviewPhase.saved,
       onPopInvokedWithResult: (didPop, _) async {
+        if (state.phase == ReviewPhase.saving) return;
         final shouldDiscard = !didPop && await _confirmDiscard(context);
         if (shouldDiscard && context.mounted) {
           ref.read(descriptionControllerProvider.notifier).reset();
+          ref.read(photoControllerProvider.notifier).discard();
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },

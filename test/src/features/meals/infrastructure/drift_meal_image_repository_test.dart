@@ -25,6 +25,38 @@ void main() {
 
   tearDown(() => database.close());
 
+  test('failed bulk deletion rolls back preference and every image', () async {
+    for (final id in ['meal-1', 'meal-2']) {
+      await meals.createWithRetainedImage(
+        _draft(confirmationId: id),
+        _retained(id),
+      );
+    }
+    final before = await database
+        .customSelect('SELECT * FROM meal_entries ORDER BY id')
+        .get();
+    await database.customStatement(
+      "CREATE TRIGGER fail_media_delete BEFORE DELETE ON meal_retained_images BEGIN SELECT RAISE(ABORT, 'synthetic failure'); END",
+    );
+    await expectLater(images.setEnabled(false), throwsA(anything));
+    expect(await images.isEnabled(), isTrue);
+    expect(
+      await database.select(database.mealRetainedImages).get(),
+      hasLength(2),
+    );
+    expect(
+      (await database
+              .customSelect('SELECT * FROM meal_entries ORDER BY id')
+              .get())
+          .map((r) => r.data),
+      before.map((r) => r.data),
+    );
+    await database.customStatement('DROP TRIGGER fail_media_delete');
+    await images.setEnabled(false);
+    expect(await images.isEnabled(), isFalse);
+    expect(await database.select(database.mealRetainedImages).get(), isEmpty);
+  });
+
   test(
     'defaults retention on and atomically stores one bounded image',
     () async {

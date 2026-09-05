@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:macro_advisor/src/core/infrastructure/database/app_database.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_image.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_image_policy.dart';
 import 'package:macro_advisor/src/features/settings/domain/meal_image_retention_settings.dart';
 
 class DriftMealImageRepository
@@ -8,9 +9,6 @@ class DriftMealImageRepository
   DriftMealImageRepository(this._database);
 
   static const _settingsId = 1;
-  static const _maximumEdge = 512;
-  static const _maximumBytes = 256 * 1024;
-  static const _mimeType = 'image/jpeg';
 
   final AppDatabase _database;
 
@@ -66,23 +64,15 @@ class DriftMealImageRepository
 
   static void validateCandidate(RetainedMealImage image) {
     if (image.mealId.isEmpty ||
-        image.jpegBytes.isEmpty ||
-        !_isJpeg(image.jpegBytes) ||
-        image.jpegBytes.length > _maximumBytes ||
-        image.width <= 0 ||
-        image.height <= 0 ||
-        image.width > _maximumEdge ||
-        image.height > _maximumEdge ||
-        image.mimeType != _mimeType) {
+        !MealImagePolicy.accepts(
+          bytes: image.jpegBytes,
+          width: image.width,
+          height: image.height,
+          mime: image.mimeType,
+        )) {
       throw const MealImagePersistenceFailure();
     }
   }
-
-  static bool _isJpeg(List<int> bytes) =>
-      bytes.length >= 3 &&
-      bytes[0] == 0xff &&
-      bytes[1] == 0xd8 &&
-      bytes[2] == 0xff;
 
   static void _validate(MealRetainedImageRow row) {
     validateCandidate(

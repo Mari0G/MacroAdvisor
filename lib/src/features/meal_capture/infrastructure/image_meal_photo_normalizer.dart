@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as image;
 import 'package:macro_advisor/src/features/meal_capture/application/meal_photo_source.dart';
 import 'package:macro_advisor/src/features/meal_capture/domain/meal_photo.dart';
+import 'package:macro_advisor/src/features/meals/domain/meal_image_policy.dart';
 
 /// Decode and re-encode every source image before it can reach an AI adapter.
 /// Re-encoding strips source metadata and [compute] keeps image work off the UI
@@ -11,7 +12,7 @@ class ImageMealPhotoNormalizer
   static const _maximumSourceBytes = 32 * 1024 * 1024;
   static const _maximumEdge = 2048;
   static const _jpegQuality = 88;
-  static const _retentionJpegQuality = 70;
+  static const _retentionJpegQuality = MealImagePolicy.jpegQuality;
 
   @override
   Future<MealPhoto> normalize(Uint8List sourceBytes) async {

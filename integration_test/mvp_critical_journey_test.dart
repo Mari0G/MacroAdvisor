@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:drift/native.dart';
@@ -191,9 +192,8 @@ void main() {
     await _waitFor(tester, find.text('Meals and drinks (1)'));
     expect(find.text('900 kcal'), findsWidgets);
 
-    // Recreate the app with the same database to prove the revised entry is
-    // persisted, rather than only reflected by the in-memory edit state.
-    await tester.pumpWidget(harness.app);
+    // Close the database and reopen its file with a fresh app/provider scope.
+    await harness.restart(tester);
     await _advance(tester);
     expect(find.text('Meals and drinks (0)'), findsOneWidget);
     expect(find.text('Progress toward goals'), findsOneWidget);
@@ -211,6 +211,8 @@ void main() {
   testWidgets('library and camera photo meals retain bounded media', (
     tester,
   ) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
     final harness = _TestHarness();
     addTearDown(harness.dispose);
 
@@ -262,8 +264,7 @@ void main() {
     ]);
     expect(harness.provider.calls, 2);
 
-    await tester.pumpWidget(harness.app);
-    await _advance(tester);
+    await harness.restart(tester);
     final restored = await harness.repository
         .observeDay(DateTime(2026, 7, 20))
         .first;
@@ -272,6 +273,74 @@ void main() {
     for (final entry in restored) {
       expect(await harness.images.findByMealId(entry.id), isNotNull);
     }
+    final nutritionBeforeRemoval = await harness.nutritionSnapshot();
+
+    // Remove one image through detail without editing its meal data.
+    await tester.ensureVisible(find.text('Photo meal').first);
+    await tester.tap(find.text('Photo meal').first);
+    await _waitFor(tester, find.byKey(const Key('remove-saved-image-button')));
+    expect(find.bySemanticsLabel('Saved meal image'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('remove-saved-image-button')));
+    await _waitFor(tester, find.text('Remove saved meal image?'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Remove saved image'));
+    await _advance(tester);
+    expect(find.byKey(const Key('remove-saved-image-button')), findsNothing);
+    var retainedCount = 0;
+    for (final entry in restored) {
+      if (await harness.images.findByMealId(entry.id) != null) retainedCount++;
+    }
+    expect(retainedCount, 1);
+    expect(await harness.nutritionSnapshot(), nutritionBeforeRemoval);
+    await tester.pageBack();
+    await _advance(tester);
+
+    // Disabling retention confirms bulk deletion in Settings.
+    await tester.tap(find.byTooltip('Open settings'));
+    await _waitFor(tester, find.byKey(const Key('retention-setting-switch')));
+    await tester.tap(find.byKey(const Key('retention-setting-switch')));
+    await _waitFor(tester, find.text('Disable saved meal images?'));
+    await tester.tap(find.text('Disable and remove images'));
+    await _waitFor(
+      tester,
+      find.text('Disabled. New and existing retained meal images are removed.'),
+    );
+    for (final entry in restored) {
+      expect(await harness.images.findByMealId(entry.id), isNull);
+    }
+    expect(await harness.nutritionSnapshot(), nutritionBeforeRemoval);
+    await tester.pageBack();
+    await _advance(tester);
+
+    // A photo confirmed after opting out still saves its nutrition, no media.
+    await tester.tap(find.text('Record meal').first);
+    await _advance(tester);
+    await tester.tap(find.byKey(const Key('choose-photo-source')));
+    await _waitFor(tester, find.text('Photo meal or drink'));
+    final analyzeButton = find.byKey(const Key('analyze-photo-button')).last;
+    await tester.scrollUntilVisible(
+      analyzeButton,
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(analyzeButton);
+    await _waitFor(tester, find.text('Review estimate'));
+    await tester.tap(find.byKey(const Key('confirm-save-button')));
+    await _advance(tester);
+    await harness.restart(tester);
+    final optedOut = await harness.repository
+        .observeDay(DateTime(2026, 7, 20))
+        .first;
+    expect(optedOut, hasLength(3));
+    for (final entry in optedOut) {
+      expect(await harness.images.findByMealId(entry.id), isNull);
+      expect(
+        (entry.items.single.nutrition[NutrientId.energy] as KnownNutritionValue)
+            .milliUnits,
+        450000,
+      );
+    }
+    expect(await harness.images.isEnabled(), isFalse);
+    expect(harness.provider.calls, 3);
   });
 }
 
@@ -300,10 +369,8 @@ class _TestHarness {
   _TestHarness()
     : clock = _FixedClock(DateTime(2026, 7, 20, 12)),
       ids = _SequenceIdGenerator(),
-      database = AppDatabase.forTesting(NativeDatabase.memory()),
       credentials = _InMemoryCredentialStore() {
-    repository = DriftMealRepository(database, clock, ids);
-    images = DriftMealImageRepository(database);
+    _openDatabase();
     provider = _CountingNutritionAnalysisProvider(
       DeterministicNutritionAnalysisProvider(clock, ids),
     );
@@ -311,11 +378,14 @@ class _TestHarness {
 
   final _FixedClock clock;
   final _SequenceIdGenerator ids;
-  final AppDatabase database;
+  final Directory directory = Directory.systemTemp.createTempSync(
+    'macro-advisor-journey-',
+  );
+  late AppDatabase database;
   final _InMemoryCredentialStore credentials;
   late final _CountingNutritionAnalysisProvider provider;
-  late final DriftMealRepository repository;
-  late final DriftMealImageRepository images;
+  late DriftMealRepository repository;
+  late DriftMealImageRepository images;
   final photoSource = _TestPhotoSource();
   var _appVersion = 0;
 
@@ -339,7 +409,39 @@ class _TestHarness {
     child: const MacroAdvisorApp(locale: Locale('en')),
   );
 
-  Future<void> dispose() => database.close();
+  void _openDatabase() {
+    database = AppDatabase.forTesting(
+      NativeDatabase(File('${directory.path}/journey.sqlite')),
+    );
+    repository = DriftMealRepository(database, clock, ids);
+    images = DriftMealImageRepository(database);
+  }
+
+  Future<List<Object?>> nutritionSnapshot() async => [
+    for (final table in [
+      'meal_entries',
+      'meal_items',
+      'meal_nutrient_values',
+      'goal_targets',
+    ])
+      (await database.customSelect('SELECT * FROM $table').get())
+          .map((row) => row.data)
+          .toList(),
+  ];
+
+  Future<void> restart(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await database.close();
+    _openDatabase();
+    await tester.pumpWidget(app);
+    await _advance(tester);
+  }
+
+  Future<void> dispose() async {
+    await database.close();
+    await directory.delete(recursive: true);
+  }
 }
 
 class _CountingNutritionAnalysisProvider implements NutritionAnalysisProvider {

@@ -15,6 +15,7 @@ class SettingsPage extends ConsumerStatefulWidget {
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _changingRetention = false;
   Object? _retentionError;
+  bool? _failedRetentionValue;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       appBar: AppBar(title: Text(localizations.settingsTitle)),
       body: SafeArea(
         child: ResponsiveContent(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -44,7 +45,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   changing: _changingRetention,
                   error: _retentionError,
                   onChanged: _changeRetention,
-                  onRetry: () => _retryRetention(retention),
+                  onRetry: _retryRetention,
                 ),
                 Card(
                   child: ListTile(
@@ -100,8 +101,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await _saveRetention(enabled);
   }
 
-  Future<void> _retryRetention(AsyncValue<bool> retention) async {
-    final enabled = retention is AsyncData<bool> ? retention.value : null;
+  Future<void> _retryRetention() async {
+    final enabled = _failedRetentionValue;
     if (enabled != null) {
       await _saveRetention(enabled);
     } else {
@@ -118,12 +119,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       await ref.read(mealImageRetentionSettingsProvider).setEnabled(enabled);
       if (!mounted) return;
       ref.invalidate(mealImageRetentionEnabledProvider);
-      setState(() => _changingRetention = false);
+      setState(() {
+        _changingRetention = false;
+        _failedRetentionValue = null;
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _changingRetention = false;
         _retentionError = Object();
+        _failedRetentionValue = enabled;
       });
     }
   }

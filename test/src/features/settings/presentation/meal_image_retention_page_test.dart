@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,161 @@ import 'package:macro_advisor/src/features/settings/domain/meal_image_retention_
 import 'package:macro_advisor/src/features/settings/presentation/settings_page.dart';
 
 void main() {
+  for (final language in ['en', 'de']) {
+    testWidgets(
+      '$language settings supports cancel, failure and retry at 200%',
+      (tester) async {
+        final settings = _FakeRetentionSettings()..failSave = true;
+        await tester.pumpWidget(
+          _settingsApp(Locale(language), settings, scale: 2),
+        );
+        await tester.pumpAndSettle();
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(SettingsPage)),
+        );
+        expect(find.text(l10n.savedMealImagesEnabledBody), findsOneWidget);
+        final toggle = find.byKey(const Key('retention-setting-switch'));
+        await tester.ensureVisible(toggle);
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.disableSavedMealImagesTitle), findsOneWidget);
+        await tester.tap(find.text(l10n.cancelAction));
+        await tester.pumpAndSettle();
+        expect(settings.requests, isEmpty);
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.disableSavedMealImagesAction));
+        await tester.pumpAndSettle();
+        expect(settings.enabled, isTrue);
+        expect(find.text(l10n.savedMealImagesSaveFailed), findsOneWidget);
+        expect(
+          tester
+              .widgetList<Semantics>(find.byType(Semantics))
+              .any((widget) => widget.properties.liveRegion == true),
+          isTrue,
+        );
+        final retry = find.text(l10n.retryAction);
+        await tester.ensureVisible(retry);
+        await tester.tap(retry);
+        await tester.pumpAndSettle();
+        expect(settings.requests, [false, false]);
+        expect(settings.enabled, isFalse);
+        expect(find.text(l10n.savedMealImagesDisabledBody), findsOneWidget);
+        expect(find.text(l10n.savedMealImagesSaveFailed), findsNothing);
+        await tester.ensureVisible(toggle);
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        expect(settings.enabled, isTrue);
+        expect(settings.requests, [false, false, true]);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('$language settings loading and load failure can retry', (
+      tester,
+    ) async {
+      final source = StreamController<bool>();
+      addTearDown(source.close);
+      final settings = _FakeRetentionSettings()..source = source.stream;
+      await tester.pumpWidget(
+        _settingsApp(Locale(language), settings, scale: 2),
+      );
+      await tester.pump();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(SettingsPage)),
+      );
+      expect(find.text(l10n.savedMealImagesLoading), findsOneWidget);
+      source.addError(StateError('synthetic load failure'));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.savedMealImagesLoadFailed), findsOneWidget);
+      settings.source = null;
+      await tester.ensureVisible(find.text(l10n.retryAction));
+      await tester.tap(find.text(l10n.retryAction));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.savedMealImagesEnabledBody), findsOneWidget);
+      expect(settings.requests, isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      '$language image loading and failure retry to image-free detail',
+      (tester) async {
+        final pending = Completer<RetainedMealImage?>();
+        final repository = _FakeImageRepository(null)
+          ..pendingLoad = pending.future;
+        await tester.pumpWidget(
+          _app(
+            const MealDetailPage(mealId: 'meal-1'),
+            imageRepository: repository,
+            locale: Locale(language),
+            scale: 2,
+          ),
+        );
+        await tester.pump();
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(MealDetailPage)),
+        );
+        expect(find.text(l10n.savedMealImageLoading), findsOneWidget);
+        pending.completeError(StateError('synthetic load failure'));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.savedMealImageLoadFailed), findsOneWidget);
+        repository.pendingLoad = null;
+        final retry = find.byKey(const Key('retry-saved-image-button'));
+        await tester.ensureVisible(retry);
+        await tester.tap(retry);
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.savedMealImageLoadFailed), findsNothing);
+        expect(
+          find.byKey(const Key('remove-saved-image-button')),
+          findsNothing,
+        );
+        expect(find.text('Synthetic item'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('$language image removal supports cancel and retry at 200%', (
+      tester,
+    ) async {
+      final repository = _FakeImageRepository(_retained('meal-1'))
+        ..failRemove = true;
+      await tester.pumpWidget(
+        _app(
+          const MealDetailPage(mealId: 'meal-1'),
+          imageRepository: repository,
+          locale: Locale(language),
+          scale: 2,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(MealDetailPage)),
+      );
+      expect(find.bySemanticsLabel(l10n.savedMealImageLabel), findsOneWidget);
+      final remove = find.byKey(const Key('remove-saved-image-button'));
+      await tester.ensureVisible(remove);
+      await tester.tap(remove);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.cancelAction));
+      await tester.pumpAndSettle();
+      expect(repository.removeCalls, 0);
+      await tester.tap(remove);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.removeSavedImageAction).last);
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.removeSavedImageFailed), findsOneWidget);
+      expect(repository.image, isNotNull);
+      final retry = find.byKey(const Key('retry-remove-saved-image-button'));
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(repository.removeCalls, 2);
+      expect(repository.image, isNull);
+      expect(find.bySemanticsLabel(l10n.savedMealImageLabel), findsNothing);
+      expect(find.text('Synthetic item'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('meal detail displays and confirms removal of a retained image', (
     tester,
   ) async {
@@ -96,32 +252,49 @@ void main() {
   });
 }
 
-Widget _app(Widget home, {required _FakeImageRepository imageRepository}) =>
-    ProviderScope(
-      overrides: [
-        mealRepositoryProvider.overrideWithValue(_FakeMealRepository()),
-        mealImageRepositoryProvider.overrideWithValue(imageRepository),
-      ],
-      child: MaterialApp(
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: home,
-      ),
-    );
+Widget _app(
+  Widget home, {
+  required _FakeImageRepository imageRepository,
+  Locale locale = const Locale('en'),
+  double scale = 1,
+}) => ProviderScope(
+  overrides: [
+    mealRepositoryProvider.overrideWithValue(_FakeMealRepository()),
+    mealImageRepositoryProvider.overrideWithValue(imageRepository),
+  ],
+  child: MaterialApp(
+    locale: locale,
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(scale)),
+      child: child!,
+    ),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: home,
+  ),
+);
 
-Widget _settingsApp(Locale locale, _FakeRetentionSettings settings) =>
-    ProviderScope(
-      overrides: [
-        mealImageRetentionSettingsProvider.overrideWithValue(settings),
-      ],
-      child: MaterialApp(
-        locale: locale,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: const SettingsPage(),
-      ),
-    );
+Widget _settingsApp(
+  Locale locale,
+  _FakeRetentionSettings settings, {
+  double scale = 1,
+}) => ProviderScope(
+  overrides: [mealImageRetentionSettingsProvider.overrideWithValue(settings)],
+  child: MaterialApp(
+    locale: locale,
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(scale)),
+      child: child!,
+    ),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: const SettingsPage(),
+  ),
+);
 
 RetainedMealImage _retained(String mealId) {
   final picture = image.Image(width: 2, height: 2)
@@ -141,9 +314,11 @@ class _FakeImageRepository implements MealImageRepository {
   RetainedMealImage? image;
   var removeCalls = 0;
   var failRemove = false;
+  Future<RetainedMealImage?>? pendingLoad;
 
   @override
-  Future<RetainedMealImage?> findByMealId(String mealId) async => image;
+  Future<RetainedMealImage?> findByMealId(String mealId) async =>
+      pendingLoad == null ? image : await pendingLoad;
 
   @override
   Future<void> removeForMeal(String mealId) async {
@@ -158,15 +333,25 @@ class _FakeImageRepository implements MealImageRepository {
 
 class _FakeRetentionSettings implements MealImageRetentionSettings {
   var enabled = true;
+  var failSave = false;
+  final requests = <bool>[];
+  Stream<bool>? source;
 
   @override
   Future<bool> isEnabled() async => enabled;
 
   @override
-  Stream<bool> observeEnabled() => Stream.value(enabled);
+  Stream<bool> observeEnabled() => source ?? Stream.value(enabled);
 
   @override
-  Future<void> setEnabled(bool value) async => enabled = value;
+  Future<void> setEnabled(bool value) async {
+    requests.add(value);
+    if (failSave) {
+      failSave = false;
+      throw StateError('synthetic save failure');
+    }
+    enabled = value;
+  }
 }
 
 class _FakeMealRepository implements MealRepository {
