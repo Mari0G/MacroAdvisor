@@ -1,10 +1,10 @@
 # Nutrition goals and history
 
-Status: Accepted v0.1
+Status: Implemented v0.1
 
 Feature ID: F-004
 
-Last updated: 2026-08-03
+Last updated: 2026-09-16
 
 ## User outcome
 
