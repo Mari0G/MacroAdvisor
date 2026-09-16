@@ -37,7 +37,7 @@ void main() {
     },
   );
 
-  test('goal values persist after reopening the schema-v2 database', () async {
+  test('goal values persist after reopening the schema-v3 database', () async {
     final directory = await Directory.systemTemp.createTemp('macro_goals_');
     final path = '${directory.path}${Platform.pathSeparator}goals.sqlite';
     final firstDatabase = AppDatabase.forTesting(NativeDatabase(File(path)));
@@ -48,7 +48,7 @@ void main() {
     final version = await firstDatabase
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(version.read<int>('user_version'), 2);
+    expect(version.read<int>('user_version'), 3);
     await firstDatabase.close();
 
     final reopened = AppDatabase.forTesting(NativeDatabase(File(path)));
