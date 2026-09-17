@@ -33,6 +33,8 @@ An analysis contains:
 - detected locale
 - one or more items
 - per-item amounts, nutrients, confidence, and assumptions
+- all seven core nutrient fields for every item, with explicit unknown values
+  where a defensible estimate is unavailable
 - calculated totals
 - non-fatal validation warnings
 
@@ -57,6 +59,8 @@ amount; it is not converted to mass without defensible food-specific evidence.
 - A description may contain multiple foods and drinks.
 - Ambiguous portions produce assumptions and lower confidence.
 - Partial provider output remains editable if core validation succeeds.
+- Fewer than two known nutrient values on any item adds a non-fatal completeness
+  warning. Completeness does not trigger an automatic provider retry.
 - Negative, infinite, non-numeric, or unsupported nutrient-unit values are
   rejected. A finite item amount with an unknown or noncanonical unit is
   preserved as an editable descriptive amount with a non-fatal warning and no
@@ -73,6 +77,9 @@ amount; it is not converted to mass without defensible food-specific evidence.
   then an editable itemized draft is shown in the active app language.
 - Every known core nutrient displays a value and unit; unknown values are visibly
   marked instead of displayed as zero.
+- Every provider-requested item contains all seven core nutrient fields; an item
+  with fewer than two known values remains editable and shows a completeness
+  warning without another provider request.
 - Provider assumptions and the estimated nature of the result are visible before
   confirmation.
 - Editing an item nutrient immediately updates totals without a second AI request.
@@ -85,8 +92,9 @@ amount; it is not converted to mass without defensible food-specific evidence.
 
 ## Verification
 
-- unit tests for validation, totals, edits, descriptive unknown-unit amounts,
-  and error mapping including provider-response timeout
+- unit tests for validation, required nutrient fields, two-value completeness,
+  totals, edits, descriptive unknown-unit amounts, and error mapping including
+  provider-response timeout
 - shared provider contract tests using sanitized fixtures
 - widget tests in German and English
 - Android integration test using a deterministic fake provider

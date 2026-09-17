@@ -304,9 +304,15 @@ redaction for adapter error mapping and any structured logging boundary.
 The MVP uses bring-your-own-key access and sends requests directly from the mobile
 device over TLS. It ships no shared provider secret and therefore needs no backend.
 
-The first implementation targets stable `gemini-3.5-flash`. Provider-specific
+The first implementation targets stable `gemini-3.5-flash-lite`. Provider-specific
 requests and responses remain inside an infrastructure adapter. Domain code
 consumes a provider-neutral `NutritionAnalysis` contract.
+
+Gemini meal analysis uses JSON Schema structured output. Every item requires all
+seven core nutrient keys and an explicit numeric or null value for each key. The
+adapter preserves null as unknown, measures completeness without logging meal
+data, and adds a non-fatal warning when any item has fewer than two known nutrient
+values. It never performs an automatic repair request.
 
 The provider configuration supports adding other adapters without migrating meal
 data. OpenAI is the first planned alternative. A future managed-key mode must use

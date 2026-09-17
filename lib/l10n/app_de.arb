@@ -103,6 +103,7 @@
   "confidenceHigh": "Hohe Sicherheit",
   "assumptionsTitle": "Annahmen",
   "warningsTitle": "Bitte prüfen",
+  "lowNutrientCompletenessWarning": "Es konnten weniger als zwei Nährwerte geschätzt werden. Prüfe diese Mahlzeit sorgfältig.",
   "totalsTitle": "Neu berechnete Gesamtwerte",
   "unknownValue": "Unbekannt",
   "unknownAmountUnitWarning": "Diese Menge verwendet eine unbekannte Einheit und bleibt ohne Umrechnung in eine Masse bearbeitbar.",

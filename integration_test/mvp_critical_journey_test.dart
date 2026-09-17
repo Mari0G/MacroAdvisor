@@ -61,7 +61,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('save-goals-button')));
     await _advance(tester);
-    await tester.pageBack();
+    await _pageBack(tester);
     await _advance(tester);
 
     await tester.tap(find.byTooltip('Open settings'));
@@ -80,9 +80,9 @@ void main() {
     expect(find.text('Connection test succeeded.'), findsOneWidget);
     expect(find.text('agent-fixture-key'), findsNothing);
 
-    await tester.pageBack();
+    await _pageBack(tester);
     await _advance(tester);
-    await tester.pageBack();
+    await _pageBack(tester);
     await _advance(tester);
 
     await tester.tap(find.byType(FloatingActionButton));
@@ -127,7 +127,7 @@ void main() {
     await _advance(tester);
     expect(find.text('Nutrition history'), findsOneWidget);
     expect(find.text('Daily values'), findsOneWidget);
-    await tester.pageBack();
+    await _pageBack(tester);
     await _advance(tester);
 
     final savedMealFinder = find
@@ -182,7 +182,7 @@ void main() {
     expect(revisedEntry.occursOnLocalDay(DateTime(2026, 7, 20)), isFalse);
     expect(harness.provider.calls, 1);
 
-    await tester.pageBack();
+    await _pageBack(tester);
     await _waitFor(tester, find.text('Meals and drinks (0)'));
     expect(find.text('No meals or drinks recorded'), findsOneWidget);
 
@@ -291,7 +291,7 @@ void main() {
     }
     expect(retainedCount, 1);
     expect(await harness.nutritionSnapshot(), nutritionBeforeRemoval);
-    await tester.pageBack();
+    await _pageBack(tester);
     await _advance(tester);
 
     // Disabling retention confirms bulk deletion in Settings.
@@ -308,7 +308,7 @@ void main() {
       expect(await harness.images.findByMealId(entry.id), isNull);
     }
     expect(await harness.nutritionSnapshot(), nutritionBeforeRemoval);
-    await tester.pageBack();
+    await _pageBack(tester);
     await _advance(tester);
 
     // A photo confirmed after opting out still saves its nutrition, no media.
@@ -346,6 +346,11 @@ void main() {
 
 Future<void> _advance(WidgetTester tester) =>
     tester.pump(const Duration(milliseconds: 500));
+
+Future<void> _pageBack(WidgetTester tester) async {
+  expect(await tester.binding.handlePopRoute(), isTrue);
+  await tester.pump();
+}
 
 Future<void> _waitFor(
   WidgetTester tester,
