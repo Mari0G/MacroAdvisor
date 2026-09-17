@@ -103,6 +103,7 @@
   "confidenceHigh": "High confidence",
   "assumptionsTitle": "Assumptions",
   "warningsTitle": "Things to review",
+  "lowNutrientCompletenessWarning": "Fewer than two nutrient values could be estimated. Review this meal carefully.",
   "totalsTitle": "Recalculated totals",
   "unknownValue": "Unknown",
   "unknownAmountUnitWarning": "This amount uses an unfamiliar unit and remains editable without a mass conversion.",

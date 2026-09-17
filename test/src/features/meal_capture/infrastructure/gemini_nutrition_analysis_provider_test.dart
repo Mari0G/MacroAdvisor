@@ -56,10 +56,11 @@ void main() {
         expect(transport.timeout, const Duration(seconds: 60));
 
         final request = jsonDecode(transport.body) as Map<String, dynamic>;
+        final generationConfig =
+            request['generationConfig'] as Map<String, dynamic>;
+        expect(generationConfig['responseSchema'], isNull);
         final schema =
-            (request['generationConfig']
-                    as Map<String, dynamic>)['responseSchema']
-                as Map<String, dynamic>;
+            generationConfig['responseJsonSchema'] as Map<String, dynamic>;
         final properties = schema['properties'] as Map<String, dynamic>;
         final items = properties['items'] as Map<String, dynamic>;
         final itemSchema = items['items'] as Map<String, dynamic>;
@@ -67,6 +68,9 @@ void main() {
         final itemNutrients =
             (itemProperties['nutrients'] as Map<String, dynamic>)['properties']
                 as Map<String, dynamic>;
+        final requiredItemNutrients =
+            (itemProperties['nutrients'] as Map<String, dynamic>)['required']
+                as List<dynamic>;
         final totals = properties['totals'] as Map<String, dynamic>;
         final totalsProperties = totals['properties'] as Map<String, dynamic>;
         for (final nutrient in <String>[
@@ -79,9 +83,14 @@ void main() {
           'salt',
         ]) {
           expect(
+            requiredItemNutrients,
+            contains(nutrient),
+            reason: 'item nutrient $nutrient must always be present',
+          );
+          expect(
             (itemNutrients[nutrient] as Map<String, dynamic>)['required'],
-            contains('unit'),
-            reason: 'item nutrient $nutrient must require a unit',
+            containsAll(<String>['value', 'unit']),
+            reason: 'item nutrient $nutrient must explicitly report a value',
           );
           expect(
             (totalsProperties[nutrient] as Map<String, dynamic>)['required'],
@@ -105,6 +114,10 @@ void main() {
         expect(
           (properties['assumptions'] as Map<String, dynamic>)['items'],
           isA<Map<String, dynamic>>(),
+        );
+        expect(
+          transport.body,
+          contains('Every item must contain all seven nutrient fields'),
         );
       },
     );
@@ -197,7 +210,42 @@ void main() {
         result.warnings.map((warning) => warning.code),
         contains('unknown-carbohydrates'),
       );
+      expect(
+        result.warnings.map((warning) => warning.code),
+        contains('low-nutrient-completeness'),
+      );
     });
+
+    test(
+      'accepts exactly two known nutrients without completeness warning',
+      () async {
+        final provider = _provider(
+          _FakeTransport(
+            response: GeminiHttpResponse(
+              statusCode: 200,
+              body: _fixture('two_known_nutrients.json'),
+            ),
+          ),
+        );
+
+        final result = await provider.analyzeText(
+          const NutritionAnalysisRequest(
+            description: 'synthetic meal',
+            localeTag: 'en',
+          ),
+        );
+
+        expect(
+          result.items.single.nutrition.values.values
+              .whereType<KnownNutritionValue>(),
+          hasLength(2),
+        );
+        expect(
+          result.warnings.map((warning) => warning.code),
+          isNot(contains('low-nutrient-completeness')),
+        );
+      },
+    );
 
     test(
       'preserves finite amounts with unknown units as descriptive editable data',
