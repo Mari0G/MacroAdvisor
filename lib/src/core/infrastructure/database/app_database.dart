@@ -14,6 +14,7 @@ part 'app_database.g.dart';
     GoalTargets,
     MealRetainedImages,
     MealImageRetentionSettings,
+    AppearanceSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -22,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -32,6 +33,12 @@ class AppDatabase extends _$AppDatabase {
         MealImageRetentionSettingsCompanion.insert(
           id: const Value(1),
           enabled: true,
+        ),
+      );
+      await into(appearanceSettings).insert(
+        AppearanceSettingsCompanion.insert(
+          id: const Value(1),
+          paletteId: 'lime',
         ),
       );
     },
@@ -44,6 +51,15 @@ class AppDatabase extends _$AppDatabase {
           MealImageRetentionSettingsCompanion.insert(
             id: const Value(1),
             enabled: true,
+          ),
+        );
+      }
+      if (from < 4) {
+        await migrator.createTable(appearanceSettings);
+        await into(appearanceSettings).insert(
+          AppearanceSettingsCompanion.insert(
+            id: const Value(1),
+            paletteId: 'lime',
           ),
         );
       }

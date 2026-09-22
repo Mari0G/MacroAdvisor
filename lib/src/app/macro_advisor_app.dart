@@ -4,23 +4,24 @@ import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/app/app_router.dart';
 import 'package:macro_advisor/src/app/app_theme.dart';
 import 'package:macro_advisor/src/features/meal_capture/application/capture_controllers.dart';
+import 'package:macro_advisor/src/features/settings/application/appearance_controller.dart';
 
-class MacroAdvisorApp extends StatelessWidget {
+class MacroAdvisorApp extends ConsumerWidget {
   const MacroAdvisorApp({this.locale, super.key});
 
   final Locale? locale;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = ref.watch(appearanceControllerProvider).palette;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      theme: AppTheme.forPalette(palette),
+      themeMode: ThemeMode.dark,
       initialRoute: AppRoutes.today,
       onGenerateRoute: AppRouter.onGenerateRoute,
       builder: (context, child) => _PhotoLostDataRecovery(child: child!),

@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/app_router.dart';
+import 'package:macro_advisor/src/app/app_theme.dart';
 import 'package:macro_advisor/src/core/presentation/responsive_content.dart';
+import 'package:macro_advisor/src/core/presentation/type_c_components.dart';
 import 'package:macro_advisor/src/features/dashboard/application/dashboard_controller.dart';
 import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
 import 'package:macro_advisor/src/features/goals/application/goal_repository_provider.dart';
@@ -77,11 +79,18 @@ class TodayView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 82,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.todayTitle),
-            Text(dateLabel, style: Theme.of(context).textTheme.labelMedium),
+            Text(
+              l10n.todayTitle,
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            Text(
+              dateLabel,
+              style: TextStyle(color: TypeCTokens.of(context).muted),
+            ),
           ],
         ),
         actions: [
@@ -100,11 +109,11 @@ class TodayView extends StatelessWidget {
         ],
       ),
       floatingActionButton: showRecordAction
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
               key: const Key('today-record-meal-button'),
               onPressed: onRecordMeal,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.recordMealAction),
+              tooltip: l10n.recordMealAction,
+              child: const Icon(Icons.add),
             )
           : null,
       body: SafeArea(
@@ -134,10 +143,9 @@ class TodayView extends StatelessWidget {
                         onRetry: onRetry,
                       );
                       return expanded
-                          ? Row(
+                          ? KeyedSubtree(
                               key: const Key('today-expanded-layout'),
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [Expanded(child: content)],
+                              child: content,
                             )
                           : Column(
                               key: const Key('today-compact-layout'),
@@ -176,51 +184,49 @@ class _DaySelector extends StatelessWidget {
     return Semantics(
       container: true,
       label: l10n.daySelectorLabel,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Row(
-            children: [
-              IconButton(
-                tooltip: l10n.previousDayTooltip,
-                onPressed: () => onSelectDay(day.previous()),
-                icon: const Icon(Icons.chevron_left),
-              ),
-              Expanded(
-                child: TextButton(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: day.date,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      onSelectDay(LocalDay.fromDateTime(picked));
-                    }
-                  },
-                  child: Column(
-                    children: [
-                      Text(
-                        day == currentDay ? l10n.todayTitle : shortLabel,
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        dateLabel,
-                        style: Theme.of(context).textTheme.labelSmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: l10n.previousDayTooltip,
+              onPressed: () => onSelectDay(day.previous()),
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Expanded(
+              child: TextButton(
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: day.date,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    onSelectDay(LocalDay.fromDateTime(picked));
+                  }
+                },
+                child: Column(
+                  children: [
+                    Text(
+                      day == currentDay ? l10n.todayTitle : shortLabel,
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      dateLabel,
+                      style: Theme.of(context).textTheme.labelSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
-              IconButton(
-                tooltip: l10n.nextDayTooltip,
-                onPressed: () => onSelectDay(day.next()),
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
-          ),
+            ),
+            IconButton(
+              tooltip: l10n.nextDayTooltip,
+              onPressed: () => onSelectDay(day.next()),
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ],
         ),
       ),
     );
@@ -329,36 +335,34 @@ class _DashboardData extends StatelessWidget {
       NutrientId.fat,
     ];
     final progress = TodayProgressModel.fromDashboard(model, goals);
-    return Column(
+    final energyGoal = [
+      for (final item in progress.nutrients)
+        if (item.nutrient == NutrientId.energy) item,
+    ].firstOrNull;
+    final left = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (model.hasIncompleteData) ...[
           _IncompleteBanner(),
           const SizedBox(height: 12),
         ],
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        TypeCSectionHeader(title: l10n.dailyNutritionTitle),
+        TypeCHeroCard(
+          child: _EnergyHero(total: model[NutrientId.energy], goal: energyGoal),
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final tileWidth = (constraints.maxWidth - 8) / 2;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Text(
-                  l10n.dailyNutritionTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    for (final nutrient in overviewNutrients)
-                      _NutrientTile(total: model[nutrient]),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                for (final nutrient in overviewNutrients.skip(1))
+                  _NutrientTile(total: model[nutrient], width: tileWidth),
               ],
-            ),
-          ),
+            );
+          },
         ),
         const SizedBox(height: 12),
         _GoalProgressSection(progress: progress),
@@ -373,12 +377,14 @@ class _DashboardData extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        Text(
-          l10n.mealsAndDrinksTitle(model.entries.length),
-          style: Theme.of(context).textTheme.titleMedium,
+      ],
+    );
+    final right = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TypeCSectionHeader(
+          title: l10n.mealsAndDrinksTitle(model.entries.length),
         ),
-        const SizedBox(height: 12),
         if (model.isEmpty)
           _EmptyDay(onRecordMeal: onRecordMeal)
         else
@@ -387,6 +393,93 @@ class _DashboardData extends StatelessWidget {
               entry: entry,
               onTap: () => onOpenMealDetail(entry.id),
             ),
+      ],
+    );
+    final expanded = MediaQuery.sizeOf(context).width >= 840;
+    return expanded
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: left),
+              const SizedBox(width: 24),
+              Expanded(flex: 6, child: right),
+            ],
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [left, const SizedBox(height: 16), right],
+          );
+  }
+}
+
+class _EnergyHero extends StatelessWidget {
+  const _EnergyHero({required this.total, required this.goal});
+  final DashboardNutrientTotal total;
+  final TodayNutrientProgress? goal;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final ratio = goal?.progress.ratio;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.nutrientEnergy,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                nutritionValueText(context, total.value),
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              if (total.isIncomplete) Text(l10n.incompleteDataTitle),
+              if (goal != null) ...[
+                const SizedBox(height: 6),
+                Text(goalTargetText(context, NutrientId.energy, goal!.target)),
+                Text(goalStatusText(l10n, goal!.progress.status)),
+              ],
+            ],
+          ),
+        ),
+        if (goal != null) ...[
+          const SizedBox(width: 12),
+          Semantics(
+            label: l10n.goalProgressSemantics(
+              l10n.nutrientEnergy,
+              nutritionValueText(context, total.value),
+              goalTargetText(context, NutrientId.energy, goal!.target),
+              goalStatusText(l10n, goal!.progress.status),
+            ),
+            child: SizedBox(
+              width: 92,
+              height: 92,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 92,
+                    height: 92,
+                    child: CircularProgressIndicator(
+                      value: (ratio ?? 0).clamp(0, 1).toDouble(),
+                      strokeWidth: 10,
+                      strokeCap: StrokeCap.round,
+                    ),
+                  ),
+                  Text(
+                    ratio == null
+                        ? l10n.unknownValue
+                        : '${(ratio * 100).round()}%',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -409,6 +502,10 @@ class _GoalProgressSection extends StatelessWidget {
         ),
       );
     }
+    final otherNutrients = progress.nutrients.where(
+      (item) => item.nutrient != NutrientId.energy,
+    );
+    if (otherNutrients.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -417,7 +514,7 @@ class _GoalProgressSection extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        for (final nutrient in progress.nutrients)
+        for (final nutrient in otherNutrients)
           _GoalProgressCard(progress: nutrient),
       ],
     );
@@ -507,9 +604,10 @@ class _IncompleteBanner extends StatelessWidget {
 }
 
 class _NutrientTile extends StatelessWidget {
-  const _NutrientTile({required this.total});
+  const _NutrientTile({required this.total, this.width = 140});
 
   final DashboardNutrientTotal total;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
@@ -523,7 +621,7 @@ class _NutrientTile extends StatelessWidget {
       container: true,
       label: '$label: $value$incomplete',
       child: SizedBox(
-        width: 140,
+        width: width,
         child: Card(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Padding(
@@ -625,10 +723,14 @@ class _MealEntryCard extends StatelessWidget {
       (item) => item.nutrition.values.values.any((value) => !value.isKnown),
     );
     final energy = nutritionValueText(context, entry.totals[NutrientId.energy]);
-    return Card(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         isThreeLine: hasUnknown,
-        leading: const Icon(Icons.restaurant),
+        leading: CircleAvatar(
+          backgroundColor: TypeCTokens.of(context).meal,
+          child: const Icon(Icons.restaurant),
+        ),
         title: Text(title),
         subtitle: Text(
           '${DateFormat.Hm(locale).format(localOccurrence)} · $energy'

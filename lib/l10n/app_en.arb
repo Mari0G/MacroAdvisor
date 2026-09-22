@@ -217,5 +217,15 @@
   "historyNoGoalComparison": "No current goal",
   "historyChartLabel": "Daily nutrition chart; values are also listed below.",
   "historyFailure": "Nutrition history could not be loaded.",
-  "historyRetry": "Retry history"
+  "historyRetry": "Retry history",
+  "appearanceTitle": "Appearance",
+  "appearanceBody": "Choose a color palette for the dark design.",
+  "appearanceLoading": "Loading appearance…",
+  "appearanceSaving": "Saving palette…",
+  "appearanceLoadFailed": "Appearance could not be loaded.",
+  "appearanceSaveFailed": "The palette could not be saved. The previous color is active.",
+  "paletteLime": "Lime",
+  "paletteOcean": "Ocean",
+  "paletteCoral": "Coral",
+  "paletteViolet": "Violet"
 }

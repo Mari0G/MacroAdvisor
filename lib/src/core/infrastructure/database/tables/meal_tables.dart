@@ -81,3 +81,12 @@ class MealImageRetentionSettings extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+@DataClassName('AppearanceSettingRow')
+class AppearanceSettings extends Table {
+  IntColumn get id => integer()();
+  TextColumn get paletteId => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

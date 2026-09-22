@@ -15,9 +15,11 @@ import 'package:macro_advisor/src/features/meals/application/meal_image_reposito
 import 'package:macro_advisor/src/features/meals/application/meal_repository_provider.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_image_repository.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
+import 'package:macro_advisor/src/features/settings/application/appearance_controller.dart';
 import 'package:macro_advisor/src/features/settings/application/meal_image_retention_provider.dart';
 import 'package:macro_advisor/src/features/settings/application/provider_settings_controller.dart';
 import 'package:macro_advisor/src/features/settings/domain/provider_connection_checker.dart';
+import 'package:macro_advisor/src/features/settings/infrastructure/drift_appearance_settings.dart';
 import 'package:macro_advisor/src/features/settings/infrastructure/secure_credential_store.dart';
 
 final clockProvider = Provider<Clock>((ref) => const SystemClock());
@@ -46,6 +48,10 @@ final appMealImageRepositoryProvider = Provider<DriftMealImageRepository>((
   ref,
 ) {
   return DriftMealImageRepository(ref.watch(appDatabaseProvider));
+});
+
+final appAppearanceSettingsProvider = Provider<DriftAppearanceSettings>((ref) {
+  return DriftAppearanceSettings(ref.watch(appDatabaseProvider));
 });
 
 /// Production bindings for secure provider configuration.
@@ -80,6 +86,9 @@ final appMealPhotoNormalizerProvider = Provider<MealPhotoNormalizer>(
 );
 
 List<Object?> productionOverrides() => [
+  appearanceSettingsProvider.overrideWith(
+    (ref) => ref.watch(appAppearanceSettingsProvider),
+  ),
   mealRepositoryProvider.overrideWith(
     (ref) => ref.watch(appMealRepositoryProvider),
   ),

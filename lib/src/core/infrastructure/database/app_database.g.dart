@@ -2822,6 +2822,207 @@ class MealImageRetentionSettingsCompanion
   }
 }
 
+class $AppearanceSettingsTable extends AppearanceSettings
+    with TableInfo<$AppearanceSettingsTable, AppearanceSettingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppearanceSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _paletteIdMeta = const VerificationMeta(
+    'paletteId',
+  );
+  @override
+  late final GeneratedColumn<String> paletteId = GeneratedColumn<String>(
+    'palette_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, paletteId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'appearance_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppearanceSettingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('palette_id')) {
+      context.handle(
+        _paletteIdMeta,
+        paletteId.isAcceptableOrUnknown(data['palette_id']!, _paletteIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paletteIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AppearanceSettingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppearanceSettingRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      paletteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}palette_id'],
+      )!,
+    );
+  }
+
+  @override
+  $AppearanceSettingsTable createAlias(String alias) {
+    return $AppearanceSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class AppearanceSettingRow extends DataClass
+    implements Insertable<AppearanceSettingRow> {
+  final int id;
+  final String paletteId;
+  const AppearanceSettingRow({required this.id, required this.paletteId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['palette_id'] = Variable<String>(paletteId);
+    return map;
+  }
+
+  AppearanceSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AppearanceSettingsCompanion(
+      id: Value(id),
+      paletteId: Value(paletteId),
+    );
+  }
+
+  factory AppearanceSettingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppearanceSettingRow(
+      id: serializer.fromJson<int>(json['id']),
+      paletteId: serializer.fromJson<String>(json['paletteId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'paletteId': serializer.toJson<String>(paletteId),
+    };
+  }
+
+  AppearanceSettingRow copyWith({int? id, String? paletteId}) =>
+      AppearanceSettingRow(
+        id: id ?? this.id,
+        paletteId: paletteId ?? this.paletteId,
+      );
+  AppearanceSettingRow copyWithCompanion(AppearanceSettingsCompanion data) {
+    return AppearanceSettingRow(
+      id: data.id.present ? data.id.value : this.id,
+      paletteId: data.paletteId.present ? data.paletteId.value : this.paletteId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppearanceSettingRow(')
+          ..write('id: $id, ')
+          ..write('paletteId: $paletteId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, paletteId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppearanceSettingRow &&
+          other.id == this.id &&
+          other.paletteId == this.paletteId);
+}
+
+class AppearanceSettingsCompanion
+    extends UpdateCompanion<AppearanceSettingRow> {
+  final Value<int> id;
+  final Value<String> paletteId;
+  const AppearanceSettingsCompanion({
+    this.id = const Value.absent(),
+    this.paletteId = const Value.absent(),
+  });
+  AppearanceSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    required String paletteId,
+  }) : paletteId = Value(paletteId);
+  static Insertable<AppearanceSettingRow> custom({
+    Expression<int>? id,
+    Expression<String>? paletteId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (paletteId != null) 'palette_id': paletteId,
+    });
+  }
+
+  AppearanceSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? paletteId,
+  }) {
+    return AppearanceSettingsCompanion(
+      id: id ?? this.id,
+      paletteId: paletteId ?? this.paletteId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (paletteId.present) {
+      map['palette_id'] = Variable<String>(paletteId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppearanceSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('paletteId: $paletteId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2834,6 +3035,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $MealRetainedImagesTable(this);
   late final $MealImageRetentionSettingsTable mealImageRetentionSettings =
       $MealImageRetentionSettingsTable(this);
+  late final $AppearanceSettingsTable appearanceSettings =
+      $AppearanceSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2845,6 +3048,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     goalTargets,
     mealRetainedImages,
     mealImageRetentionSettings,
+    appearanceSettings,
   ];
 }
 
@@ -4983,6 +5187,153 @@ typedef $$MealImageRetentionSettingsTableProcessedTableManager =
       MealImageRetentionSettingRow,
       PrefetchHooks Function()
     >;
+typedef $$AppearanceSettingsTableCreateCompanionBuilder =
+    AppearanceSettingsCompanion Function({
+      Value<int> id,
+      required String paletteId,
+    });
+typedef $$AppearanceSettingsTableUpdateCompanionBuilder =
+    AppearanceSettingsCompanion Function({
+      Value<int> id,
+      Value<String> paletteId,
+    });
+
+class $$AppearanceSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppearanceSettingsTable> {
+  $$AppearanceSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paletteId => $composableBuilder(
+    column: $table.paletteId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppearanceSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppearanceSettingsTable> {
+  $$AppearanceSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paletteId => $composableBuilder(
+    column: $table.paletteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppearanceSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppearanceSettingsTable> {
+  $$AppearanceSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get paletteId =>
+      $composableBuilder(column: $table.paletteId, builder: (column) => column);
+}
+
+class $$AppearanceSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppearanceSettingsTable,
+          AppearanceSettingRow,
+          $$AppearanceSettingsTableFilterComposer,
+          $$AppearanceSettingsTableOrderingComposer,
+          $$AppearanceSettingsTableAnnotationComposer,
+          $$AppearanceSettingsTableCreateCompanionBuilder,
+          $$AppearanceSettingsTableUpdateCompanionBuilder,
+          (
+            AppearanceSettingRow,
+            BaseReferences<
+              _$AppDatabase,
+              $AppearanceSettingsTable,
+              AppearanceSettingRow
+            >,
+          ),
+          AppearanceSettingRow,
+          PrefetchHooks Function()
+        > {
+  $$AppearanceSettingsTableTableManager(
+    _$AppDatabase db,
+    $AppearanceSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppearanceSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppearanceSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppearanceSettingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> paletteId = const Value.absent(),
+              }) => AppearanceSettingsCompanion(id: id, paletteId: paletteId),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String paletteId,
+              }) => AppearanceSettingsCompanion.insert(
+                id: id,
+                paletteId: paletteId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppearanceSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppearanceSettingsTable,
+      AppearanceSettingRow,
+      $$AppearanceSettingsTableFilterComposer,
+      $$AppearanceSettingsTableOrderingComposer,
+      $$AppearanceSettingsTableAnnotationComposer,
+      $$AppearanceSettingsTableCreateCompanionBuilder,
+      $$AppearanceSettingsTableUpdateCompanionBuilder,
+      (
+        AppearanceSettingRow,
+        BaseReferences<
+          _$AppDatabase,
+          $AppearanceSettingsTable,
+          AppearanceSettingRow
+        >,
+      ),
+      AppearanceSettingRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5003,4 +5354,6 @@ class $AppDatabaseManager {
         _db,
         _db.mealImageRetentionSettings,
       );
+  $$AppearanceSettingsTableTableManager get appearanceSettings =>
+      $$AppearanceSettingsTableTableManager(_db, _db.appearanceSettings);
 }

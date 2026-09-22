@@ -217,5 +217,15 @@
   "historyNoGoalComparison": "Kein aktuelles Ziel",
   "historyChartLabel": "Tägliches Ernährungsdiagramm; die Werte sind auch unten aufgeführt.",
   "historyFailure": "Die Ernährungshistorie konnte nicht geladen werden.",
-  "historyRetry": "Historie erneut laden"
+  "historyRetry": "Historie erneut laden",
+  "appearanceTitle": "Darstellung",
+  "appearanceBody": "Wähle eine Farbpalette für das dunkle Design.",
+  "appearanceLoading": "Darstellung wird geladen …",
+  "appearanceSaving": "Farbpalette wird gespeichert …",
+  "appearanceLoadFailed": "Die Darstellung konnte nicht geladen werden.",
+  "appearanceSaveFailed": "Die Farbpalette konnte nicht gespeichert werden. Die bisherige Farbe bleibt aktiv.",
+  "paletteLime": "Lime",
+  "paletteOcean": "Ocean",
+  "paletteCoral": "Coral",
+  "paletteViolet": "Violet"
 }

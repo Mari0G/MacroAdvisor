@@ -24,10 +24,12 @@ import 'package:macro_advisor/src/features/meals/application/meal_repository_pro
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_image_repository.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
+import 'package:macro_advisor/src/features/settings/application/appearance_controller.dart';
 import 'package:macro_advisor/src/features/settings/application/meal_image_retention_provider.dart';
 import 'package:macro_advisor/src/features/settings/application/provider_settings_controller.dart';
 import 'package:macro_advisor/src/features/settings/domain/credential_store.dart';
 import 'package:macro_advisor/src/features/settings/infrastructure/deterministic_connection_checker.dart';
+import 'package:macro_advisor/src/features/settings/infrastructure/drift_appearance_settings.dart';
 
 /// Fast, repeatable Android smoke test for agents and CI.
 ///
@@ -49,6 +51,17 @@ void main() {
 
     await tester.tap(find.byTooltip('Open settings'));
     await _advance(tester);
+    await tester.ensureVisible(find.byKey(const Key('palette-ocean')));
+    await tester.tap(find.byKey(const Key('palette-ocean')));
+    await _advance(tester);
+    expect(
+      tester
+          .widget<MaterialApp>(find.byType(MaterialApp))
+          .theme!
+          .colorScheme
+          .primary,
+      const Color(0xff58d7ff),
+    );
     await tester.tap(find.text('Nutrition goals'));
     await _advance(tester);
     await tester.tap(find.text('Minimum').first);
@@ -74,8 +87,11 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('save-credential-button')));
     await _advance(tester);
-    await tester.tap(find.byKey(const Key('test-connection-button')));
+    FocusManager.instance.primaryFocus?.unfocus();
     await _advance(tester);
+    await tester.ensureVisible(find.byKey(const Key('test-connection-button')));
+    await tester.tap(find.byKey(const Key('test-connection-button')));
+    await _waitFor(tester, find.text('Connection test succeeded.'));
 
     expect(find.text('Connection test succeeded.'), findsOneWidget);
     expect(find.text('agent-fixture-key'), findsNothing);
@@ -120,7 +136,6 @@ void main() {
     expect(harness.provider.calls, 1);
     expect(find.text('Meals and drinks (1)'), findsOneWidget);
     expect(find.text('450 kcal'), findsWidgets);
-    expect(find.text('Progress toward goals'), findsOneWidget);
     expect(find.text('Below minimum'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Open nutrition history'));
@@ -196,12 +211,23 @@ void main() {
     await harness.restart(tester);
     await _advance(tester);
     expect(find.text('Meals and drinks (0)'), findsOneWidget);
-    expect(find.text('Progress toward goals'), findsOneWidget);
+    expect(
+      tester
+          .widget<MaterialApp>(find.byType(MaterialApp))
+          .theme!
+          .colorScheme
+          .primary,
+      const Color(0xff58d7ff),
+    );
     await tester.tap(find.byTooltip('Previous day'));
     await _waitFor(tester, find.text('Meals and drinks (1)'));
     expect(find.text('900 kcal'), findsWidgets);
 
-    await tester.tap(find.text('Greek yogurt with banana and almonds').first);
+    final reopenedMeal = find
+        .text('Greek yogurt with banana and almonds')
+        .first;
+    await tester.ensureVisible(reopenedMeal);
+    await tester.tap(reopenedMeal);
     await _waitFor(tester, find.text('Saved meal'));
     await _waitFor(tester, find.textContaining('Revision 1'));
     expect(find.text('Edited'), findsOneWidget);
@@ -212,7 +238,6 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     final harness = _TestHarness();
     addTearDown(harness.dispose);
 
@@ -225,7 +250,7 @@ void main() {
     ];
     for (var index = 0; index < sources.length; index++) {
       final source = sources[index];
-      await tester.tap(find.text('Record meal').first);
+      await tester.tap(find.byType(FloatingActionButton));
       await _advance(tester);
       await tester.tap(source);
       await _waitFor(tester, find.text('Photo meal or drink'));
@@ -312,7 +337,7 @@ void main() {
     await _advance(tester);
 
     // A photo confirmed after opting out still saves its nutrition, no media.
-    await tester.tap(find.text('Record meal').first);
+    await tester.tap(find.byType(FloatingActionButton));
     await _advance(tester);
     await tester.tap(find.byKey(const Key('choose-photo-source')));
     await _waitFor(tester, find.text('Photo meal or drink'));
@@ -341,6 +366,7 @@ void main() {
     }
     expect(await harness.images.isEnabled(), isFalse);
     expect(harness.provider.calls, 3);
+    semantics.dispose();
   });
 }
 
@@ -403,6 +429,9 @@ class _TestHarness {
       mealImageRepositoryProvider.overrideWithValue(images),
       mealImageRetentionSettingsProvider.overrideWithValue(images),
       goalRepositoryProvider.overrideWithValue(DriftGoalRepository(database)),
+      appearanceSettingsProvider.overrideWithValue(
+        DriftAppearanceSettings(database),
+      ),
       credentialStoreProvider.overrideWithValue(credentials),
       providerConnectionCheckerProvider.overrideWithValue(
         const DeterministicConnectionChecker(),

@@ -11,137 +11,146 @@ import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 import 'package:macro_advisor/src/features/meals/infrastructure/drift_meal_repository.dart';
 
 void main() {
-  for (final version in [1, 2]) {
-    test(
-      'upgrades historical v$version to v3 without losing or backfilling data',
-      () async {
-        final historicalTables = [
-          'meal_entries',
-          'meal_items',
-          'meal_nutrient_values',
-          if (version == 2) 'goal_targets',
-        ];
-        final before = <String, List<Map<String, Object?>>>{};
-        final database = AppDatabase.forTesting(
-          NativeDatabase.memory(
-            setup: (sqlite) {
-              sqlite.execute(
-                File(
-                  'test/fixtures/database/schema_v$version.sql',
-                ).readAsStringSync(),
-              );
-              sqlite.execute(_historicalMeals);
-              if (version == 2) sqlite.execute(_historicalGoals);
-              for (final table in historicalTables) {
-                before[table] = sqlite
-                    .select('SELECT * FROM $table')
-                    .map((row) => Map<String, Object?>.from(row))
-                    .toList();
-              }
-              expect(sqlite.userVersion, version);
-            },
-          ),
-        );
-        final fresh = AppDatabase.forTesting(NativeDatabase.memory());
-        addTearDown(database.close);
-        addTearDown(fresh.close);
-
-        // The first query must run the real onUpgrade path, not onCreate.
-        final settings = await database
-            .select(database.mealImageRetentionSettings)
-            .get();
-        expect(settings, hasLength(1));
-        expect(settings.single.id, 1);
-        expect(settings.single.enabled, isTrue);
-        expect(
-          await database.select(database.mealRetainedImages).get(),
-          isEmpty,
-        );
-        for (final table in historicalTables) {
-          expect(
-            await _rows(database, 'SELECT * FROM $table'),
-            before[table],
-            reason: '$table must survive v$version -> v3 unchanged',
-          );
-        }
-        if (version == 1) {
-          expect(await database.select(database.goalTargets).get(), isEmpty);
-        }
-        final meals = DriftMealRepository(database, _Clock(), _Ids());
-        final active = (await meals.findById('synthetic-active'))!;
-        expect(active.description, 'Synthetic fixture meal');
-        expect(active.userEdited, isTrue);
-        expect(active.revision, 4);
-        expect(active.assumptions.single.code, 'synthetic');
-        expect(active.assumptions.single.description, 'Synthetic assumption');
-        expect(active.items.single.name, 'Synthetic oats');
-        expect(
-          (active.items.single.nutrition[NutrientId.energy]
-                  as KnownNutritionValue)
-              .milliUnits,
-          123456,
-        );
-        expect(
-          active.items.single.nutrition[NutrientId.protein].source,
-          NutritionValueSource.userEdited,
-        );
-        expect(await meals.findById('synthetic-deleted'), isNull);
-        final deleted = (await meals.findById(
-          'synthetic-deleted',
-          includeDeleted: true,
-        ))!;
-        expect(deleted.deletedAtUtc, isNotNull);
-        expect(deleted.items.single.assumptions.single.code, 'synthetic');
-        expect(
-          deleted.items.single.nutrition[NutrientId.protein],
-          isA<UnknownNutritionValue>(),
-        );
-        final goals = await DriftGoalRepository(database).read();
-        if (version == 1) {
-          expect(goals.active, isEmpty);
-        } else {
-          expect(
-            goals[NutrientId.energy],
-            const RangeGoalTarget(1800000, 2200000),
-          );
-          expect(goals[NutrientId.protein], const MinimumGoalTarget(90000));
-          expect(goals[NutrientId.salt], const MaximumGoalTarget(6000));
-        }
-        expect(
-          (await _rows(database, 'PRAGMA user_version')).single['user_version'],
-          3,
-        );
-        expect(await _rows(database, 'PRAGMA foreign_key_check'), isEmpty);
-
-        // Compare columns, nullability, defaults, keys and references against a
-        // newly created v3 database. Historical fixtures never use current tables.
-        const tables = [
-          'goal_targets',
-          'meal_entries',
-          'meal_image_retention_settings',
-          'meal_items',
-          'meal_nutrient_values',
-          'meal_retained_images',
-        ];
-        expect(
-          await _rows(database, _tableNames),
-          await _rows(fresh, _tableNames),
-        );
-        for (final table in tables) {
-          for (final pragma in [
-            'table_info',
-            'foreign_key_list',
-            'index_list',
-          ]) {
-            expect(
-              await _rows(database, 'PRAGMA $pragma($table)'),
-              await _rows(fresh, 'PRAGMA $pragma($table)'),
-              reason: '$table $pragma after v$version -> v3',
+  for (final version in [1, 2, 3]) {
+    test('upgrades historical v$version to v4 without losing data', () async {
+      final historicalTables = [
+        'meal_entries',
+        'meal_items',
+        'meal_nutrient_values',
+        if (version >= 2) 'goal_targets',
+        if (version == 3) 'meal_retained_images',
+        if (version == 3) 'meal_image_retention_settings',
+      ];
+      final before = <String, List<Map<String, Object?>>>{};
+      final database = AppDatabase.forTesting(
+        NativeDatabase.memory(
+          setup: (sqlite) {
+            sqlite.execute(
+              File(
+                'test/fixtures/database/schema_v$version.sql',
+              ).readAsStringSync(),
             );
-          }
+            sqlite.execute(_historicalMeals);
+            if (version >= 2) sqlite.execute(_historicalGoals);
+            if (version == 3) {
+              sqlite.execute(
+                'INSERT INTO meal_image_retention_settings VALUES (1, 0)',
+              );
+              sqlite.execute(
+                "INSERT INTO meal_retained_images VALUES ('synthetic-active', X'010203', 1, 1, 'image/jpeg')",
+              );
+            }
+            for (final table in historicalTables) {
+              before[table] = sqlite
+                  .select('SELECT * FROM $table')
+                  .map((row) => Map<String, Object?>.from(row))
+                  .toList();
+            }
+            expect(sqlite.userVersion, version);
+          },
+        ),
+      );
+      final fresh = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(database.close);
+      addTearDown(fresh.close);
+
+      // The first query must run the real onUpgrade path, not onCreate.
+      final settings = await database
+          .select(database.mealImageRetentionSettings)
+          .get();
+      expect(settings, hasLength(1));
+      expect(settings.single.id, 1);
+      expect(settings.single.enabled, version != 3);
+      expect(
+        await database.select(database.mealRetainedImages).get(),
+        hasLength(version == 3 ? 1 : 0),
+      );
+      final appearance = await database
+          .select(database.appearanceSettings)
+          .get();
+      expect(appearance, hasLength(1));
+      expect(appearance.single.paletteId, 'lime');
+      for (final table in historicalTables) {
+        expect(
+          await _rows(database, 'SELECT * FROM $table'),
+          before[table],
+          reason: '$table must survive v$version -> v4 unchanged',
+        );
+      }
+      if (version == 1) {
+        expect(await database.select(database.goalTargets).get(), isEmpty);
+      }
+      final meals = DriftMealRepository(database, _Clock(), _Ids());
+      final active = (await meals.findById('synthetic-active'))!;
+      expect(active.description, 'Synthetic fixture meal');
+      expect(active.userEdited, isTrue);
+      expect(active.revision, 4);
+      expect(active.assumptions.single.code, 'synthetic');
+      expect(active.assumptions.single.description, 'Synthetic assumption');
+      expect(active.items.single.name, 'Synthetic oats');
+      expect(
+        (active.items.single.nutrition[NutrientId.energy]
+                as KnownNutritionValue)
+            .milliUnits,
+        123456,
+      );
+      expect(
+        active.items.single.nutrition[NutrientId.protein].source,
+        NutritionValueSource.userEdited,
+      );
+      expect(await meals.findById('synthetic-deleted'), isNull);
+      final deleted = (await meals.findById(
+        'synthetic-deleted',
+        includeDeleted: true,
+      ))!;
+      expect(deleted.deletedAtUtc, isNotNull);
+      expect(deleted.items.single.assumptions.single.code, 'synthetic');
+      expect(
+        deleted.items.single.nutrition[NutrientId.protein],
+        isA<UnknownNutritionValue>(),
+      );
+      final goals = await DriftGoalRepository(database).read();
+      if (version == 1) {
+        expect(goals.active, isEmpty);
+      } else {
+        expect(
+          goals[NutrientId.energy],
+          const RangeGoalTarget(1800000, 2200000),
+        );
+        expect(goals[NutrientId.protein], const MinimumGoalTarget(90000));
+        expect(goals[NutrientId.salt], const MaximumGoalTarget(6000));
+      }
+      expect(
+        (await _rows(database, 'PRAGMA user_version')).single['user_version'],
+        4,
+      );
+      expect(await _rows(database, 'PRAGMA foreign_key_check'), isEmpty);
+
+      // Compare columns, nullability, defaults, keys and references against a
+      // newly created v4 database. Historical fixtures never use current tables.
+      const tables = [
+        'goal_targets',
+        'appearance_settings',
+        'meal_entries',
+        'meal_image_retention_settings',
+        'meal_items',
+        'meal_nutrient_values',
+        'meal_retained_images',
+      ];
+      expect(
+        await _rows(database, _tableNames),
+        await _rows(fresh, _tableNames),
+      );
+      for (final table in tables) {
+        for (final pragma in ['table_info', 'foreign_key_list', 'index_list']) {
+          expect(
+            await _rows(database, 'PRAGMA $pragma($table)'),
+            await _rows(fresh, 'PRAGMA $pragma($table)'),
+            reason: '$table $pragma after v$version -> v4',
+          );
         }
-      },
-    );
+      }
+    });
   }
 }
 

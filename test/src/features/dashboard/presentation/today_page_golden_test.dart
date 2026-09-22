@@ -10,6 +10,7 @@ import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
 import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
+import 'package:macro_advisor/src/features/settings/domain/app_palette.dart';
 
 void main() {
   setUp(() {
@@ -44,6 +45,30 @@ void main() {
     await expectLater(
       find.byType(TodayView),
       matchesGoldenFile('goldens/today_dashboard_de.png'),
+    );
+  });
+
+  for (final palette in AppPalette.values.skip(1)) {
+    testWidgets('renders compact Today in ${palette.id}', (tester) async {
+      _configureCompactView(tester);
+      await tester.pumpWidget(_app(const Locale('en'), palette: palette));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(TodayView),
+        matchesGoldenFile('goldens/today_${palette.id}.png'),
+      );
+    });
+  }
+
+  testWidgets('renders expanded Lime Today', (tester) async {
+    tester.view.physicalSize = const Size(1000, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(_app(const Locale('en')));
+    await tester.pumpAndSettle();
+    await expectLater(
+      find.byType(TodayView),
+      matchesGoldenFile('goldens/today_lime_expanded.png'),
     );
   });
 }
@@ -87,14 +112,19 @@ void _configureCompactView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-Widget _app(Locale locale) {
-  final theme = AppTheme.light();
+Widget _app(Locale locale, {AppPalette palette = AppPalette.lime}) {
+  final theme = AppTheme.forPalette(palette);
   return MaterialApp(
     locale: locale,
     // Pin the test font so the checked-in pixels match Linux CI and local runs.
     theme: theme.copyWith(
       textTheme: theme.textTheme.apply(fontFamily: 'Ahem'),
       primaryTextTheme: theme.primaryTextTheme.apply(fontFamily: 'Ahem'),
+      appBarTheme: theme.appBarTheme.copyWith(
+        titleTextStyle: theme.appBarTheme.titleTextStyle?.copyWith(
+          fontFamily: 'Ahem',
+        ),
+      ),
     ),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

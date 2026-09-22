@@ -79,6 +79,10 @@ class _MealDetailPageState extends ConsumerState<MealDetailPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
             child: Text(l10n.deleteAction),
           ),
         ],
@@ -117,6 +121,10 @@ class _MealDetailPageState extends ConsumerState<MealDetailPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
               child: Text(l10n.removeSavedImageAction),
             ),
           ],
