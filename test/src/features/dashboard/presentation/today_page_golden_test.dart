@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,18 +9,13 @@ import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dar
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 import 'package:macro_advisor/src/features/settings/domain/app_palette.dart';
+import '../../../../support/tolerant_golden_file_comparator.dart';
 
 void main() {
-  setUp(() {
-    final previousComparator = goldenFileComparator;
-    if (previousComparator is LocalFileComparator) {
-      goldenFileComparator = _TolerantGoldenFileComparator(
-        previousComparator,
-        precisionTolerance: .04,
-      );
-      addTearDown(() => goldenFileComparator = previousComparator);
-    }
-  });
+  setUpTolerantGoldenFileComparator(
+    'today_page_golden_test.dart',
+    precisionTolerance: .04,
+  );
 
   testWidgets('renders the English populated Today baseline', (tester) async {
     _configureCompactView(tester);
@@ -71,39 +64,6 @@ void main() {
       matchesGoldenFile('goldens/today_lime_expanded.png'),
     );
   });
-}
-
-/// Allows small font-rasterization differences between local Windows runs and
-/// the Linux CI renderer while still failing on meaningful layout changes.
-class _TolerantGoldenFileComparator extends LocalFileComparator {
-  _TolerantGoldenFileComparator(
-    LocalFileComparator original, {
-    required double precisionTolerance,
-  }) : assert(
-         precisionTolerance >= 0 && precisionTolerance <= 1,
-         'precisionTolerance must be between 0 and 1',
-       ),
-       _precisionTolerance = precisionTolerance,
-       super(original.basedir.resolve('today_page_golden_test.dart'));
-
-  final double _precisionTolerance;
-
-  @override
-  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
-    final result = await GoldenFileComparator.compareLists(
-      imageBytes,
-      await getGoldenBytes(golden),
-    );
-    final passed = result.passed || result.diffPercent <= _precisionTolerance;
-    if (passed) {
-      result.dispose();
-      return true;
-    }
-
-    final error = await generateFailureOutput(result, golden, basedir);
-    result.dispose();
-    throw FlutterError(error);
-  }
 }
 
 void _configureCompactView(WidgetTester tester) {

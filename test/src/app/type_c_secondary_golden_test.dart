@@ -21,8 +21,13 @@ import 'package:macro_advisor/src/features/meals/domain/meal_repository.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 import 'package:macro_advisor/src/features/meals/presentation/meal_detail_page.dart';
 import 'package:macro_advisor/src/features/settings/domain/app_palette.dart';
+import '../../support/tolerant_golden_file_comparator.dart';
 
 void main() {
+  setUpTolerantGoldenFileComparator(
+    'type_c_secondary_golden_test.dart',
+    precisionTolerance: .045,
+  );
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });

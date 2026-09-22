@@ -5,8 +5,13 @@ import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/app/app_theme.dart';
 import 'package:macro_advisor/src/features/settings/domain/app_palette.dart';
 import 'package:macro_advisor/src/features/settings/presentation/settings_page.dart';
+import '../../../../support/tolerant_golden_file_comparator.dart';
 
 void main() {
+  setUpTolerantGoldenFileComparator(
+    'settings_page_golden_test.dart',
+    precisionTolerance: .04,
+  );
   testWidgets('renders Lime Settings with palette choices', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
