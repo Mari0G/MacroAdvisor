@@ -1,6 +1,6 @@
 # Type C appearance and palettes
 
-Status: Accepted v0.1
+Status: Implemented v0.1
 
 Feature ID: F-006
 
