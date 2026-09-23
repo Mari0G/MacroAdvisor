@@ -1,6 +1,6 @@
 # Implementation status
 
-Last updated: 2026-08-04
+Last updated: 2026-09-23
 
 This tracker records durable delivery progress for the slices in
 [implementation-plan.md](implementation-plan.md). It does not replace feature
@@ -32,9 +32,10 @@ features. New rows use one feature ID and one slice ID.
 | S-008 | F-001, F-002 | Merged | `codex/slice8-hardening` | — | Deterministic Android save/edit/day-move/restart hardening passes locally on an Android emulator; accessibility evidence remains explicitly deferred. |
 | S-009 | F-003 | Merged | `feat/s-009-photo-capture` | — | Full local gate and deterministic Android library/camera journeys pass; draft PR pending. |
 | S-010 | F-001 | Merged | `codex/slice10-analysis-resilience` | — | Permits unknown/noncanonical item amount units as descriptive, non-fatal values; adds a distinct `AnalysisTimedOut` provider failure and localized recovery. |
-| S-011 | F-004 | In review | `codex/slice11-goals-history` | `test/src/features/goals/`, `test/src/features/history/`, `test/src/features/dashboard/presentation/today_page_test.dart`, and `integration_test/mvp_critical_journey_test.dart` | Full local verification and the deterministic Android goals/history/meal journey pass. |
-| S-012 | F-005 | Planned | — | — | F-005 defines default-on bounded local food-image retention, individual removal, and a Settings opt-out that deletes retained images. |
+| S-011 | F-004 | Merged | — | `test/src/features/goals/`, `test/src/features/history/`, `test/src/features/dashboard/presentation/today_page_test.dart`, and `integration_test/mvp_critical_journey_test.dart` | Merged as PR #17; goals, Today progress, local history, accessibility semantics, localization, and deterministic Android journey evidence are on `develop`. |
+| S-012 | F-005 | Merged | — | [Privacy audit](f-005-privacy-audit.md), migration, capture, repository, localized UI tests, and `integration_test/mvp_critical_journey_test.dart` | Merged as PR #25; bounded local retention, restart persistence, opt-out, individual removal, bulk deletion, cleanup, privacy, localization, and accessibility evidence are on `develop`. |
 | S-013 | — | Planned | — | — | Reserved maintenance slice for compact, expandable warning and information UI and visual-spacing fixes. Detailed slice plan is pending. |
+| S-014 | F-006 | Merged | — | `test/src/features/settings/application/appearance_controller_test.dart`, `test/src/features/settings/infrastructure/drift_appearance_settings_test.dart`, `test/src/app/type_c_secondary_golden_test.dart`, and `integration_test/mvp_critical_journey_test.dart` | Merged via PR #27; selectable Type C palettes persist across restart, with migration, localization, accessibility, and visual evidence on `develop`. |
 
 ## Update rules
 

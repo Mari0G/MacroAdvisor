@@ -1,0 +1,14 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"confidence\":\"low\",\"items\":[{\"name\":\"Synthetic meal\",\"amount\":{\"unknown\":true},\"nutrients\":{\"energy\":{\"value\":250,\"unit\":\"kcal\"},\"protein\":{\"value\":12,\"unit\":\"g\"},\"carbohydrates\":{\"value\":null,\"unit\":\"g\"},\"fat\":{\"value\":null,\"unit\":\"g\"},\"fibre\":{\"value\":null,\"unit\":\"g\"},\"sugars\":{\"value\":null,\"unit\":\"g\"},\"salt\":{\"value\":null,\"unit\":\"g\"}}}],\"assumptions\":[],\"warnings\":[]}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ]
+}

@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:macro_advisor/src/app/app_providers.dart';
 import 'package:macro_advisor/src/app/macro_advisor_app.dart';
+import 'package:macro_advisor/src/features/meal_capture/application/capture_controllers.dart';
+import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -31,9 +33,9 @@ void main() {
         'Live Gemini smoke requires a credential saved through Provider settings on this emulator.',
       );
     }
-    await tester.pageBack();
+    await _pageBack(tester);
     await _waitFor(tester, find.byKey(const Key('provider-settings-entry')));
-    await tester.pageBack();
+    await _pageBack(tester);
     await _waitFor(tester, find.byKey(const Key('today-settings-button')));
     await tester.tap(find.byKey(const Key('today-record-meal-button')));
     await _waitFor(tester, find.byKey(const Key('describe-meal-source')));
@@ -55,7 +57,25 @@ void main() {
     expect(find.byKey(const Key('review-estimate-title')), findsOneWidget);
     expect(find.byKey(const Key('confirm-save-button')), findsOneWidget);
     expect(find.byKey(const Key('review-provenance')), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MacroAdvisorApp)),
+    );
+    final review = container.read(reviewControllerProvider);
+    expect(review.items, isNotEmpty);
+    for (final item in review.items) {
+      expect(item.nutrition.values, hasLength(NutrientId.core.length));
+      expect(
+        item.nutrition.values.values.whereType<KnownNutritionValue>().length,
+        greaterThanOrEqualTo(2),
+      );
+    }
   });
+}
+
+Future<void> _pageBack(WidgetTester tester) async {
+  expect(await tester.binding.handlePopRoute(), isTrue);
+  await tester.pump();
 }
 
 Future<void> _waitFor(

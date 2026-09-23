@@ -2,7 +2,7 @@
 
 Status: Research snapshot
 
-Evaluated: 2026-07-20
+Evaluated: 2026-09-17
 
 Pricing, limits, models, and provider terms change frequently. Re-check the linked
 official sources before implementation or release.
@@ -10,11 +10,13 @@ official sources before implementation or release.
 ## Recommendation
 
 Use a bring-your-own-key model for the MVP and implement Google Gemini first with
-stable `gemini-3.5-flash`.
+stable `gemini-3.5-flash-lite`.
 
 Reasons:
 
-- free API quota is available
+- the model is optimized for high-throughput, cost-efficient execution
+- free API quota is available, with project-specific active limits shown in
+  Google AI Studio
 - text and image inputs fit the planned capture modes
 - structured JSON output supports the nutrition contract
 - a user-owned key avoids shipping a shared project secret or operating a backend

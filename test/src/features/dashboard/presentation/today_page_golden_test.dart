@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,18 +8,14 @@ import 'package:macro_advisor/src/features/dashboard/domain/local_day.dart';
 import 'package:macro_advisor/src/features/dashboard/presentation/today_page.dart';
 import 'package:macro_advisor/src/features/meals/domain/meal_entry.dart';
 import 'package:macro_advisor/src/features/meals/domain/nutrition.dart';
+import 'package:macro_advisor/src/features/settings/domain/app_palette.dart';
+import '../../../../support/tolerant_golden_file_comparator.dart';
 
 void main() {
-  setUp(() {
-    final previousComparator = goldenFileComparator;
-    if (previousComparator is LocalFileComparator) {
-      goldenFileComparator = _TolerantGoldenFileComparator(
-        previousComparator,
-        precisionTolerance: .04,
-      );
-      addTearDown(() => goldenFileComparator = previousComparator);
-    }
-  });
+  setUpTolerantGoldenFileComparator(
+    'today_page_golden_test.dart',
+    precisionTolerance: .04,
+  );
 
   testWidgets('renders the English populated Today baseline', (tester) async {
     _configureCompactView(tester);
@@ -46,39 +40,30 @@ void main() {
       matchesGoldenFile('goldens/today_dashboard_de.png'),
     );
   });
-}
 
-/// Allows small font-rasterization differences between local Windows runs and
-/// the Linux CI renderer while still failing on meaningful layout changes.
-class _TolerantGoldenFileComparator extends LocalFileComparator {
-  _TolerantGoldenFileComparator(
-    LocalFileComparator original, {
-    required double precisionTolerance,
-  }) : assert(
-         precisionTolerance >= 0 && precisionTolerance <= 1,
-         'precisionTolerance must be between 0 and 1',
-       ),
-       _precisionTolerance = precisionTolerance,
-       super(original.basedir.resolve('today_page_golden_test.dart'));
-
-  final double _precisionTolerance;
-
-  @override
-  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
-    final result = await GoldenFileComparator.compareLists(
-      imageBytes,
-      await getGoldenBytes(golden),
-    );
-    final passed = result.passed || result.diffPercent <= _precisionTolerance;
-    if (passed) {
-      result.dispose();
-      return true;
-    }
-
-    final error = await generateFailureOutput(result, golden, basedir);
-    result.dispose();
-    throw FlutterError(error);
+  for (final palette in AppPalette.values.skip(1)) {
+    testWidgets('renders compact Today in ${palette.id}', (tester) async {
+      _configureCompactView(tester);
+      await tester.pumpWidget(_app(const Locale('en'), palette: palette));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(TodayView),
+        matchesGoldenFile('goldens/today_${palette.id}.png'),
+      );
+    });
   }
+
+  testWidgets('renders expanded Lime Today', (tester) async {
+    tester.view.physicalSize = const Size(1000, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(_app(const Locale('en')));
+    await tester.pumpAndSettle();
+    await expectLater(
+      find.byType(TodayView),
+      matchesGoldenFile('goldens/today_lime_expanded.png'),
+    );
+  });
 }
 
 void _configureCompactView(WidgetTester tester) {
@@ -87,14 +72,19 @@ void _configureCompactView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-Widget _app(Locale locale) {
-  final theme = AppTheme.light();
+Widget _app(Locale locale, {AppPalette palette = AppPalette.lime}) {
+  final theme = AppTheme.forPalette(palette);
   return MaterialApp(
     locale: locale,
     // Pin the test font so the checked-in pixels match Linux CI and local runs.
     theme: theme.copyWith(
       textTheme: theme.textTheme.apply(fontFamily: 'Ahem'),
       primaryTextTheme: theme.primaryTextTheme.apply(fontFamily: 'Ahem'),
+      appBarTheme: theme.appBarTheme.copyWith(
+        titleTextStyle: theme.appBarTheme.titleTextStyle?.copyWith(
+          fontFamily: 'Ahem',
+        ),
+      ),
     ),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

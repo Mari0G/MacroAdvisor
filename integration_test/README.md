@@ -5,6 +5,11 @@ device. They are the default verification for every feature or bug fix that
 changes a user journey. They use deterministic test seams for provider and
 credential behavior, but production navigation and persistence.
 
+The F-005 photo journey covers library and camera confirmation, file-backed
+database close/reopen, individual image removal, confirmed bulk removal and
+opt-out saving. It compares meal, nutrient and goal rows around image deletion.
+Synthetic media is generated at runtime; no image screenshots are recorded.
+
 From `android/`, run one journey with native Android instrumentation:
 
 ```powershell

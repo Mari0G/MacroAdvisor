@@ -38,6 +38,7 @@ String confidenceText(AppLocalizations l10n, MealConfidence confidence) =>
 String analysisWarningText(AppLocalizations l10n, AnalysisWarning warning) =>
     switch (warning.code) {
       'unknown-amount-unit' => l10n.unknownAmountUnitWarning,
+      'low-nutrient-completeness' => l10n.lowNutrientCompletenessWarning,
       _ => warning.description,
     };
 

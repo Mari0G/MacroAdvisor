@@ -13,6 +13,16 @@ import 'package:macro_advisor/src/features/settings/domain/provider_connection_c
 
 const _geminiProviderId = 'gemini';
 const _geminiModelId = 'gemini-3.5-flash-lite';
+const _minimumKnownNutrientCount = 2;
+const _coreNutrientNames = <String>[
+  'energy',
+  'protein',
+  'carbohydrates',
+  'fat',
+  'fibre',
+  'sugars',
+  'salt',
+];
 const _geminiEndpoint =
     'https://generativelanguage.googleapis.com/v1beta/models/'
     '$_geminiModelId:generateContent';
@@ -217,8 +227,12 @@ final class GeminiNutritionAnalysisProvider
       ..write('Analyze the meal description for locale $localeTag. ')
       ..write(
         'Return only JSON matching the supplied response schema. '
-        'Use unknown nutrient values when the description does not support '
-        'a defensible estimate; do not invent precision. '
+        'Every item must contain all seven nutrient fields: energy, protein, '
+        'carbohydrates, fat, fibre, sugars, and salt. '
+        'Estimate standard food-composition values when the food and portion '
+        'are reasonably inferable, record the assumption, and lower confidence '
+        'instead of inventing precision. Use unknown only when no defensible '
+        'estimate is possible. '
         'Nutrient units must be kcal for energy and g for all other nutrients. '
         'Keep finite amounts with unfamiliar units as descriptive amounts; '
         'do not infer a mass conversion. ',
@@ -239,7 +253,7 @@ final class GeminiNutritionAnalysisProvider
       ],
       'generationConfig': <String, Object?>{
         'responseMimeType': 'application/json',
-        'responseSchema': _responseSchema,
+        'responseJsonSchema': _responseJsonSchema,
         'temperature': 0,
         'thinkingConfig': <String, String>{'thinkingLevel': 'minimal'},
       },
@@ -255,8 +269,12 @@ final class GeminiNutritionAnalysisProvider
       ..write(
         'If no meal or drink is recognizable, return an empty items array. '
         'Return only JSON matching the supplied response schema. '
-        'Use unknown nutrient values when the image does not support a '
-        'defensible estimate; do not invent precision. '
+        'Every item must contain all seven nutrient fields: energy, protein, '
+        'carbohydrates, fat, fibre, sugars, and salt. '
+        'Estimate standard food-composition values when the food and portion '
+        'are reasonably inferable, record the assumption, and lower confidence '
+        'instead of inventing precision. Use unknown only when no defensible '
+        'estimate is possible. '
         'Nutrient units must be kcal for energy and g for all other nutrients. ',
       );
     return jsonEncode(<String, Object?>{
@@ -280,7 +298,7 @@ final class GeminiNutritionAnalysisProvider
       ],
       'generationConfig': <String, Object?>{
         'responseMimeType': 'application/json',
-        'responseSchema': _responseSchema,
+        'responseJsonSchema': _responseJsonSchema,
         'temperature': 0,
         'thinkingConfig': <String, String>{'thinkingLevel': 'minimal'},
       },
@@ -309,79 +327,74 @@ final class GeminiNutritionAnalysisProvider
     });
   }
 
-  static final _responseSchema = <String, Object?>{
-    'type': 'OBJECT',
+  static final _responseJsonSchema = <String, Object?>{
+    'type': 'object',
     'properties': <String, Object?>{
-      'detectedLocale': <String, Object?>{'type': 'STRING'},
+      'detectedLocale': <String, Object?>{'type': 'string'},
       'confidence': <String, Object?>{
-        'type': 'STRING',
+        'type': 'string',
         'enum': <String>['low', 'medium', 'high'],
       },
       'items': <String, Object?>{
-        'type': 'ARRAY',
+        'type': 'array',
         'items': <String, Object?>{
-          'type': 'OBJECT',
+          'type': 'object',
           'properties': <String, Object?>{
-            'name': <String, Object?>{'type': 'STRING'},
+            'name': <String, Object?>{'type': 'string'},
             'amount': <String, Object?>{
-              'type': 'OBJECT',
+              'type': 'object',
               'properties': <String, Object?>{
-                'value': <String, Object?>{'type': 'NUMBER'},
+                'value': <String, Object?>{'type': 'number'},
                 'unit': <String, Object?>{
-                  'type': 'STRING',
+                  'type': 'string',
                   'description':
                       'Canonical or descriptive portion unit; unfamiliar '
                       'units remain editable and are not converted to mass.',
                 },
-                'unknown': <String, Object?>{'type': 'BOOLEAN'},
-                'description': <String, Object?>{'type': 'STRING'},
+                'unknown': <String, Object?>{'type': 'boolean'},
+                'description': <String, Object?>{'type': 'string'},
               },
             },
             'nutrients': <String, Object?>{
-              'type': 'OBJECT',
+              'type': 'object',
               'properties': <String, Object?>{
-                for (final nutrient in <String>[
-                  'energy',
-                  'protein',
-                  'carbohydrates',
-                  'fat',
-                  'fibre',
-                  'sugars',
-                  'salt',
-                ])
+                for (final nutrient in _coreNutrientNames)
                   nutrient: <String, Object?>{
-                    'type': 'OBJECT',
+                    'type': 'object',
                     'properties': <String, Object?>{
-                      'value': <String, Object?>{'type': 'NUMBER'},
-                      'unit': <String, Object?>{'type': 'STRING'},
-                      'unknown': <String, Object?>{'type': 'BOOLEAN'},
+                      'value': <String, Object?>{
+                        'type': <String>['number', 'null'],
+                      },
+                      'unit': <String, Object?>{'type': 'string'},
+                      'unknown': <String, Object?>{'type': 'boolean'},
                     },
-                    'required': <String>['unit'],
+                    'required': <String>['value', 'unit'],
                   },
               },
+              'required': _coreNutrientNames,
             },
             'confidence': <String, Object?>{
-              'type': 'STRING',
+              'type': 'string',
               'enum': <String>['low', 'medium', 'high'],
             },
             'assumptions': <String, Object?>{
-              'type': 'ARRAY',
+              'type': 'array',
               'items': <String, Object?>{
-                'type': 'OBJECT',
+                'type': 'object',
                 'properties': <String, Object?>{
-                  'code': <String, Object?>{'type': 'STRING'},
-                  'description': <String, Object?>{'type': 'STRING'},
+                  'code': <String, Object?>{'type': 'string'},
+                  'description': <String, Object?>{'type': 'string'},
                 },
                 'required': <String>['code', 'description'],
               },
             },
             'warnings': <String, Object?>{
-              'type': 'ARRAY',
+              'type': 'array',
               'items': <String, Object?>{
-                'type': 'OBJECT',
+                'type': 'object',
                 'properties': <String, Object?>{
-                  'code': <String, Object?>{'type': 'STRING'},
-                  'description': <String, Object?>{'type': 'STRING'},
+                  'code': <String, Object?>{'type': 'string'},
+                  'description': <String, Object?>{'type': 'string'},
                 },
                 'required': <String>['code', 'description'],
               },
@@ -391,47 +404,41 @@ final class GeminiNutritionAnalysisProvider
         },
       },
       'totals': <String, Object?>{
-        'type': 'OBJECT',
+        'type': 'object',
         'description': 'Optional totals used for consistency validation.',
         'properties': <String, Object?>{
-          for (final nutrient in <String>[
-            'energy',
-            'protein',
-            'carbohydrates',
-            'fat',
-            'fibre',
-            'sugars',
-            'salt',
-          ])
+          for (final nutrient in _coreNutrientNames)
             nutrient: <String, Object?>{
-              'type': 'OBJECT',
+              'type': 'object',
               'properties': <String, Object?>{
-                'value': <String, Object?>{'type': 'NUMBER'},
-                'unit': <String, Object?>{'type': 'STRING'},
-                'unknown': <String, Object?>{'type': 'BOOLEAN'},
+                'value': <String, Object?>{
+                  'type': <String>['number', 'null'],
+                },
+                'unit': <String, Object?>{'type': 'string'},
+                'unknown': <String, Object?>{'type': 'boolean'},
               },
               'required': <String>['unit'],
             },
         },
       },
       'assumptions': <String, Object?>{
-        'type': 'ARRAY',
+        'type': 'array',
         'items': <String, Object?>{
-          'type': 'OBJECT',
+          'type': 'object',
           'properties': <String, Object?>{
-            'code': <String, Object?>{'type': 'STRING'},
-            'description': <String, Object?>{'type': 'STRING'},
+            'code': <String, Object?>{'type': 'string'},
+            'description': <String, Object?>{'type': 'string'},
           },
           'required': <String>['code', 'description'],
         },
       },
       'warnings': <String, Object?>{
-        'type': 'ARRAY',
+        'type': 'array',
         'items': <String, Object?>{
-          'type': 'OBJECT',
+          'type': 'object',
           'properties': <String, Object?>{
-            'code': <String, Object?>{'type': 'STRING'},
-            'description': <String, Object?>{'type': 'STRING'},
+            'code': <String, Object?>{'type': 'string'},
+            'description': <String, Object?>{'type': 'string'},
           },
           'required': <String>['code', 'description'],
         },
@@ -449,9 +456,25 @@ final class GeminiNutritionAnalysisProvider
       ),
     ];
     final items = <MealItem>[];
+    var hasLowNutrientCompleteness = false;
     for (final item in response.items) {
       final parsed = _parseItem(item, response.confidence, warnings);
       items.add(parsed);
+      final knownNutrientCount = parsed.nutrition.values.values
+          .whereType<KnownNutritionValue>()
+          .length;
+      hasLowNutrientCompleteness |=
+          knownNutrientCount < _minimumKnownNutrientCount;
+    }
+    if (hasLowNutrientCompleteness) {
+      warnings.add(
+        const AnalysisWarning(
+          code: 'low-nutrient-completeness',
+          description:
+              'Fewer than two nutrient values could be estimated. Review the '
+              'meal carefully.',
+        ),
+      );
     }
     _validateTotals(response.totals, items, warnings);
 
