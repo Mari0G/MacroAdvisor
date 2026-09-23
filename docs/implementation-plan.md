@@ -286,6 +286,12 @@ slice plan in its dedicated planning task before implementation starts.
 expandable detail, and visual spacing defects between interface items are
 corrected.
 
+### S-014 — Type C appearance and palettes
+
+**Feature specification:** [F-006 — Type C appearance and palettes](../specs/features/type-c-appearance.md)
+
+**Outcome:** The app uses the dark Type C visual system and remembers the user's chosen palette.
+
 ## New-feature checklist
 
 - Assign the next unused `F-###` ID and add it to [the specification index](../specs/README.md).

@@ -16,7 +16,7 @@ void main() {
     await tester.pumpWidget(_app(_model(const []), const Locale('en')));
 
     expect(find.text('No meals or drinks recorded'), findsOneWidget);
-    expect(find.text('Record meal'), findsNWidgets(2));
+    expect(find.text('Record meal'), findsOneWidget);
     expect(find.bySemanticsLabel('Selected day'), findsOneWidget);
   });
 
@@ -89,7 +89,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Progress toward goals'), findsOneWidget);
+      expect(find.text('at least 800 kcal'), findsOneWidget);
       expect(find.text('Below minimum'), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp('Energy: current')), findsOneWidget);
     },

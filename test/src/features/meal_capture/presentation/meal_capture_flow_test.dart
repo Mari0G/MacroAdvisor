@@ -37,7 +37,7 @@ void main() {
         deriver: deriver,
       ),
     );
-    await tester.tap(find.text('Record meal').first);
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('choose-photo-source')));
     await tester.pumpAndSettle();
@@ -74,7 +74,7 @@ void main() {
           deriver: deriver,
         ),
       );
-      await tester.tap(find.text('Record meal').first);
+      await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('choose-photo-source')));
       await tester.pumpAndSettle();
@@ -112,7 +112,7 @@ void main() {
     final repository = _Repository();
     await tester.pumpWidget(_app(const Locale('en'), repository));
 
-    await tester.tap(find.text('Record meal').first);
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('describe-meal-source')));
     await tester.pumpAndSettle();
@@ -154,7 +154,7 @@ void main() {
       _app(const Locale('en'), _Repository(), provider: provider),
     );
 
-    await tester.tap(find.text('Record meal').first);
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('describe-meal-source')));
     await tester.pumpAndSettle();
@@ -203,7 +203,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Mahlzeit erfassen').first);
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('describe-meal-source')));
     await tester.pumpAndSettle();
@@ -232,7 +232,7 @@ void main() {
     'German description form is localized and whitespace cannot submit',
     (tester) async {
       await tester.pumpWidget(_app(const Locale('de'), _Repository()));
-      await tester.tap(find.text('Mahlzeit erfassen').first);
+      await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('describe-meal-source')));
       await tester.pumpAndSettle();
@@ -262,7 +262,7 @@ void main() {
       _app(const Locale('en'), repository, source: source),
     );
 
-    await tester.tap(find.text('Record meal').first);
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('choose-photo-source')));
     await tester.pumpAndSettle();

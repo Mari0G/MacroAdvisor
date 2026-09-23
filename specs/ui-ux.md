@@ -66,9 +66,10 @@ direct route to provider settings and preserves the description.
 
 ## Shared visual language
 
-The first implementation uses Material 3 components and the system font. Theme
-values are semantic rather than feature-specific so dark mode and higher contrast
-can be added without rewriting screens.
+F-006 uses the dark Type C design in `prototypes/macro_advisor_ui_prototype.html`
+throughout the app. Lime is the default; Ocean, Coral, and Violet are selectable
+in Settings. The app keeps the system font. Theme values are semantic so screens
+share the same surfaces, controls, focus states, and accessible color roles.
 
 ### Color roles
 

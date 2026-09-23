@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:macro_advisor/l10n/generated/app_localizations.dart';
 import 'package:macro_advisor/src/app/app_router.dart';
 import 'package:macro_advisor/src/core/presentation/responsive_content.dart';
+import 'package:macro_advisor/src/core/presentation/type_c_components.dart';
+import 'package:macro_advisor/src/features/settings/application/appearance_controller.dart';
 import 'package:macro_advisor/src/features/settings/application/meal_image_retention_provider.dart';
+import 'package:macro_advisor/src/features/settings/domain/app_palette.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -31,6 +34,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 16,
               children: [
+                const _AppearanceCard(),
                 Card(
                   child: ListTile(
                     title: Text(localizations.goalsSectionTitle),
@@ -91,6 +95,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
               child: Text(l10n.disableSavedMealImagesAction),
             ),
           ],
@@ -131,6 +139,94 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         _failedRetentionValue = enabled;
       });
     }
+  }
+}
+
+class _AppearanceCard extends ConsumerWidget {
+  const _AppearanceCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final state = ref.watch(appearanceControllerProvider);
+    final controller = ref.read(appearanceControllerProvider.notifier);
+    final scheme = Theme.of(context).colorScheme;
+    String name(AppPalette palette) => switch (palette) {
+      AppPalette.lime => l10n.paletteLime,
+      AppPalette.ocean => l10n.paletteOcean,
+      AppPalette.coral => l10n.paletteCoral,
+      AppPalette.violet => l10n.paletteViolet,
+    };
+    Color swatch(AppPalette palette) => switch (palette) {
+      AppPalette.lime => const Color(0xffb7f36b),
+      AppPalette.ocean => const Color(0xff58d7ff),
+      AppPalette.coral => const Color(0xffff906d),
+      AppPalette.violet => const Color(0xffdfa1ff),
+    };
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TypeCSectionHeader(title: l10n.appearanceTitle),
+            Text(
+              l10n.appearanceBody,
+              style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            if (state.loading)
+              Text(l10n.appearanceLoading)
+            else ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final palette in AppPalette.values)
+                    TypeCSelectionRow(
+                      key: Key('palette-${palette.id}'),
+                      title: name(palette),
+                      selected: state.palette == palette,
+                      swatch: swatch(palette),
+                      onTap: state.saving
+                          ? null
+                          : () => controller.select(palette),
+                    ),
+                ],
+              ),
+              if (state.saving) ...[
+                const SizedBox(height: 12),
+                Text(l10n.appearanceSaving),
+              ],
+            ],
+            if (state.loadFailed || state.saveFailed) ...[
+              const SizedBox(height: 12),
+              Semantics(
+                liveRegion: true,
+                child: TypeCNotice(
+                  icon: Icons.error_outline,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          state.loadFailed
+                              ? l10n.appearanceLoadFailed
+                              : l10n.appearanceSaveFailed,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: controller.retry,
+                        child: Text(l10n.retryAction),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 

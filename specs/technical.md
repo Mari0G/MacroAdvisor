@@ -266,6 +266,11 @@ proposed with its purpose and version line documented here before it is added.
 
 ### Persistence and transaction boundaries
 
+F-006 stores the selected Type C palette ID in a singleton Drift row in schema
+version 4. New and upgraded databases default to `lime`; an unknown stored ID
+renders Lime without rewriting it. The provider-neutral `AppearanceSettings`
+interface owns reads, observation, and writes. No production package is added.
+
 Drift data classes are infrastructure types. Repository mappers translate them to
 and from domain entities and validate values at the boundary. Schema tables use
 stable IDs, UTC timestamps plus the recorded occurrence offset where required,

@@ -312,7 +312,13 @@ class _HistoryData extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: SizedBox(
                 height: 180,
-                child: CustomPaint(painter: _HistoryChartPainter(model.points)),
+                child: CustomPaint(
+                  painter: _HistoryChartPainter(
+                    model.points,
+                    accent: Theme.of(context).colorScheme.primary,
+                    axis: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
               ),
             ),
           ),
@@ -371,9 +377,11 @@ class _HistoryPointRow extends StatelessWidget {
 }
 
 class _HistoryChartPainter extends CustomPainter {
-  _HistoryChartPainter(this.points);
+  _HistoryChartPainter(this.points, {required this.accent, required this.axis});
 
   final List<HistoryPoint> points;
+  final Color accent;
+  final Color axis;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -382,13 +390,13 @@ class _HistoryChartPainter extends CustomPainter {
           (point) => point.value is KnownNutritionValue && !point.isIncomplete,
         )
         .toList();
-    final axis = Paint()
-      ..color = Colors.grey
+    final axisPaint = Paint()
+      ..color = axis
       ..strokeWidth = 1;
     canvas.drawLine(
       Offset(0, size.height - 1),
       Offset(size.width, size.height - 1),
-      axis,
+      axisPaint,
     );
     if (known.isEmpty) return;
     final maxValue = known.fold<int>(
@@ -397,11 +405,11 @@ class _HistoryChartPainter extends CustomPainter {
           math.max(max, (point.value as KnownNutritionValue).milliUnits),
     );
     final line = Paint()
-      ..color = Colors.blue
+      ..color = accent
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
     final dots = Paint()
-      ..color = Colors.blue
+      ..color = accent
       ..style = PaintingStyle.fill;
     final path = Path();
     for (var index = 0; index < known.length; index++) {
@@ -426,5 +434,7 @@ class _HistoryChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HistoryChartPainter oldDelegate) =>
-      oldDelegate.points != points;
+      oldDelegate.points != points ||
+      oldDelegate.accent != accent ||
+      oldDelegate.axis != axis;
 }
